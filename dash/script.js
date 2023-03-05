@@ -21,7 +21,7 @@ function getDares() {
 function dareReview() {
   fetch(`${endpoint}/api/review/dares`)
     .then(response => response.json())
-    .then(dares => { displayList(dares, true); selected = "review" })
+    .then(dares => { displayList(dares, true); selected = "dare_review" })
     .catch(error => console.error(error));
 }
 
@@ -57,7 +57,7 @@ function displayList(items, isReview = false) {
     approveBtn.onclick = () => approveItem(item);
     buttonPanel.appendChild(banBtn);
     buttonPanel.appendChild(deleteBtn);
-    buttonPanel.appendChild(approveBtn);
+    if (selected === "dare_review" || selected === "truth_review") buttonPanel.appendChild(approveBtn);
     li.appendChild(questionSpan);
     li.appendChild(buttonPanel);
     list.appendChild(li);
@@ -122,6 +122,8 @@ function deleteItem(item) {
     deleteTruth(item.id);
   } else if (selected === "dare") {
     deleteDare(item.id);
+  } else if (selected === "dare_review") {
+    deleteReview(item.id);
   } else if (selected === "server") {
     deleteServer(item.key)
   }
