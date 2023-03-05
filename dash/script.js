@@ -1,5 +1,5 @@
 let selected = null;
-const endpoint = "https://tordBot-Alpha.tx296rt2wp.repl.co"
+const endpoint = "https://tordBot-Alpha.tx296rt2wp.repl.co";
 // Retrieve truths from the server
 function getTruths() {
   fetch(`${endpoint}/api/truths`)
@@ -24,6 +24,7 @@ function dareReview() {
     .then(dares => { displayDares(dares, true); selected = "review" })
     .catch(error => console.error(error));
 }
+
 
 // Retrieve servers from the server
 function getServers() {
@@ -55,7 +56,7 @@ function displayList(items, isReview = false) {
     deleteBtn.textContent = 'Approve';
     deleteBtn.onclick = () => approveItem(item);
     buttonPanel.appendChild(banBtn);
-    buttonPanel.appendChild(isReview ? approveBtn ?? deleteBtn);
+    buttonPanel.appendChild(isReview ? approveBtn : deleteBtn);
     li.appendChild(questionSpan);
     li.appendChild(buttonPanel);
     list.appendChild(li);
