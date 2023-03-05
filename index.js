@@ -19,6 +19,9 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 const db = new Database()
 db.get("dares").then((dares) => {
   db.get("truths").then((truths) => {
+    db.list().then((list) => {
+      console.log(list)
+    })
     console.log("loaded: ", dares.length + truths.length)
   })
 })
@@ -44,7 +47,7 @@ client.on('interactionCreate', async interaction => {
       return;
     }
 
-    if (guild && (guild.name === undefined || guild.name === null)){
+    if (guild && (guild.name === undefined || guild.name === null)) {
       guild.name = interaction.guild.name;
       db.set(key, guild).then(() => {
         console.log(

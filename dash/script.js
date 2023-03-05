@@ -21,7 +21,7 @@ function getDares() {
 function dareReview() {
   fetch(`${endpoint}/api/review/dares`)
     .then(response => response.json())
-    .then(dares => { displayList(dares, true); selected = "dare_review" })
+    .then(dares => { displayList(dares, true); selected = "review_dare" })
     .catch(error => console.error(error));
 }
 
@@ -37,31 +37,42 @@ function getServers() {
 
 // Display the list of truths/dares
 function displayList(items, isReview = false) {
-  const list = document.getElementById('list');
-  list.innerHTML = '';
-  items.forEach(item => {
+  if (items.length === 0) {
+    const list = document.getElementById('list');
+    list.innerHTML = '';
     const li = document.createElement('li');
     const questionSpan = document.createElement('span');
     questionSpan.classList.add('item');
-    questionSpan.textContent = item.question;
-    const buttonPanel = document.createElement('span');
-    buttonPanel.classList.add('button-panel');
-    const banBtn = document.createElement('button');
-    banBtn.textContent = 'Ban';
-    banBtn.onclick = () => banItem(item);
-    const deleteBtn = document.createElement('button');
-    deleteBtn.textContent = 'Delete';
-    deleteBtn.onclick = () => deleteItem(item);
-    const approveBtn = document.createElement('button');
-    approveBtn.textContent = 'Approve';
-    approveBtn.onclick = () => approveItem(item);
-    buttonPanel.appendChild(banBtn);
-    buttonPanel.appendChild(deleteBtn);
-    if (selected === "dare_review" || selected === "truth_review") buttonPanel.appendChild(approveBtn);
+    questionSpan.textContent = "Nothing to show";
     li.appendChild(questionSpan);
-    li.appendChild(buttonPanel);
     list.appendChild(li);
-  });
+  } else {
+    const list = document.getElementById('list');
+    list.innerHTML = '';
+    items.forEach(item => {
+      const li = document.createElement('li');
+      const questionSpan = document.createElement('span');
+      questionSpan.classList.add('item');
+      questionSpan.textContent = item.question;
+      const buttonPanel = document.createElement('span');
+      buttonPanel.classList.add('button-panel');
+      const banBtn = document.createElement('button');
+      banBtn.textContent = 'Ban';
+      banBtn.onclick = () => banItem(item);
+      const deleteBtn = document.createElement('button');
+      deleteBtn.textContent = 'Delete';
+      deleteBtn.onclick = () => deleteItem(item);
+      const approveBtn = document.createElement('button');
+      approveBtn.textContent = 'Approve';
+      approveBtn.onclick = () => approveItem(item);
+      buttonPanel.appendChild(banBtn);
+      buttonPanel.appendChild(deleteBtn);
+      if (selected === "review_dare" || selected === "review_dare") buttonPanel.appendChild(approveBtn);
+      li.appendChild(questionSpan);
+      li.appendChild(buttonPanel);
+      list.appendChild(li);
+    });
+  }
 }
 
 
@@ -118,17 +129,16 @@ function banItem(item) {
 // Empty function to delete an item
 function deleteItem(item) {
   console.log(`Deleting ${item.id}`);
+  console.log("mode", selected);
   if (selected === "truth") {
     deleteTruth(item.id);
   } else if (selected === "dare") {
     deleteDare(item.id);
-  } else if (selected === "dare_review") {
+  } else if (selected === "review_dare") {
     deleteReview(item.id);
   } else if (selected === "server") {
     deleteServer(item.key)
   }
-
-
 }
 
 function deleteTruth(id) {
@@ -156,6 +166,36 @@ function deleteTruth(id) {
 
 function deleteDare(id) {
   fetch(`${endpoint}/api/dare/delete`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ id: id })
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Reload the page to show the updated truth list
+        getDares();
+      } else {
+        console.log('Error deleting dare');
+      }
+    })
+    .catch(error => {
+      console.error('Error deleting dare:', error);
+    });
+}
+
+function deleteReview(id) {
+  let api = "";
+
+  if (selected === "review_dare") api = "/api/review/dare/delete";
+  else if (selected === "review_truth") api = "/api/review/truth/delete";
+  else { console.log("Invalid Selected List"); return; }
+
+  console.log("Sending delete command to ", `${endpoint}${api}`)
+
+  fetch(`${endpoint}${api}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'

@@ -136,8 +136,30 @@ class DashboardHandler {
       callback(false)
     }
   }
-}
 
+  async deleteDareReviewable(id, callback) {
+    console.log(id)
+    try {
+      if (!id && id !== 0) {
+        callback(false);
+        return;
+      }
+
+      this.db.get("dare_review").then((dares) => {
+        console.log(dares);
+        const x = dares.splice(id, 1);
+        //  console.log(x)
+        //   console.log(dares)
+        this.db.set("dare_review", dares).then(() => {
+          callback(true)
+        })
+      })
+    } catch (error) {
+      console.log(error.message)
+      callback(false)
+    }
+  }
+}
 
 
 module.exports = DashboardHandler;

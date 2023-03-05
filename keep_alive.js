@@ -168,6 +168,37 @@ try {
           res.write('Error deleting dare');
           res.end();
         });
+      } else if (req.url === '/api/review/dare/delete') {
+        let rawBody = '';
+        req.on('readable', function() {
+          rawBody += req.read();
+        });
+        req.on('end', function() {
+          let body = '';
+          if (rawBody.slice(-4) === 'null') {
+            body = rawBody.slice(0, -4);
+          } else {
+            body = rawBody;
+          }
+          let data = JSON.parse(body)
+          const dashboardHandler = new DashboardHandler();
+          dashboardHandler.deleteDareReviewable(data.id, (data) => {
+            if (!data) {
+              res.writeHead(500, { 'Content-Type': 'text/plain' });
+              res.write('Error deleting dare');
+              res.end();
+            } else {
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.write(JSON.stringify({ success: true }));
+              res.end();
+            }
+          });
+        });
+        req.on('error', function(err) {
+          res.writeHead(500, { 'Content-Type': 'text/plain' });
+          res.write('Error deleting dare');
+          res.end();
+        });
       }//end api endpoint call
     }//end post
   });//end server
