@@ -16,6 +16,15 @@ function getDares() {
     .catch(error => console.error(error));
 }
 
+
+// Retrieve servers from the server
+function dareReview() {
+  fetch(`${endpoint}/api/review`)
+    .then(response => response.json())
+    .then(dares => { displayDares(dares, true); selected = "review" })
+    .catch(error => console.error(error));
+}
+
 // Retrieve servers from the server
 function getServers() {
   fetch(`${endpoint}/api/servers`)
@@ -26,7 +35,7 @@ function getServers() {
 
 
 // Display the list of truths/dares
-function displayList(items) {
+function displayList(items, isReview = false) {
   const list = document.getElementById('list');
   list.innerHTML = '';
   items.forEach(item => {
@@ -42,8 +51,11 @@ function displayList(items) {
     const deleteBtn = document.createElement('button');
     deleteBtn.textContent = 'Delete';
     deleteBtn.onclick = () => deleteItem(item);
+    const approveBtn = document.createElement('button');
+    deleteBtn.textContent = 'Approve';
+    deleteBtn.onclick = () => approveItem(item);
     buttonPanel.appendChild(banBtn);
-    buttonPanel.appendChild(deleteBtn);
+    buttonPanel.appendChild(isReview ? approveBtn ?? deleteBtn);
     li.appendChild(questionSpan);
     li.appendChild(buttonPanel);
     list.appendChild(li);
@@ -61,6 +73,8 @@ function displayServers(servers) {
     const idSpan = document.createElement('span');
     idSpan.classList.add('server-id');
     idSpan.textContent = server.id;
+    const nameheading = document.createElement('h3');
+    nameheading.textContent = server.name;
     const keySpan = document.createElement('span');
     keySpan.classList.add('server-key');
     keySpan.textContent = server.key;
@@ -74,6 +88,7 @@ function displayServers(servers) {
     bannedSpan.textContent = server.isBanned ? 'Banned' : '';
     statusSpan.appendChild(acceptedSpan);
     statusSpan.appendChild(bannedSpan);
+    itemSpan.appendChild(nameheading);
     itemSpan.appendChild(idSpan);
     itemSpan.appendChild(keySpan);
     itemSpan.appendChild(statusSpan);

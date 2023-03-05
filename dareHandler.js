@@ -43,7 +43,7 @@ class DareHandler extends Handler {
       const random = Math.floor(Math.random() * unBannedQuestions.length);
       const dare = unBannedQuestions[random];
 
-      let creator = this.client.users.cache.get(dare.creator + "one");
+      let creator = this.client.users.cache.get(dare.creator);
       if (creator === undefined) creator = { username: "Somebody" };
 
       const embed = new EmbedBuilder()
