@@ -71,7 +71,23 @@ try {
             res.end();
           }
         });
-      }  else if (req.url === '/api/servers') {
+      } else if (req.url === '/api/review/dares') {
+        console.log("Recieved Dashboard Dare review request")
+        const dashboardHandler = new DashboardHandler();
+        dashboardHandler.getDareReviewables((data) => {
+          if (data) {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            console.log("json")
+            res.write(JSON.stringify(data));
+            console.log("json complete")
+            res.end();
+          } else {
+            res.writeHead(500, { 'Content-Type': 'text/plain' });
+            res.write('Error getting truths: None found');
+            res.end();
+          }
+        });
+      } else if (req.url === '/api/servers') {
         const dashboardHandler = new DashboardHandler();
         dashboardHandler.getServers((data) => {
           if (data) {

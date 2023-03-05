@@ -21,9 +21,10 @@ class DareHandler extends Handler {
         interaction.reply("This dare already exists!");
         return;
       } else {
-        this.db.get("reviewDares").then((dares) => {
+        this.db.get("dare_review").then((dares) => {
+          if (!dares) dares = []
           dares.push(question)
-          this.db.set("reviewDares", dares).then(() => {
+          this.db.set("dare_review", dares).then(() => {
             const embed = new EmbedBuilder()
               .setTitle('New Dare Created!')
               .setDescription(question.question)

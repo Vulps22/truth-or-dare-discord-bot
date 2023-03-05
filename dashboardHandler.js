@@ -45,7 +45,30 @@ class DashboardHandler {
       callback(error.message);
     }
   }
-    
+
+
+  async getDareReviewables(callback) {
+    console.log("Get Dare Reviewables")
+    try {
+      this.db.get("dare_review").then(dares => {
+        console.log("Gotten Dares");
+        console.log(dares)
+        if (!dares) dares = [];
+        const dareArray = dares.map((dare, index) => {
+          const question = new Question(dare.question, dare.creator);
+          question.id = index;
+          return question.toJson();
+        });
+        console.log("Return!")
+        callback(dareArray);
+      })
+    } catch (error) {
+      console.log("Error");
+      console.error(error);
+      callback(error.message);
+    }
+  }
+
   async getServers(callback) {
     console.log("Get servers")
     try {

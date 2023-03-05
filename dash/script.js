@@ -19,9 +19,9 @@ function getDares() {
 
 // Retrieve servers from the server
 function dareReview() {
-  fetch(`${endpoint}/api/review`)
+  fetch(`${endpoint}/api/review/dares`)
     .then(response => response.json())
-    .then(dares => { displayDares(dares, true); selected = "review" })
+    .then(dares => { displayList(dares, true); selected = "review" })
     .catch(error => console.error(error));
 }
 
@@ -53,10 +53,11 @@ function displayList(items, isReview = false) {
     deleteBtn.textContent = 'Delete';
     deleteBtn.onclick = () => deleteItem(item);
     const approveBtn = document.createElement('button');
-    deleteBtn.textContent = 'Approve';
-    deleteBtn.onclick = () => approveItem(item);
+    approveBtn.textContent = 'Approve';
+    approveBtn.onclick = () => approveItem(item);
     buttonPanel.appendChild(banBtn);
-    buttonPanel.appendChild(isReview ? approveBtn : deleteBtn);
+    buttonPanel.appendChild(deleteBtn);
+    buttonPanel.appendChild(approveBtn);
     li.appendChild(questionSpan);
     li.appendChild(buttonPanel);
     list.appendChild(li);
