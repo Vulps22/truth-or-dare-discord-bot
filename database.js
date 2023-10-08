@@ -49,11 +49,11 @@ class Database {
 		sql += ') VALUES (';
 
 		if (fields.includes('id') && fields['id']) {
-			sql += `\`${valueObject.id}\`, `;
+			sql += `'${valueObject.id}', `;
 		}
 
 		nonIdFields.forEach(field => {
-			sql += `\`${valueObject[field]}\`, `;
+			sql += `'${valueObject[field]}', `;
 		});
 
 		sql = sql.slice(0, -2); // Remove trailing comma
@@ -62,7 +62,7 @@ class Database {
 		sql += ` ON DUPLICATE KEY UPDATE `;
 		fields.forEach(field => {
 			if (field !== 'id') {
-				sql += `\`${field}\` = \`${valueObject[field]}\`, `;
+				sql += `\`${field}\` = '${valueObject[field]}', `;
 			}
 		});
 
