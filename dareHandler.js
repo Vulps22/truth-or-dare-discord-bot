@@ -36,6 +36,7 @@ class DareHandler extends Handler {
 
 	dare(interaction) {
 		this.db.list("dares").then((dares) => {
+			if(!dares || dares.length === 0) interaction.reply("Hmm, I can't find any dares. This might be a bug, try again later");
 			const unBannedQuestions = dares.filter(q => !q.isBanned);
 			const random = Math.floor(Math.random() * unBannedQuestions.length);
 			const dare = unBannedQuestions[random];

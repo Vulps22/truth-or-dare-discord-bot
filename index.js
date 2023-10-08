@@ -131,7 +131,6 @@ function randomSelection(interaction) {
 	else new TruthHandler(client).truth(interaction);
 }
 
-
 function updateCommands(interaction = null) {
 	const rest = new REST({ version: '9' }).setToken(TOKEN);
 

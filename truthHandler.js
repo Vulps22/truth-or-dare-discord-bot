@@ -38,6 +38,7 @@ class TruthHandler extends Handler {
 
 	truth(interaction) {
 		this.db.list("truths").then((truths) => {
+			if(!truths || truth.length === 0) interaction.reply("Hmm, I can't find any truths. This might be a bug, try again later");
 			const unBannedQuestions = truths.filter(q => !q.isBanned);
 			const random = Math.floor(Math.random() * unBannedQuestions.length);
 			const truth = unBannedQuestions[random];
