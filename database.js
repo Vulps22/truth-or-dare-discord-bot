@@ -35,47 +35,30 @@ class Database {
 
 	async set(table, valueObject) {
 
-		// Extract values
-		const values = Object.values(valueObject);
-
-		// Check if ID is defined
-		const hasId = Object.hasOwnProperty.call(valueObject, 'id');
-
-		let sql = `INSERT INTO \`${table}\``;
-
-		if (hasId) {
-			// Add id field if present
-			sql += '(id, ';
-		} else {
-			// Let id auto increment
-			sql += '(';
-		}
-
-		// Add other fields 
-		const fields = Object.keys(valueObject)
-			.filter(f => f !== 'id')
-			.join(', ');
-
-		sql += fields;
+		let sql = `INSERT INTO \`${table}\` (`;
+	  
+		const fields = Object.keys(valueObject);
+	  
+		sql += fields.join(', '); 
 		sql += ') VALUES (';
-
-		if (hasId) {
-			// Add passed in id 
-			sql += valueObject.id + ', ';
-		}
-
-		// Add other values
-		const valuePlaceholders = fields.split(', ').map(() => '?').join(', ');
-
-		sql += valuePlaceholders;
-		sql += ')';
-
-		// Upsert query
-		sql += ` ON DUPLICATE KEY UPDATE ${fields.replace(/, /g, ' = ?, ')} = ?`;
-
-		// Execute query
-		return this.query(sql, values);
-	}
+	  
+		fields.forEach(field => {
+		  sql += `\`${valueObject[field]}\`, `; 
+		});
+	  
+		sql = sql.slice(0, -2); // Remove trailing comma
+		sql += ')'; 
+	  
+		sql += ` ON DUPLICATE KEY UPDATE `;
+		fields.forEach(field => {
+		  sql += `\`${field}\` = \`${valueObject[field]}\`, `;
+		});
+	  
+		sql = sql.slice(0, -2); // Remove trailing comma
+	  
+		return this.query(sql);
+	  
+	  }
 
 
 
