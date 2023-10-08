@@ -36,31 +36,41 @@ class Database {
 	async set(table, valueObject) {
 
 		let sql = `INSERT INTO \`${table}\` (`;
-	  
+
 		const fields = Object.keys(valueObject);
-	  
-		sql += fields.join(', '); 
+
+		if (fields.includes('id')) {
+			sql += '`id`, ';
+		}
+
+		const nonIdFields = fields.filter(f => f !== 'id');
+
+		sql += nonIdFields.join(', ');
 		sql += ') VALUES (';
-	  
-		fields.forEach(field => {
-		  sql += `\`${valueObject[field]}\`, `; 
+
+		if (fields.includes('id')) {
+			sql += `\`${valueObject.id}\`, `;
+		}
+
+		nonIdFields.forEach(field => {
+			sql += `\`${valueObject[field]}\`, `;
 		});
-	  
+
 		sql = sql.slice(0, -2); // Remove trailing comma
-		sql += ')'; 
-	  
+		sql += ')';
+
 		sql += ` ON DUPLICATE KEY UPDATE `;
 		fields.forEach(field => {
-		  sql += `\`${field}\` = \`${valueObject[field]}\`, `;
+			if (field !== 'id') {
+				sql += `\`${field}\` = \`${valueObject[field]}\`, `;
+			}
 		});
-	  
+
 		sql = sql.slice(0, -2); // Remove trailing comma
-	  
+
 		return this.query(sql);
-	  
-	  }
 
-
+	}
 
 	delete(table, id) {
 		return this.query(`DELETE FROM ${table} WHERE id=${id}`);
