@@ -5,7 +5,6 @@ class Database {
 	connection;
 
 	constructor() {
-		console.log("================DATABASE=============")
 		this.connection = mysql.createConnection({
 			host: process.env['DATABASE_HOST'],
 			user: process.env['DATABASE_USER'],
@@ -14,12 +13,10 @@ class Database {
 		});
 		this.connection.connect(function (err) {
 			if (err) throw err;
-			console.log("Connected!");
 		});
 	}
 
 	query(sql) {
-		console.log(sql);
 		return new Promise((resolve, reject) => {
 			this.connection.query(sql, (error, results) => {
 				if (error) {
@@ -32,13 +29,11 @@ class Database {
 	}
 
 	get(table, id) {
-		console.log("get " + table)
 		return this.query(`SELECT * FROM ${table} WHERE id=${id}`)
 			.then(rows => rows[0]);
 	}
 
 	async set(table, valueArray) {
-		console.log("set " + table);
 
 		// Extract field names and values from the valueArray object
 		const fieldNames = Object.keys(valueArray);
@@ -62,13 +57,10 @@ class Database {
 
 
 	delete(table, id) {
-		console.log("del " + table)
-
 		return this.query(`DELETE FROM ${table} WHERE id=${id}`);
 	}
 
 	list(table) {
-		console.log("list " + table)
 
 		return this.query(`SELECT * FROM ${table}`);
 	}

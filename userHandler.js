@@ -15,7 +15,6 @@ class UserHandler extends Handler {
 
 	async findGuild(id) {
 		if (!id) return;
-	console.log("find guild", id);
 		return this.db.get('guilds', id)
 		  .then(guild => {
 			return guild;  
@@ -37,7 +36,6 @@ class UserHandler extends Handler {
 			])
 
 		const guild = this.findGuild(interaction.guildId).then((data) => {
-			console.log("found:", data)
 			if (!data) this.db.set('guilds', { id: interaction.guildId, name: interaction.guild.name, hasAccepted: false, isBanned: false }).then(() => {
 				interaction.reply({ embeds: [embed] });
 			})
@@ -53,7 +51,6 @@ class UserHandler extends Handler {
 				return;
 			}
 			let g = data;
-			console.log(g);
 			g.id = interaction.guildId;
 			g.hasAccepted = 1;
 			this.db.set('guilds', g);

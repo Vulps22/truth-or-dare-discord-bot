@@ -14,7 +14,6 @@ const TOKEN = process.env['TOKEN']
 const CLIENT_ID = process.env['CLIENT_ID']
 const GUILD_ID = process.env['GUILD_ID']
 
-console.log(TOKEN);
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 const db = new Database()
@@ -24,9 +23,7 @@ db.list("dares").then((dares) => {
 		console.log("loaded: ", dares.length + truths.length)
 	})
 })
-/*db.set("dares", [])
-db.set("truths", [])*/
-//updateCommands();
+
 client.on('ready', () => {
 	console.log(`Logged in as ${client.user.tag}!`);
 
