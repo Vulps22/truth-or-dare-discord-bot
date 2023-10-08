@@ -33,25 +33,48 @@ class Database {
 			.then(rows => rows[0]);
 	}
 
-	async set(table, valueArray) {
+	async set(table, valueObject) {
 
-		// Extract field names and values from the valueArray object
-		const fieldNames = Object.keys(valueArray);
-		const fieldValues = fieldNames.map(fieldName => valueArray[fieldName]);
+		// Extract values
+		const values = Object.values(valueObject);
 
-		// Create an array of field assignments like "field1 = 'value1'", "field2 = 'value2'", ...
-		const fieldAssignments = fieldNames.map(fieldName => `${fieldName} = '${valueArray[fieldName]}'`);
+		// Check if ID is defined
+		const hasId = Object.hasOwnProperty.call(valueObject, 'id');
 
-		// Construct the SQL query by joining the field assignments
-		const sql = `
-    INSERT INTO \`${table}\`
-    SET ${fieldAssignments.join(', ')}
-    ON DUPLICATE KEY UPDATE ${fieldAssignments.join(', ')}
-`;
+		let sql = `INSERT INTO \`${table}\``;
 
+		if (hasId) {
+			// Add id field if present
+			sql += '(id, ';
+		} else {
+			// Let id auto increment
+			sql += '(';
+		}
 
-		// Execute the query
-		return this.query(sql);
+		// Add other fields 
+		const fields = Object.keys(valueObject)
+			.filter(f => f !== 'id')
+			.join(', ');
+
+		sql += fields;
+		sql += ') VALUES (';
+
+		if (hasId) {
+			// Add passed in id 
+			sql += valueObject.id + ', ';
+		}
+
+		// Add other values
+		const valuePlaceholders = fields.split(', ').map(() => '?').join(', ');
+
+		sql += valuePlaceholders;
+		sql += ')';
+
+		// Upsert query
+		sql += ` ON DUPLICATE KEY UPDATE ${fields.replace(/, /g, ' = ?, ')} = ?`;
+
+		// Execute query
+		return this.query(sql, values);
 	}
 
 
