@@ -39,7 +39,7 @@ class Database {
 
 		const fields = Object.keys(valueObject);
 
-		if (fields.includes('id') && fields['id'] !== null) {
+		if (fields.includes('id') && fields['id']) {
 			sql += '`id`, ';
 		}
 
@@ -48,7 +48,7 @@ class Database {
 		sql += nonIdFields.join(', ');
 		sql += ') VALUES (';
 
-		if (fields.includes('id') && fields['id'] !== null) {
+		if (fields.includes('id') && fields['id']) {
 			sql += `\`${valueObject.id}\`, `;
 		}
 
