@@ -1,4 +1,4 @@
-const Database = require("@replit/database");
+const Database = require('./database');
 const Question = require('./question.js');
 
 class Handler {

@@ -6,97 +6,85 @@ client = null;
 
 class TruthHandler extends Handler {
 
-  constructor(client) {
-    super()
-    this.client = client
-  }
 
+	constructor(client) {
+		super()
+		this.client = client
+	}
 
-  createTruth(interaction) {
-    const question = new Question(interaction.options.getString('text'), interaction.user.id);
-    if (!question.question) {
-      interaction.reply("You need to give me a truth!");
-      return;
-    }
-    this.db.get("truths").then((truths) => {
-      if (truths.some(q => q.question === question.question)) {
-        interaction.reply("This truth already exists!");
-        return;
-      } else {
-        truths.push(question);
-        this.db.set("truths", truths).then(() => {
-          const embed = new EmbedBuilder()
-            .setTitle('New Truth Created!')
-            .setDescription(question.question)
-            .setColor('#00ff00')
-            .setFooter({ text: `Created by ${interaction.user.username} | ID: #${truths.length}`, iconURL: interaction.user.displayAvatarURL() });
-          interaction.reply("Thank you for your submission")
-          interaction.channel.send({ embeds: [embed] });
-        });
-      }
-    });
-  }
+	createTruth(interaction) {
+		const question = new Question(interaction.options.getString('text'), interaction.user.id);
+		if (!question.question) {
+			interaction.reply("You need to give me a truth!");
+			return;
+		}
+		this.db.list("truths").then((truths) => {
+			if (truths.some(q => q.question === question.question)) {
+				interaction.reply("This truth already exists!");
+				return;
+			} else {
+				this.db.set("truths", question).then(() => {
+					const embed = new EmbedBuilder()
+						.setTitle('New Truth Created!')
+						.setDescription(question.question)
+						.setColor('#00ff00')
+						.setFooter({ text: ' Created by ' + interaction.user.username + ' | ' + 'ID: #' + truths.length, iconURL: interaction.user.displayAvatarURL() });
+					interaction.reply("Thank you for your submission. A member of the moderation team will review your truth shortly")
+					interaction.channel.send({ embeds: [embed] });
+				});
+			}
+		});
+	}
 
-  truth(interaction) {
-    console.log(client)
-    this.db.get("truths").then((truths) => {
-      const unBannedQuestions = truths.filter(q => !q.isBanned);
-      const random = Math.floor(Math.random() * unBannedQuestions.length);
-      const truth = unBannedQuestions[random];
+	truth(interaction) {
+		this.db.list("truths").then((truths) => {
+			const unBannedQuestions = truths.filter(q => !q.isBanned);
+			const random = Math.floor(Math.random() * unBannedQuestions.length);
+			const truth = unBannedQuestions[random];
 
-      let creator = this.client.users.cache.get(truth.creator);
-      if (creator === undefined) creator = { username: "Somebody" };
+			let creator = this.client.users.cache.get(truth.creator);
+			if (creator === undefined) creator = { username: "Somebody" };
 
-      const embed = new EmbedBuilder()
-        .setTitle('Truth')
-        .setDescription(truth.question)
-        .setColor('#FFC0CB')
-        .setFooter({ text: `Requested by ${interaction.user.username} | Created By ${creator.username} | #${random}`, iconURL: interaction.user.displayAvatarURL() });
-      interaction.reply("Here's your Truth!")
-      interaction.channel.send({ embeds: [embed] });
-    });
-  }
+			const embed = new EmbedBuilder()
+				.setTitle('Truth!')
+				.setDescription(truth.question)
+				.setColor('#6A5ACD')
+				.setFooter({ text: `Requested by ${interaction.user.username} | Created By ${creator.username} | #${random}`, iconURL: interaction.user.displayAvatarURL() });
+			interaction.reply("Here's your Truth!")
+			interaction.channel.send({ embeds: [embed] });
+		});
+	}
 
-  listAll(interaction) {
-    this.db.get("truths").then((truths) => {
+	async listAll(interaction) {
+		await this.db.list("truths").then((truths) => {
 
-      const questions = []
-      
-      for (let i = 0; i < truths.length; i++) {
+			for (let i = 0; i < truths.length; i++) {
+				if (truth[i].isBanned) {
+					continue;
+				}
+				let creator = this.client.users.cache.get(truth[i].creator);
+				if (creator === undefined) creator = { username: "Somebody" };
 
-        if (truths[i].isBanned) continue;
+				const embed = new EmbedBuilder()
+					.setTitle('Truth')
+					.setDescription(unBannedQuestions[i].question)
+					.setColor('#6A5ACD')
+					.setFooter({ text: `Created By ${creator.username} | ID: #` + i });
 
-        let creator = this.client.users.cache.get(truths[i].creator);
-        if (creator === undefined) creator = { username: "Somebody" };
+				interaction.channel.send({ embeds: [embed] });
+			}
+		})
+	}
 
-        questions.push("ID: ${i} \n ${truths[i].question} \n Created By: ${creator.username}")
-        
-        if(questions.length % 50 === 0){
-          const embed = new EmbedBuilder()
-            .setTitle('Truth')
-            .setDescription(truths[i].question)
-            .setColor('#FFC0CB');
-          interaction.channel.send({ embeds: [embed] });
-        }
-      }
-    })
-  }
+	ban(interaction) {
+		let id = interaction.options.getInteger("id");
+		let truth = this.db.get("truths", id);
+		if (!truth) { interaction.reply("Truth not found"); return; }
 
-  ban(interaction) {
-    let id = interaction.options.getInteger("id")
-    this.db.get("truths").then((truths) => {
-      if (truths.length > id) {
-        let truth = truths[id]
-        truth.isBanned = true
-        truths[id] = truth
-        this.db.set("truths", truths).then(() => {
-          interaction.reply("Truth " + id + " has been banned!")
-        })
-      } else {
-        interaction.reply("This Truth does not exist")
-      }
-    })
-  }
+		truth.isBanned = 1;
+		this.db.set('truths', Truth);
+		interaction.reply("Truth " + id + " has been banned!");
+	}
 }
 
 module.exports = TruthHandler;
