@@ -36,7 +36,7 @@ class UserHandler extends Handler {
 			])
 
 		const guild = this.findGuild(interaction.guildId).then((data) => {
-			if (!data) this.db.set('guilds', { id: interaction.guildId, name: interaction.guild.name, hasAccepted: false, isBanned: false }).then(() => {
+			if (!data) this.db.set('guilds', { id: interaction.guildId, name: interaction.guild.name, hasAccepted: 0, isBanned: 0 }).then(() => {
 				interaction.reply({ embeds: [embed] });
 			})
 		})
