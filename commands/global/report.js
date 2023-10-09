@@ -1,4 +1,5 @@
-const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandNumberOption, SlashCommandStringOption } = require("discord.js");
+require('dotenv').config();
+const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandNumberOption, SlashCommandStringOption, WebhookClient } = require("discord.js");
 const Database = require("../../database");
 
 module.exports = {
@@ -65,6 +66,9 @@ module.exports = {
 				content: "Your report has been submitted. Only you can see this message.",
 				ephemeral: true
 			})
+			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_REPORT_URL});
+
+			webhookClient.send(`New report received:\nType: ${subcommand}\nReason: ${reason}`);
 		})
 	}
 }

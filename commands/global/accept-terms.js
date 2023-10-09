@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionsBitField } = require("discord.js");
+const { SlashCommandBuilder, PermissionsBitField, WebhookClient } = require("discord.js");
 const UserHandler = require("../../userHandler");
 
 module.exports = {
@@ -11,7 +11,11 @@ module.exports = {
 			interaction.reply("Only an administrator can run setup commands or accept my terms")
 			return;
 		} else {
-			new UserHandler().acceptSetup(interaction);
+			new UserHandler().acceptSetup(interaction).then(() => {
+				const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_SERVER_URL});
+
+			webhookClient.send(`${interaction.guild.name} has accepted Terms and is now using the Bot!`);
+			});
 		}
 	}
 }

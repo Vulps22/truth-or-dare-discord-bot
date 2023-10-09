@@ -1,4 +1,4 @@
-const { Events } = require("discord.js");
+const { Events, WebhookClient } = require("discord.js");
 const UserHandler = require("../userHandler");
 
 module.exports = {
@@ -14,7 +14,7 @@ module.exports = {
 				);
 				return;
 			}
-
+			
 			const key = interaction.guildId
 			const guild = await new UserHandler().findGuild(key)
 
@@ -52,6 +52,9 @@ module.exports = {
 			console.error(`Error executing ${interaction.commandName}`);
 			console.error(error);
 			interaction.reply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:")
+			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL});
+
+			webhookClient.send(`New Brain Fart occurred!\nCommand: ${interaction.commandName}\nError: ${error.message}`);
 		}
 	},
 };
