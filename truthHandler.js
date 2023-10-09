@@ -28,7 +28,7 @@ class TruthHandler extends Handler {
 						.setTitle('New Truth Created!')
 						.setDescription(question.question)
 						.setColor('#00ff00')
-						.setFooter({ text: ' Created by ' + interaction.user.username + ' | ' + 'ID: #' + truths.length, iconURL: interaction.user.displayAvatarURL() });
+						.setFooter({ text: ' Created by ' + interaction.user.username, iconURL: interaction.user.displayAvatarURL() });
 					interaction.reply("Thank you for your submission. A member of the moderation team will review your truth shortly")
 					interaction.channel.send({ embeds: [embed] });
 				});
@@ -50,7 +50,7 @@ class TruthHandler extends Handler {
 				.setTitle('Truth!')
 				.setDescription(truth.question)
 				.setColor('#6A5ACD')
-				.setFooter({ text: `Requested by ${interaction.user.username} | Created By ${creator.username} | #${random}`, iconURL: interaction.user.displayAvatarURL() });
+				.setFooter({ text: `Requested by ${interaction.user.username} | Created By ${creator.username} | #${truth.id}`, iconURL: interaction.user.displayAvatarURL() });
 			interaction.reply("Here's your Truth!")
 			interaction.channel.send({ embeds: [embed] });
 		});

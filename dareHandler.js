@@ -26,7 +26,7 @@ class DareHandler extends Handler {
 						.setTitle('New Dare Created!')
 						.setDescription(question.question)
 						.setColor('#00ff00')
-						.setFooter({ text: ' Created by ' + interaction.user.username + ' | ' + 'ID: #' + dares.length, iconURL: interaction.user.displayAvatarURL() });
+						.setFooter({ text: ' Created by ' + interaction.user.username, iconURL: interaction.user.displayAvatarURL() });
 					interaction.reply("Thank you for your submission. A member of the moderation team will review your dare shortly")
 					interaction.channel.send({ embeds: [embed] });
 				});
@@ -48,7 +48,7 @@ class DareHandler extends Handler {
 				.setTitle('Dare!')
 				.setDescription(dare.question)
 				.setColor('#6A5ACD')
-				.setFooter({ text: `Requested by ${interaction.user.username} | Created By ${creator.username} | #${random}`, iconURL: interaction.user.displayAvatarURL() });
+				.setFooter({ text: `Requested by ${interaction.user.username} | Created By ${creator.username} | #${dare.id}`, iconURL: interaction.user.displayAvatarURL() });
 			interaction.reply("Here's your Dare!")
 			interaction.channel.send({ embeds: [embed] });
 		});

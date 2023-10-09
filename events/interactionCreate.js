@@ -15,14 +15,18 @@ module.exports = {
 			return;
 		}
 
+		const key = interaction.guildId
+		const guild = await new UserHandler().findGuild(key)
+		if(guild.isBanned) {
+			interaction.reply('Your Community has been banned for violating the bot\'s Terms of Use');
+			return;
+		}
+
 		if (!interaction.channel.nsfw) {
 			interaction.reply("My commands can only be used on channels marked as NSFW")
 			return;
 		}
 
-		const key = interaction.guildId
-		const guild = await new UserHandler().findGuild(key)
-		console.log(guild)
 		if ((!guild || !guild.hasAccepted) && !(interaction.commandName === "setup" || interaction.commandName === "accept-terms")) {
 			interaction.reply("A community Administrator must first run the /setup command before you can use me");
 			return;

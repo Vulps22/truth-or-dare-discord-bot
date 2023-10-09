@@ -34,46 +34,43 @@ class Database {
 	}
 
 	async set(table, valueObject) {
-		console.log(valueObject);
-	  
+
 		const fields = Object.keys(valueObject);
 		const hasId = fields.includes('id');
-	  
+
 		let sql = `INSERT INTO \`${table}\` (`;
-	  
+
 		if (hasId) {
-		  sql += '`id`, ';
+			sql += '`id`, ';
 		}
-	  
+
 		const nonIdFields = fields.filter((field) => field !== 'id');
-	  
+
 		sql += nonIdFields.join(', ');
 		sql += ') VALUES (';
-	  
+
 		if (hasId) {
-		  sql += `'${valueObject.id}', `;
+			sql += `'${valueObject.id}', `;
 		}
-	  
+
 		nonIdFields.forEach((field) => {
-		  sql += `'${valueObject[field]}', `;
+			sql += `'${valueObject[field]}', `;
 		});
-	  
+
 		sql = sql.slice(0, -2); // Remove trailing comma
 		sql += ')';
-	  
+
 		sql += ` ON DUPLICATE KEY UPDATE `;
 		fields.forEach((field) => {
-		  if (field !== 'id') {
-			sql += `\`${field}\` = '${valueObject[field]}', `;
-		  }
+			if (field !== 'id') {
+				sql += `\`${field}\` = '${valueObject[field]}', `;
+			}
 		});
-	  
-		sql = sql.slice(0, -2); // Remove trailing comma
-		console.log(sql);
-	  
+
+		sql = sql.slice(0, -2); // Remove trailing comma 	  
 		return this.query(sql);
-	  }
-	  
+	}
+
 
 	delete(table, id) {
 		return this.query(`DELETE FROM ${table} WHERE id=${id}`);
