@@ -34,11 +34,14 @@ class UserHandler extends Handler {
 				{ name: "5. Consequences", value: "You understand that your server could be banned from using the bot and reported for breaching Discord's ToS if a member of the moderation team finds you to be breaching these terms, Discord ToS, or the law." },
 				{ name: "6. Data", value: "You agree to allow the bot to store some basic information about the community for moderation purposes: Your community ID number, and your community's name." }
 			])
-
 		const guild = this.findGuild(interaction.guildId).then((data) => {
 			if (!data) this.db.set('guilds', { id: interaction.guildId, name: interaction.guild.name, hasAccepted: 0, isBanned: 0 }).then(() => {
 				interaction.reply({ embeds: [embed] });
 			})
+			else {
+				if(!data.hasAccepted) interaction.reply('Setup has already been started. Please use /accept-terms to continue.');
+				else interaction.reply('You have already accepted my terms');
+			}
 		})
 
 	}
@@ -50,6 +53,12 @@ class UserHandler extends Handler {
 				interaction.reply("You must first use /setup and read the Terms of Use");
 				return;
 			}
+			
+			if(data.hasAccepted) {
+				interaction.reply('You have already accepted my terms');
+				return;
+			}
+
 			let g = data;
 			g.id = interaction.guildId;
 			g.hasAccepted = 1;

@@ -1,9 +1,11 @@
 require('dotenv').config();
+const fs = require('node:fs');
+const path = require('node:path');
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
-const { modCommands, globalCommands } = require('./command.js');
+const { modCommands } = require('./command.js');
 const keep_alive = require('./keep_alive.js');
-const { Client, GatewayIntentBits, PermissionsBitField } = require('discord.js');
+const { Client, GatewayIntentBits, PermissionsBitField, Collection } = require('discord.js');
 const Database = require('./database.js'); //import Database class
 const DareHandler = require('./dareHandler.js'); // import DareHandler
 const TruthHandler = require('./truthHandler.js'); // import TruthHandler
@@ -19,103 +21,46 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 const db = new Database()
 db.list("dares").then((dares) => {
 	db.list("truths").then((truths) => {
-		console.log({'dares': dares, 'truths': truths});
+		console.log({ 'dares': dares, 'truths': truths });
 		console.log("loaded: ", dares.length + truths.length)
 	})
 })
 
-client.on('ready', () => {
-	console.log(`Logged in as ${client.user.tag}!`);
 
-});
+//load the event files
 
-client.on('interactionCreate', async interaction => {
+const eventsPath = path.join(__dirname, "events");
+const eventFiles = fs.readdirSync(eventsPath)
+	.filter((file) => file.endsWith('.js'));
 
-	if (!interaction.isCommand()) return;
-	try {
-		console.log(interaction.guild.name);
-		const key = interaction.guildId
-		const guild = await new UserHandler().findGuild(key)
-		console.log(guild)
-		if ((!guild || !guild.hasAccepted) && !(interaction.commandName === "setup" || interaction.commandName === "accept-terms")) {
-			interaction.reply("A community Administrator must first run the /setup command before you can use me");
-			console.log("A community Administrator must first run the /setup command before you can use me")
-			return;
-		}
+for (const file of eventFiles) {
+	const filePath = path.join(eventsPath, file);
+	const event = require(filePath);
+	if (event.once) {
+		client.once(event.name, (...args) => event.execute(...args));
+	} else {
+		client.on(event.name, (...args) => event.execute(...args));
+	}
+}
 
-		if (guild && (guild.name === undefined || guild.name === null)) {
-			guild.name = interaction.guild.name;
-			db.set('guilds', guild).then(() => {
-				console.log(
-					"Server updated with name"
-				)
-			})
-		}
+client.commands = new Collection();
 
-		if (!interaction.channel.nsfw) {
-			interaction.reply("My commands can only be used on channels marked as NSFW")
-			return;
-		}
+const commandsPathG = path.join(__dirname, "commands/global");
+const commandFilesG = fs.readdirSync(commandsPathG)
+	.filter((file) => file.endsWith('.js'));
 
-		if (interaction.commandName === "accept-terms" || interaction.commandName === "setup") {
-			if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-				interaction.reply("Only an administrator can run setup commands or accept my terms")
-				return;
-			} else {
-				if (interaction.commandName === "setup") {
-					new UserHandler().startSetup(interaction);
-					return;
-				}
-				if (interaction.commandName === "accept-terms") {
-					new UserHandler().acceptSetup(interaction);
-					return;
-				}
-			}
-		}
+for (const file of commandFilesG) {
+	const filePath = path.join(commandsPathG, file);
+	const command = require(filePath);
+	if ('data' in command && 'execute' in command) {
+		client.commands.set(command.data.name, command)
+	} else {
+		console.warn(`[WARNING] The command at ${filePath} is missing a required 'data or 'execute property`)
+	}
+}
 
-		switch (interaction.commandName) {
-			case 'createdare':
-				new DareHandler(client).createDare(interaction);
-				break;
-			case 'dare':
-				new DareHandler(client).dare(interaction);
-				break;
-			case 'createtruth':
-				new TruthHandler(client).createTruth(interaction);
-				break;
-			case 'truth':
-				new TruthHandler(client).truth(interaction);
-				break;
-			case 'register':
-				interaction.reply("WIP");
-				break;
-			case 'ban-truth':
-				new TruthHandler().ban(interaction);
-				break;
-			case 'ban-dare':
-				new DareHandler().ban(interaction);
-				break;
-			case 'list-dares':
-				new DareHandler(client).listAll(interaction);
-				interaction.reply("Here's your List of Dares!");
-				break;
-			case 'list-truths':
-				new TruthHandler(client).listAll(interaction);
-				interaction.reply("Here's your List of Truths!");
-				break;
-			case 'givedare':
-				new DareHandler(client).giveDare(interaction);
-				break;
-			case 'update-commands':
-				updateCommands(interaction);
-				break;
-			case 'random':
-				randomSelection(interaction);
-				break;
-			default:
-				interaction.reply("This command does not exist. try /dare, or /truth");
-
-		}
+client.login(TOKEN);
+/*
 	} catch (error) {
 		console.error(error);
 		interaction.reply({
@@ -161,3 +106,4 @@ function updateCommands(interaction = null) {
 }
 
 client.login(process.env['TOKEN']);
+*/
