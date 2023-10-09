@@ -56,6 +56,35 @@ class TruthHandler extends Handler {
 		});
 	}
 
+	giveTruth(interaction) {
+		const user = interaction.options.getUser('user');
+		const truth = interaction.options.getString('truth');
+
+		// Send an error message if no user was mentioned
+		if (!user) {
+			interaction.reply('Please mention a user to ask!');
+			return;
+		}
+
+		// Send an error message if no question was provided
+		if (!truth) {
+			interaction.reply('Please provide a Question!');
+			return;
+		}
+
+		// Construct the message to send
+		const messageText = `${user}, ${interaction.user} has asked you ${truth}!\n Remember to answer honestly :P`;
+
+		// Create an embed with the message and send it
+		const embed = new EmbedBuilder()
+			.setTitle("Answer Honestly!")
+			.setDescription(messageText)
+			.setColor('#6A5ACD')
+
+
+		interaction.reply({ embeds: [embed] });
+	}
+
 	async listAll(interaction) {
 		await this.db.list("truths").then((truths) => {
 
