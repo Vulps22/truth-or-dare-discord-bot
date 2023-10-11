@@ -73,6 +73,15 @@ class UserHandler extends Handler {
 			])
 	}
 
+	static updateServerCount(client){
+		// Get the status channel
+		const statusChannel = client.channels.cache.get(process.env.STATUS_CHANNEL_ID);
+
+		// Update channel name with guild count
+		statusChannel.setName(`Servers: ${client.guilds.cache.size}`);
+
+		console.log(`Connected Servers: ${client.guilds.cache.size}`);
+	}
 }
 
 module.exports = UserHandler
