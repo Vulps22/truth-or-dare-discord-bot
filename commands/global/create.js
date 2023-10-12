@@ -6,7 +6,6 @@ module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('create')
 		.setDescription('Add your own Truth or Dare to the Global Pool')
-		.setNSFW(true)
 		.addSubcommand(new SlashCommandSubcommandBuilder()
 			.setName('dare')
 			.setDescription('Add a new Dare to the Global Pool')

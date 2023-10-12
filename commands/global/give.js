@@ -6,7 +6,6 @@ module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('give')
 		.setDescription('Challenge another player with a Truth or Dare Question')
-		.setNSFW(true)
 		.addSubcommand(new SlashCommandSubcommandBuilder()
 			.setName('dare')
 			.setDescription('Dare a user to do something')

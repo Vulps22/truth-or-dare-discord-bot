@@ -1,7 +1,6 @@
 const { EmbedBuilder, Embed } = require('discord.js');
 module.exports = {
 	help(setup = false) {
-		setup = true;
 		let embed = new EmbedBuilder()
 			.setTitle('Truth or Dare Bot Help')
 			.setDescription('Here are the commands you can use with the bot:');
@@ -47,9 +46,9 @@ module.exports = {
 			{
 				name: '**Utility Commands**',
 				value:
-				'- `/vote` - See a list of Bot lists where you can vote to support our bot and help it grow faster!\n' +
-				'- `terms` - View the Terms of Use this server has agreed to follow.\n\t\tUse `/report guild` if this server has broken those Terms\n' +
-				'- `/help` - See a list of available commands\n\n'
+					'- `/vote` - See a list of Bot lists where you can vote to support our bot and help it grow faster!\n' +
+					'- `terms` - View the Terms of Use this server has agreed to follow.\n\t\tUse `/report guild` if this server has broken those Terms\n' +
+					'- `/help` - See a list of available commands\n\n'
 			}
 		)
 
