@@ -30,7 +30,7 @@ module.exports = {
 					}
 
 					if (!interaction.channel.nsfw) {
-						interaction.reply("My commands can only be used on channels marked as NSFW")
+						interaction.reply("My commands can only be used on channels marked as NSFW (`Age Restricted`)\nFor more information use `/help`")
 						return;
 					}
 				}
