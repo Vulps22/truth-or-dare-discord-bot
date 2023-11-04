@@ -11,6 +11,6 @@ COPY . .
 
 HEALTHCHECK --interval=30s CMD netstat -lnt | grep :3000
 
-LABEL name="discord-bot"
+LABEL name="truth-or-dare-bot"
 
 CMD ["node", "index.js"]
