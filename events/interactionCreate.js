@@ -5,6 +5,11 @@ module.exports = {
 	name: Events.InteractionCreate,
 	async execute(interaction) {
 		if (!interaction.isChatInputCommand()) return;
+
+		const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
+
+		webhookClient.send(`**Command**: ${interaction.commandName} | **server**: ${interaction.guild.name}`);
+
 		try {
 			const command = interaction.client.commands.get(interaction.commandName);
 

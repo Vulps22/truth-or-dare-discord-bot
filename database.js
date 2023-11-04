@@ -50,11 +50,11 @@ class Database {
 		sql += ') VALUES (';
 
 		if (hasId) {
-			sql += `'${valueObject.id}', `;
+			sql += `${this.escape(valueObject.id)}, `;
 		}
 
 		nonIdFields.forEach((field) => {
-			sql += `'${valueObject[field]}', `;
+			sql += `${this.escape(valueObject[field])}, `;
 		});
 
 		sql = sql.slice(0, -2); // Remove trailing comma
@@ -63,7 +63,7 @@ class Database {
 		sql += ` ON DUPLICATE KEY UPDATE `;
 		fields.forEach((field) => {
 			if (field !== 'id') {
-				sql += `\`${field}\` = '${valueObject[field]}', `;
+				sql += `\`${field}\` = ${this.escape(valueObject[field])}, `;
 			}
 		});
 
@@ -80,6 +80,18 @@ class Database {
 
 		return this.query(`SELECT * FROM ${table}`);
 	}
+
+	escape(value) {
+		if (typeof value === 'string') {
+		  return `${mysql.escape(value)}`; 
+		} else if (typeof value === 'number') {
+		  return value;
+		} else if (value === null) {
+		  return 'NULL';
+		} else {
+		  throw new Error(`Unsupported type ${typeof value}`);
+		}
+	  }
 }
 
 module.exports = Database;

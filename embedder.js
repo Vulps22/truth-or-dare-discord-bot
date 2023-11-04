@@ -102,5 +102,5 @@ module.exports = {
 				{ name: 'For updates and help', value: ` [Join Our Support Server](https://discord.gg/${process.env.DISCORD_INVITE_CODE})`, inline: true },
 				{ name: 'Got your own community?', value: `[Add The Bot](${process.env.BOT_INVITE_URL})\n\n`, inline: true },
 			)
-	}
+	}	
 }

@@ -3,6 +3,7 @@ const { REST, Routes } = require("discord.js");
 const fs = require("node:fs");
 
 const commands = [];
+const commandJson = [];
 // Grab all the command files from the commands directory you created earlier
 const commandFiles = fs
 	.readdirSync("./commands/global")
@@ -12,6 +13,13 @@ const commandFiles = fs
 for (const file of commandFiles) {
 	const command = require(`./commands/global/${file}`);
 	commands.push(command.data.toJSON());
+
+	commandJson.push({
+		name: command.data.name,
+		description: command.data.description,
+		type: 1
+	})
+
 }
 
 // Construct and prepare an instance of the REST module
