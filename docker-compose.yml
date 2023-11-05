@@ -25,5 +25,3 @@ services:
       - PMA_HOST=db
     ports:
       - 8081:80
-    depends_on:
-      - db
