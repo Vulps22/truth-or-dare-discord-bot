@@ -16,11 +16,6 @@ services:
     build:
       context: ./
     restart: unless-stopped
-    env_file: ./.env # to load Discord tokens etc
-    environment:
-      DATABASE_HOST: db
-      DATABASE_USER: ${DATABASE_USER}
-      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
     depends_on:
       - db
 
