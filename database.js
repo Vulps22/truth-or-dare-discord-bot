@@ -17,16 +17,34 @@ class Database {
 		});
 	}
 
-	query(sql) {
-		return new Promise((resolve, reject) => {
-			this.connection.query(sql, (error, results) => {
-				if (error) {
-					reject(error);
-				} else {
-					resolve(results);
-				}
-			});
+	connect() {
+		this.connection = mysql.createConnection({
+			host: process.env['DATABASE_HOST'],
+			port: process.env['DATABASE_DOCKER_PORT'],
+			user: process.env['DATABASE_USER'],
+			password: process.env['DATABASE_PASSWORD'],
+			database: process.env['DATABASE']
 		});
+		this.connection.connect(function (err) {
+			if (err) throw err;
+		});
+	}
+
+	query(sql) {
+		try {
+			this.connect();
+			return new Promise((resolve, reject) => {
+				this.connection.query(sql, (error, results) => {
+					if (error) {
+						reject(error);
+					} else {
+						resolve(results);
+					}
+				});
+			});
+		} finally {
+			this.connection.end()
+		}
 	}
 
 	get(table, id) {
@@ -84,15 +102,15 @@ class Database {
 
 	escape(value) {
 		if (typeof value === 'string') {
-		  return `${mysql.escape(value)}`; 
+			return `${mysql.escape(value)}`;
 		} else if (typeof value === 'number') {
-		  return value;
+			return value;
 		} else if (value === null) {
-		  return 'NULL';
+			return 'NULL';
 		} else {
-		  throw new Error(`Unsupported type ${typeof value}`);
+			throw new Error(`Unsupported type ${typeof value}`);
 		}
-	  }
+	}
 }
 
 module.exports = Database;
