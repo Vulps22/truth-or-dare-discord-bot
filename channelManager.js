@@ -10,6 +10,10 @@ module.exports = class ChannelManager {
 	}
 
 	update(type = null) {
+		if(process.env.ALPHA) {
+			console.log("ALPHA MODE: Skipping Channel Update")
+			return;
+		}
 		switch (type) {
 			case 'server':
 				this.updateServerCount();
@@ -28,7 +32,10 @@ module.exports = class ChannelManager {
 	}
 
 	updateServerCount() {
-		// Get the status channel
+		if(process.env.ALPHA) {
+			console.log("ALPHA MODE: Skipping Channel Update")
+			return;
+		}		// Get the status channel
 		const statusChannel = this.client.channels.cache.get(process.env.STATUS_CHANNEL_ID);
 
 		// Update channel name with guild count
@@ -38,7 +45,10 @@ module.exports = class ChannelManager {
 	}
 
 	updateDareCount() {
-		// Get the status channel
+		if(process.env.ALPHA) {
+			console.log("ALPHA MODE: Skipping Channel Update")
+			return;
+		}		// Get the status channel
 		const statusChannel = this.client.channels.cache.get(process.env.DARE_CHANNEL_ID);
 		new Database().list('dares').then((dares) => {
 			const count = dares.length
@@ -53,6 +63,10 @@ module.exports = class ChannelManager {
 	}
 
 	updateTruthCount() {
+		if(process.env.ALPHA) {
+			console.log("ALPHA MODE: Skipping Channel Update")
+			return;
+		}
 		// Get the status channel
 		const statusChannel = this.client.channels.cache.get(process.env.TRUTH_CHANNEL_ID);
 		new Database().list('truths').then((truths) => {

@@ -72,7 +72,7 @@ module.exports = {
 			})
 			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_REPORT_URL});
 
-			webhookClient.send(`New report received:\nType: ${subcommand}\nReason: ${reason}`);
+			webhookClient.send(`New report received:\nType: ${subcommand}\nReason: ${reason}\nID: ${offender}`);
 		})
 	}
 }
