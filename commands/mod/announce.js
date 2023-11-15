@@ -12,7 +12,10 @@ module.exports = {
         ),
 
     async execute(interaction) {
-
+        if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+            interaction.reply('You do not have permission to run this command');
+            return;
+        }
         // Check permissions
         if (!interaction.member.permissions.has('ADMINISTRATOR')) {
             return interaction.reply('You do not have permission to use this command');

@@ -31,6 +31,10 @@ module.exports = {
 			)
 		),
 	async execute(interaction) {
+		if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+            interaction.reply('You do not have permission to run this command');
+            return;
+        }
 		const subcommand = interaction.options.getSubcommand();
 
 		switch (subcommand) {
