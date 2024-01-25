@@ -1,4 +1,4 @@
-const { Events, WebhookClient } = require("discord.js");
+const { Events, WebhookClient, PermissionsBitField } = require("discord.js");
 const UserHandler = require("../userHandler");
 
 module.exports = {
@@ -7,9 +7,24 @@ module.exports = {
 		if (!interaction.isChatInputCommand()) return;
 
 		const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
-
 		webhookClient.send(`**Command**: ${interaction.commandName} | **server**: ${interaction.guild.name}`);
+		// Check permissions
 
+		const botPermissions = interaction.guild.members.me.permissionsIn(interaction.channel);
+
+		
+		if (!botPermissions.has('SendMessages')) {
+			interaction.reply('I do not have permission to send messages in this channel. I require permission to `send messages` and `embed links` to function correctly');
+			webhookClient.send(`Interaction Failed: No Permissions`);
+			return;
+		}
+
+		if (!botPermissions.has('EmbedLinks')) {
+			interaction.reply('I do not have permission to embed links in this channel. I require permission to `send messages` and `embed links` to function correctly');
+			webhookClient.send(`Interaction Failed: No Permissions`);
+			return;
+		}
+		
 		try {
 			const command = interaction.client.commands.get(interaction.commandName);
 
@@ -31,6 +46,9 @@ module.exports = {
 				if (interaction.commandName !== "help") {
 					if (guild.isBanned) {
 						interaction.reply('Your Community has been banned for violating the bot\'s Terms of Use');
+						const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
+						webhookClient.send(`Command Aborted: **Banned** | **server**: ${interaction.guild.name}`);
+
 						return;
 					}
 

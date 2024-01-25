@@ -1,4 +1,4 @@
-const { EmbedBuilder, Embed } = require('discord.js');
+const { EmbedBuilder, Embed, WebhookClient } = require('discord.js');
 
 const Handler = require('./handler.js')
 const Question = require('./question.js');
@@ -21,7 +21,8 @@ class DareHandler extends Handler {
 				interaction.reply("This dare already exists!");
 				return;
 			} else {
-				this.db.set("dares", question).then(() => {
+				this.db.set("dares", question).then((data) => {
+					console.log(data);
 					const embed = new EmbedBuilder()
 						.setTitle('New Dare Created!')
 						.setDescription(question.question)
@@ -29,6 +30,10 @@ class DareHandler extends Handler {
 						.setFooter({ text: ' Created by ' + interaction.user.username, iconURL: interaction.user.displayAvatarURL() });
 					interaction.reply("Thank you for your submission. A member of the moderation team will review your dare shortly")
 					interaction.channel.send({ embeds: [embed] });
+
+					const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
+
+					webhookClient.send(`**Dare Created** | **server**: ${interaction.guild.name} \n- **Dare**: ${question.question} \n- **ID**: ${data.insertId}`);
 				});
 			}
 		});
@@ -36,7 +41,7 @@ class DareHandler extends Handler {
 
 	dare(interaction) {
 		this.db.list("dares").then((dares) => {
-			if(!dares || dares.length === 0) { interaction.reply("Hmm, I can't find any dares. This might be a bug, try again later"); return; }
+			if (!dares || dares.length === 0) { interaction.reply("Hmm, I can't find any dares. This might be a bug, try again later"); return; }
 			const unBannedQuestions = dares.filter(q => !q.isBanned);
 			const random = Math.floor(Math.random() * unBannedQuestions.length);
 			const dare = unBannedQuestions[random];

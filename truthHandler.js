@@ -1,7 +1,8 @@
-const { EmbedBuilder, Embed, Client } = require('discord.js');
+const { EmbedBuilder, Embed, Client, WebhookClient } = require('discord.js');
 
 const Handler = require('./handler.js')
 const Question = require('./question.js');
+const { exit } = require('process');
 client = null;
 
 class TruthHandler extends Handler {
@@ -23,7 +24,7 @@ class TruthHandler extends Handler {
 				interaction.reply("This truth already exists!");
 				return;
 			} else {
-				this.db.set("truths", question).then(() => {
+				this.db.set("truths", question).then((data) => {
 					const embed = new EmbedBuilder()
 						.setTitle('New Truth Created!')
 						.setDescription(question.question)
@@ -31,6 +32,10 @@ class TruthHandler extends Handler {
 						.setFooter({ text: ' Created by ' + interaction.user.username, iconURL: interaction.user.displayAvatarURL() });
 					interaction.reply("Thank you for your submission. A member of the moderation team will review your truth shortly")
 					interaction.channel.send({ embeds: [embed] });
+					const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
+
+					webhookClient.send(`**Truth Created** | **server**: ${interaction.guild.name} \n- **Truth**: ${question.question} \n- **ID**: ${data.insertId}`);
+					
 				});
 			}
 		});

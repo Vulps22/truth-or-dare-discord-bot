@@ -5,16 +5,24 @@ const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 const { modCommands } = require('./command.js');
 const keep_alive = require('./keep_alive.js');
-const { Client, GatewayIntentBits, PermissionsBitField, Collection } = require('discord.js');
+const { Client, GatewayIntentBits, PermissionsBitField, Collection, WebhookClient } = require('discord.js');
 const Database = require('./database.js'); //import Database class
 const DareHandler = require('./dareHandler.js'); // import DareHandler
 const TruthHandler = require('./truthHandler.js'); // import TruthHandler
 const UserHandler = require('./userHandler.js'); // import TruthHandler
 const Question = require('./question.js');
+const { exit } = require('node:process');
 
 const TOKEN = process.env['TOKEN']
 const CLIENT_ID = process.env['CLIENT_ID']
 const GUILD_ID = process.env['GUILD_ID']
+
+process.on('uncaughtException', (err, origin) => {
+	const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
+
+	webhookClient.send(`${process.env.ALPHA ? '[ALPHA]' : ''} UNHANDLED EXCEPTION CAUGHT AT SURFACE LEVEL\n- ${err}\n- ${origin}`);
+});
+
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 

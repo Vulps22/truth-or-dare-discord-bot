@@ -13,20 +13,9 @@ services:
       - $DATABASE_LOCAL_PORT:$DATABASE_DOCKER_PORT
 
   bot:
-    #]build:
-      #context: ./
-    image: vulps23/project-encourage:3.3
+    build:
+      context: ./
+    #image: vulps23/project-encourage:3.3
     restart: always
-    depends_on:
-      - db
-
-  phpmyadmin:
-    image: phpmyadmin
-    restart: always
-    ports:
-      - 8081:80
-    environment:
-      - PMA_HOST=db
-      - PMA_PORTS=$DATABASE_LOCAL_PORT
     depends_on:
       - db
