@@ -5,7 +5,7 @@ module.exports = {
 	name: Events.GuildCreate,
 	async execute(guild) {
 		const db = new Database();
-		console.log(guild);
+		//console.log(guild);
 		db.delete('guilds', guild.id).then(() => {
 			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_SERVER_URL });
 

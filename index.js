@@ -13,8 +13,11 @@ const UserHandler = require('./userHandler.js'); // import TruthHandler
 const Question = require('./question.js');
 const { exit } = require('node:process');
 
-const TOKEN = process.env['TOKEN']
-const CLIENT_ID = process.env['CLIENT_ID']
+
+const ALPHA = process.env['ALPHA'] ?? false;
+
+const TOKEN = ALPHA ? process.env['aTOKEN'] : process.env['TOKEN']
+const CLIENT_ID = ALPHA ? process.env['aCLIENT_ID'] : process.env['CLIENT_ID']
 const GUILD_ID = process.env['GUILD_ID']
 
 process.on('uncaughtException', (err, origin) => {

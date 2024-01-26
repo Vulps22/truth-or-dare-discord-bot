@@ -70,9 +70,26 @@ module.exports = {
 				content: "Your report has been submitted. Only you can see this message.",
 				ephemeral: true
 			})
-			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_REPORT_URL});
 
-			webhookClient.send(`New report received:\nType: ${subcommand}\nReason: ${reason}\nID: ${offender}`);
+			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_REPORT_URL });
+
+			let question;
+
+			switch (subcommand) {
+				case 'dare':
+					question = db.get('dares', offender).then((data) => {
+						webhookClient.send(`New report received:\nType: ${subcommand}\nReason: ${reason}\nID: ${offender} \nQuestion: ${data.question}`);
+					});
+					break;
+				case 'truth':
+					question = db.get('truths', offender).then((data) => {
+						webhookClient.send(`New report received:\nType: ${subcommand}\nReason: ${reason}\nID: ${offender} \nQuestion: ${data.question}`);
+					});
+					break;
+				default:
+					webhookClient.send(`New report received:\nType: ${subcommand}\nReason: ${reason}\nID: ${offender}`);
+			}
+			
 		})
 	}
 }
