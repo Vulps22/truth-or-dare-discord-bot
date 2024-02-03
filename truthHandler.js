@@ -1,4 +1,4 @@
-const { EmbedBuilder, Embed, Client, WebhookClient } = require('discord.js');
+const { EmbedBuilder, WebhookClient } = require('discord.js');
 
 const Handler = require('./handler.js')
 const Question = require('./question.js');
@@ -17,11 +17,15 @@ class TruthHandler extends Handler {
 		const question = new Question(interaction.options.getString('text'), interaction.user.id);
 		if (!question.question) {
 			interaction.reply("You need to give me a truth!");
+			webhookClient.send(`Aborted Truth creation: Nothing Given`);
+
 			return;
 		}
 		this.db.list("truths").then((truths) => {
 			if (truths.some(q => q.question === question.question)) {
 				interaction.reply("This truth already exists!");
+				const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
+				webhookClient.send(`Aborted Truth creation: Already exists`);
 				return;
 			} else {
 				this.db.set("truths", question).then((data) => {
@@ -32,7 +36,7 @@ class TruthHandler extends Handler {
 						.setFooter({ text: ' Created by ' + interaction.user.username, iconURL: interaction.user.displayAvatarURL() });
 					interaction.reply("Thank you for your submission. A member of the moderation team will review your truth shortly")
 					interaction.channel.send({ embeds: [embed] });
-					const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
+					const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_CREATIONS_URL });
 
 					webhookClient.send(`**Truth Created** | **server**: ${interaction.guild.name} \n- **Truth**: ${question.question} \n- **ID**: ${data.insertId}`);
 					

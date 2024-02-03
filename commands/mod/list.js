@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandNumberOption, SlashCommandStringOption, WebhookClient } = require("discord.js");
+const { SlashCommandBuilder, SlashCommandSubcommandBuilder, PermissionsBitField} = require("discord.js");
 const Database = require("../../database");
 
 module.exports = {

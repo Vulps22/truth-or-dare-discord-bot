@@ -40,7 +40,8 @@ module.exports = {
 				break;
 
 			default:
-				// Handle the case where an unknown subcommand is used
+				const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
+				webhookClient.send(`Aborted creation: Invalid type specified`);
 				break;
 		}
 	}

@@ -1,4 +1,4 @@
-const { Events, WebhookClient, PermissionsBitField } = require("discord.js");
+const { Events, WebhookClient } = require("discord.js");
 const UserHandler = require("../userHandler");
 
 module.exports = {

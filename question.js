@@ -6,6 +6,7 @@ class Question {
 		this.question = question
 		this.creator = creator
 		this.isBanned = 0
+		this.banReason = null;
 	}
 
 	toJson() {
@@ -14,6 +15,7 @@ class Question {
 		string.question = this.question;
 		string.creator = this.creator;
 		string.isBanned = this.isBanned;
+		string.banReason = this.banReason;
 		return string;
 	}
 }

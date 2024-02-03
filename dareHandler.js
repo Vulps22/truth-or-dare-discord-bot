@@ -1,4 +1,4 @@
-const { EmbedBuilder, Embed, WebhookClient } = require('discord.js');
+const { EmbedBuilder, WebhookClient } = require('discord.js');
 
 const Handler = require('./handler.js')
 const Question = require('./question.js');
@@ -14,11 +14,15 @@ class DareHandler extends Handler {
 		const question = new Question(interaction.options.getString('text'), interaction.user.id);
 		if (!question.question) {
 			interaction.reply("You need to give me a dare!");
+			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
+			webhookClient.send(`Aborted Dare creation: Nothing Given`);
 			return;
 		}
 		this.db.list("dares").then((dares) => {
 			if (dares.some(q => q.question === question.question)) {
 				interaction.reply("This dare already exists!");
+				const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
+				webhookClient.send(`Aborted Dare creation: Already exists`);
 				return;
 			} else {
 				this.db.set("dares", question).then((data) => {
@@ -31,8 +35,7 @@ class DareHandler extends Handler {
 					interaction.reply("Thank you for your submission. A member of the moderation team will review your dare shortly")
 					interaction.channel.send({ embeds: [embed] });
 
-					const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
-
+					const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_CREATIONS_URL });
 					webhookClient.send(`**Dare Created** | **server**: ${interaction.guild.name} \n- **Dare**: ${question.question} \n- **ID**: ${data.insertId}`);
 				});
 			}
@@ -107,16 +110,6 @@ class DareHandler extends Handler {
 				interaction.channel.send({ embeds: [embed] });
 			}
 		})
-	}
-
-	ban(interaction) {
-		let id = interaction.options.getInteger("id");
-		let dare = this.db.get("dares", id);
-		if (!dare) { interaction.reply("Dare not found"); return; }
-
-		dare.isBanned = 1;
-		this.db.set('dares', Dare);
-		interaction.reply("Dare " + id + " has been banned!");
 	}
 }
 
