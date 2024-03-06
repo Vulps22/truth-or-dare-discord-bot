@@ -7,9 +7,9 @@ class Database {
 	connect() {
 		this.connection = mysql.createConnection({
 			host: process.env['ALPHA'] ? 'localhost' : process.env['DATABASE_HOST'],
-			port: process.env['DATABASE_DOCKER_PORT'],
+			port: process.env['DATABASE_LOCAL_PORT'],
 			user: process.env['DATABASE_USER'],
-			password: process.env['ALPHA'] ? '' : process.env['DATABASE_PASSWORD'],
+			password: process.env['DATABASE_PASSWORD'],
 			database: process.env['DATABASE']
 		});
 		this.connection.connect(function (err) {
@@ -18,6 +18,8 @@ class Database {
 	}
 
 	query(sql) {
+		console.log(sql);
+		console.log('=======================================');
 		try {
 			this.connect();
 			return new Promise((resolve, reject) => {
@@ -82,10 +84,19 @@ class Database {
 		return this.query(`DELETE FROM ${table} WHERE id=${id}`);
 	}
 
-	list(table) {
+	list(table, limit = 0, order = 'ASC') {
 
-		return this.query(`SELECT * FROM ${table}`);
+		return this.query(`SELECT * FROM ${table} ORDER BY id ${order} ${limit > 0 ? 'LIMIT ' + limit : ''}`);
 	}
+
+	like(table, field, pattern, limit = 0, order = 'ASC', excludeBanned = true) {
+		if (order !== 'ASC' && order !== 'DESC') {
+			throw new Error('Invalid order parameter. Must be either "ASC" or "DESC".');
+		}
+
+		return this.query(`SELECT * FROM ${table} WHERE ${field} LIKE ${this.escape(pattern)} ${excludeBanned ? 'AND isBanned = 0' : ''} ORDER BY ${field} ${order} ${limit > 0 ? 'LIMIT ' + limit : ''}`);
+	}
+
 
 	escape(value) {
 		if (typeof value === 'string') {

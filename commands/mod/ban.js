@@ -2,6 +2,7 @@ const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandNumberOp
 const Database = require("../../database");
 const Question = require("../../question");
 const { env } = require("process");
+const { Console } = require("console");
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -14,6 +15,7 @@ module.exports = {
 			.addNumberOption(new SlashCommandNumberOption()
 				.setName('id')
 				.setDescription('The ID of the Dare to ban')
+				.setAutocomplete(true)
 			)
 			.addStringOption(new SlashCommandStringOption()
 				.setName('reason')
@@ -26,6 +28,7 @@ module.exports = {
 			.addNumberOption(new SlashCommandNumberOption()
 				.setName('id')
 				.setDescription('The ID of the Truth to ban')
+				.setAutocomplete(true)
 			)
 			.addStringOption(new SlashCommandStringOption()
 				.setName('reason')
@@ -38,6 +41,7 @@ module.exports = {
 			.addStringOption(new SlashCommandStringOption()
 				.setName('id')
 				.setDescription('The ID of the Guild to ban')
+				.setAutocomplete(true)
 			)
 			.addStringOption(new SlashCommandStringOption()
 				.setName('reason')
@@ -65,6 +69,53 @@ module.exports = {
 				interaction.reply('Not an Option');
 				break;
 		}
+	},
+	async autocomplete(interaction) {
+		const focusedOption = interaction.options.getFocused(true);
+		let choices;
+
+		if (focusedOption.name === 'id') {
+			const subcommand = interaction.options.getSubcommand();
+			const db = new Database();
+			const id = focusedOption.value.toLowerCase();
+
+			if (subcommand === 'dare') {
+				const dares = await db.like('dares', 'id', `%${id}%`, 20, "DESC");
+				choices = dares.map(dare => {
+					const name = `${dare.id} - ${dare.question}`;
+					const value = dare.id.toString();
+					if (name.length > 0 && value.length > 0) {
+						return { name: truncateString(name, 96), value: Number(value) };
+					}
+					return null;
+				}).filter(choice => choice !== null);
+			} else if (subcommand === 'truth') {
+				const truths = await db.like('truths', 'id', `%${id}%`, 20, "DESC");
+				choices = truths.map(truth => {
+					const name = `${truth.id} - ${truth.question}`;
+					const value = truth.id.toString();
+					if (name.length > 0 && value.length > 0) {
+						return { name: truncateString(name, 96), value: Number(value) };
+					}
+					return null;
+				}).filter(choice => choice !== null);
+			} else if (subcommand === 'guild') {
+				const guilds = await db.like('guilds', 'id', `%${id}%`, 20, "DESC");
+				choices = guilds.map(guild => {
+					const name = `${guild.id} - ${guild.name}`;
+					const value = guild.id
+					if (name.length > 0 && value.length > 0) {
+						return { name: truncateString(name, 96), value: value };
+					}
+					return null;
+				}).filter(choice => choice !== null);
+			}
+		}
+
+		console.log(choices);
+		console.log('=============================');
+
+		await interaction.respond(choices);
 	}
 }
 
@@ -84,7 +135,7 @@ function banDare(id, reason, interaction) {
 	});
 }
 
-function banTruth(id,reason, interaction) {
+function banTruth(id, reason, interaction) {
 	const db = new Database();
 	db.get('truths', id).then(truth => {
 		if (!truth) {
@@ -171,10 +222,17 @@ function guidanceEmbed() {
 			{ name: 'No shoutouts', value: '- Using names, "I am awesome!"' },
 			{ name: 'No dares that require more than one person', value: '- This is an **online** bot!' },
 			{ name: 'Check spelling and grammar', value: '- Low-Effort content will not be accepted' },
-			{name: '\n', value: '\n'},
-			{name: 'Important Note', value: '**You could be banned from using the bot** if we have to repeatedly ban your dares!'}
+			{ name: '\n', value: '\n' },
+			{ name: 'Important Note', value: '**You could be banned from using the bot** if we have to repeatedly ban your dares!' }
 		);
 
 	return embed;
 
+}
+
+function truncateString(str, num) {
+	if (str.length < num) {
+		return str
+	}
+	return str.slice(0, num - 3) + '...'
 }

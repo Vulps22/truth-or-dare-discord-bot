@@ -4,6 +4,29 @@ const UserHandler = require("../userHandler");
 module.exports = {
 	name: Events.InteractionCreate,
 	async execute(interaction) {
+
+		if (interaction.isAutocomplete()) {
+			
+            // Handle autocomplete interaction
+            const command = interaction.client.commands.get(interaction.commandName);
+
+            if (!command) {
+                console.error(`No command matching ${interaction.commandName} was found.`);
+                return;
+            }
+
+            try {
+                if (command.autocomplete) {
+                    await command.autocomplete(interaction);
+                }
+            } catch (error) {
+                console.error(`Error executing autocomplete for ${interaction.commandName}`);
+                console.error(error);
+            }
+
+            return; // Exit the function after handling autocomplete interaction
+        }
+		
 		if (!interaction.isChatInputCommand()) return;
 
 		const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
