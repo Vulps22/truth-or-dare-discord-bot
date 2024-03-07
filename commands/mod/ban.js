@@ -150,21 +150,37 @@ function banTruth(id, reason, interaction) {
 	});
 }
 
-function banGuild(id, reason, interaction) {
-	const db = new Database();
-	let guild = db.get('guilds', id).then(guild => {
-		if (!guild) {
-			interaction.reply('Guild not found!');
-			return;
-		}
-
-		sendGuildBanNotification(guild, reason, interaction);
-		// guild.isBanned = 1;
-		guild.banReason = reason;
-		db.set('guilds', guild);
-		interaction.reply(`gUILD has been banned!\n- **ID**: ${guild.id}\n- **Question**: ${guild.name}\n- **Reason**: ${reason}`)
-	});
+async function banGuild(id, reason, interaction) {
+    const db = new Database();
+    
+    try {
+        // Get guild data from the database
+        let guild = await db.get('guilds', id);
+        
+        // Check if guild data exists
+        if (!guild) {
+            interaction.reply('Guild not found!');
+            return;
+        }
+        
+        // Send ban notification
+        sendGuildBanNotification(guild, reason, interaction);
+        
+        // Update guild data
+        guild.isBanned = 1;
+        guild.banReason = reason;
+        
+        // Save updated guild data to the database
+        await db.set('guilds', guild);
+        
+        // Reply to interaction with ban details
+        interaction.reply(`Guild has been banned!\n- **ID**: ${guild.id}\n- **Name**: ${guild.name}\n- **Reason**: ${reason}`);
+    } catch (error) {
+        console.error('Error banning guild:', error);
+        interaction.reply('An error occurred while banning the guild.');
+    }
 }
+
 
 /**
  * 

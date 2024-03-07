@@ -103,6 +103,8 @@ class Database {
 			return `${mysql.escape(value)}`;
 		} else if (typeof value === 'number') {
 			return value;
+		} else if (value instanceof Date) {
+			return `'${value.toISOString().slice(0, 19).replace('T', ' ')}'`; // Format the date as 'YYYY-MM-DD HH:MM:SS'
 		} else if (value === null) {
 			return 'NULL';
 		} else {
