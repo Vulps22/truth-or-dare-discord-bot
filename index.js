@@ -4,7 +4,6 @@ const path = require('node:path');
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 const { modCommands } = require('./command.js');
-const keep_alive = require('./keep_alive.js');
 const { Client, GatewayIntentBits, Collection, WebhookClient } = require('discord.js');
 const Database = require('./database.js'); //import Database class
 const DareHandler = require('./dareHandler.js'); // import DareHandler
@@ -13,17 +12,25 @@ const UserHandler = require('./userHandler.js'); // import TruthHandler
 const Question = require('./question.js');
 const { exit } = require('node:process');
 
+console.log('Initialising Bot....');
 
 const ALPHA = process.env['ALPHA'] ?? false;
+
+console.log("Starting in ", ALPHA ? "ALPHA Mode" : "PRODUCTION Mode");
 
 const TOKEN = ALPHA ? process.env['aTOKEN'] : process.env['TOKEN']
 const CLIENT_ID = ALPHA ? process.env['aCLIENT_ID'] : process.env['CLIENT_ID']
 const GUILD_ID = process.env['GUILD_ID']
 
 process.on('uncaughtException', (err, origin) => {
-	const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
 
-	webhookClient.send(`${process.env.ALPHA ? '[ALPHA]' : ''} UNHANDLED EXCEPTION CAUGHT AT SURFACE LEVEL\n- ${err}\n- ${origin}`);
+	const message = `${process.env.ALPHA ? '[ALPHA]' : ''} UNHANDLED EXCEPTION CAUGHT AT SURFACE LEVEL\n- ${err}\n- ${origin}`;
+
+	console.log(message);
+	console.log('Stack: ', err.stack);
+
+	const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
+	webhookClient.send(message);
 });
 
 
@@ -64,7 +71,7 @@ const commandFilesG = fs.readdirSync(commandsPathG)
 for (const file of commandFilesG) {
 	const filePath = path.join(commandsPathG, file);
 	const command = require(filePath);
-	if ('data' in command && 'execute' in command) {
+	if (command.data && command.execute) {
 		client.commands.set(command.data.name, command)
 	} else {
 		console.warn(`[WARNING] The command at ${filePath} is missing a required 'data or 'execute property`)
@@ -78,7 +85,7 @@ const commandFilesM = fs.readdirSync(commandsPathM)
 for (const file of commandFilesM) {
 	const filePath = path.join(commandsPathM, file);
 	const command = require(filePath);
-	if ('data' in command && 'execute' in command) {
+	if (command.data && command.execute) {
 		client.commands.set(command.data.name, command)
 	} else {
 		console.warn(`[WARNING] The command at ${filePath} is missing a required 'data or 'execute property`)

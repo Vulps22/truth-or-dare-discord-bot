@@ -71,7 +71,6 @@ module.exports = {
         }
 
         db.get(table, id).then(target => {
-            console.log(target);
             if(!target || target === undefined) {
                 interaction.reply(`${subcommand} ${id} does not exist`);
                 return;

@@ -15,7 +15,7 @@ services:
   bot:
     build:
       context: ./
-    #image: vulps23/project-encourage:3.3
+    #image: vulps23/project-encourage:4.1.4
     restart: always
     depends_on:
       - db

@@ -111,10 +111,6 @@ module.exports = {
 				}).filter(choice => choice !== null);
 			}
 		}
-
-		console.log(choices);
-		console.log('=============================');
-
 		await interaction.respond(choices);
 	}
 }

@@ -4,22 +4,41 @@ class Database {
 
 	connection;
 
-	connect() {
-		this.connection = mysql.createConnection({
-			host: process.env['ALPHA'] ? 'localhost' : process.env['DATABASE_HOST'],
-			port: process.env['DATABASE_LOCAL_PORT'],
-			user: process.env['DATABASE_USER'],
-			password: process.env['DATABASE_PASSWORD'],
-			database: process.env['DATABASE']
-		});
-		this.connection.connect(function (err) {
-			if (err) throw err;
-		});
+	async connect(retryAttempt = 0) {
+		try {
+			this.connection = mysql.createConnection({
+				//host: process.env['ALPHA'] ? 'localhost' : process.env['DATABASE_HOST'],
+				host: process.env['DATABASE_HOST'],
+				port: process.env['DATABASE_DOCKER_PORT'],
+				user: process.env['DATABASE_USER'],
+				password: process.env['DATABASE_PASSWORD'],
+				database: process.env['DATABASE']
+			});
+
+			await new Promise((resolve, reject) => {
+				this.connection.connect((err) => {
+					if (err) {
+						if (err.code === 'ECONNREFUSED' && retryAttempt < 3) {
+							// Connection refused, retry after 5 seconds
+							console.log(`Connection refused, retrying in 5 seconds (attempt ${retryAttempt + 1}/3)...`);
+							setTimeout(() => {
+								this.connect(retryAttempt + 1).then(resolve).catch(reject);
+							}, 5000);
+						} else {
+							// Other error or maximum retries reached
+							reject(err);
+						}
+					} else {
+						resolve();
+					}
+				});
+			});
+		} catch (err) {
+			throw err;
+		}
 	}
 
 	query(sql) {
-		console.log(sql);
-		console.log('=======================================');
 		try {
 			this.connect();
 			return new Promise((resolve, reject) => {
@@ -84,9 +103,9 @@ class Database {
 		return this.query(`DELETE FROM ${table} WHERE id=${id}`);
 	}
 
-	list(table, limit = 0, order = 'ASC') {
+	list(table, limit = 0, order = 'ASC', page) {
 
-		return this.query(`SELECT * FROM ${table} ORDER BY id ${order} ${limit > 0 ? 'LIMIT ' + limit : ''}`);
+		return this.query(`SELECT * FROM ${table} ORDER BY id ${order} ${limit > 0 ? 'LIMIT ' + limit + " OFFSET " + (limit * page) : ''}`);
 	}
 
 	like(table, field, pattern, limit = 0, order = 'ASC', excludeBanned = true) {

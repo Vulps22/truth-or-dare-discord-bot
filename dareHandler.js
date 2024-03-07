@@ -26,7 +26,6 @@ class DareHandler extends Handler {
 				return;
 			} else {
 				this.db.set("dares", question).then((data) => {
-					console.log(data);
 					const embed = new EmbedBuilder()
 						.setTitle('New Dare Created!')
 						.setDescription(question.question)
