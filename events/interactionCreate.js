@@ -43,8 +43,11 @@ async function handleAutoComplete(interaction) {
 }
 
 function log(interaction) {
+
+	let guildName = interaction.guild.name ?? null;
+
 	const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
-	webhookClient.send(`**Command**: ${interaction.commandName} | **server**: ${interaction.guild.name}`);
+	webhookClient.send(`**Command**: ${interaction.commandName} | **server**: ${guildName ? guildName : "UNKNOWN SERVER NAME"}`);
 }
 
 function hasPermission(interaction) {
@@ -80,7 +83,15 @@ async function runCommand(interaction) {
 		}
 
 		const key = interaction.guildId
-		const guild = await new UserHandler().findGuild(key)
+		let guild = await new UserHandler().findGuild(key)
+
+		console.log(guild);
+
+		if(!guild) {
+			db = new Database();
+			guild = { id: interaction.guildId, name: interaction.guild.name, hasAccepted: 0, isBanned: 0 }
+			//await db.set('guilds', guild);
+		}
 
 		if (guild.isBanned && interaction.commandName !== "help") {
 			interaction.reply('Your Community has been banned for violating the bot\'s Terms of Use');
@@ -90,9 +101,7 @@ async function runCommand(interaction) {
 			return;
 		}
 
-		if(shouldExecute(interaction, guild))
-
-		await command.execute(interaction);
+		if(shouldExecute(interaction, guild)) await command.execute(interaction);
 	} catch (error) {
 		console.error(`Error executing ${interaction.commandName}`);
 		console.error(error);
@@ -121,7 +130,7 @@ function shouldExecute(interaction, guild) {
 		}
 		db = new Database();
 		db.set('guilds', guild); //We always update the guild so that we can see servers that have been inactive
-
+		console.log("Command should Execute");
 		return true;
-	}
+	}else return true; //Without this, we block setup and accept-terms
 }

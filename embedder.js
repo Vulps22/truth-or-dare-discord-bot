@@ -84,8 +84,8 @@ module.exports = {
 	accepted() {
 		//"Setup complete. You can now use /dare or /truth"
 		return new EmbedBuilder()
-			.setTitle("Accept these Terms and Conditions to proceed")
-			.setDescription("Type /accept-terms to accept these terms and grant access to the bot\nThank you for choosing Truth or Dare Online 18+")
+			.setTitle("Terms Accepted")
+			.setDescription("We hope you enjoy playing Truth or Dare with our massive global database of dares! 🙂");
 	},
 	vote() {
 		return new EmbedBuilder()

@@ -7,9 +7,9 @@ class Database {
 	async connect(retryAttempt = 0) {
 		try {
 			this.connection = mysql.createConnection({
-				//host: process.env['ALPHA'] ? 'localhost' : process.env['DATABASE_HOST'],
-				host: process.env['DATABASE_HOST'],
-				port: process.env['DATABASE_DOCKER_PORT'],
+				host: process.env['ALPHA'] ? 'localhost' : process.env['DATABASE_HOST'],
+				//host: process.env['DATABASE_HOST'],
+				port: process.env['ALPHA'] ? process.env['DATABASE_LOCAL_PORT'] : process.env['DATABASE_DOCKER_PORT'],
 				user: process.env['DATABASE_USER'],
 				password: process.env['DATABASE_PASSWORD'],
 				database: process.env['DATABASE']
