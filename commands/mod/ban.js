@@ -4,6 +4,21 @@ const Question = require("../../question");
 const { env } = require("process");
 const { Console } = require("console");
 
+banReasonList = [
+	{name: "1 - Breaches Discord T&C or Community Guidelines", value: "Breaches Discord T&C or Community Guidelines"},
+	{name: "2 - Childish Content", value: "Childish Content"},
+	{name: "3 - Dangerous Or Illegal Content", value: "Dangerous Or Illegal Content"},
+	{name: "4 - Giver Dare", value: "Giver Dare"},
+	{name: "5 - Mentions A Specific Person", value: "Mentions A Specific Person"},
+	{name: "6 - Nonsense Content", value: "Nonsense Content"},
+	{name: "7 - Not In English", value: "Not In English"},
+	{name: "8 - Poor Spelling Or Grammar", value: "Poor Spelling Or Grammar - Feel Free to Resubmit with proper Spelling and Grammer"},
+	{name: "9 - Requires More Than One Person", value: "Requires More Than One Person"},
+	{name: "10 - Shoutout Content", value: "Shoutout Content"},
+	{name: "11 - Suspected U-18 Server", value: "Suspected U-18 Server"}
+  ]
+
+
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('ban')
@@ -20,7 +35,7 @@ module.exports = {
 			.addStringOption(new SlashCommandStringOption()
 				.setName('reason')
 				.setDescription('Why are you banning this?')
-			)
+							)
 		)
 		.addSubcommand(new SlashCommandSubcommandBuilder()
 			.setName('truth')
@@ -33,7 +48,7 @@ module.exports = {
 			.addStringOption(new SlashCommandStringOption()
 				.setName('reason')
 				.setDescription('Why are you banning this?')
-			)
+							)
 		)
 		.addSubcommand(new SlashCommandSubcommandBuilder()
 			.setName('guild')
@@ -46,7 +61,7 @@ module.exports = {
 			.addStringOption(new SlashCommandStringOption()
 				.setName('reason')
 				.setDescription('Why are you banning this?')
-			)
+							)
 		),
 	async execute(interaction) {
 		
@@ -107,6 +122,9 @@ module.exports = {
 					return null;
 				}).filter(choice => choice !== null);
 			}
+		}
+		if(focusedOption.name === 'reason') {
+			choices = banReasonList;
 		}
 		await interaction.respond(choices);
 	}
@@ -191,6 +209,13 @@ async function sendBanNotification(question, reason, type, interaction) {
 		client.users.send(userId, {
 			content: `Your ${type} has been banned: \n- **ID**: ${question.id}\n- **Question**: ${question.question}\n- **Reason**: ${reason}\n\nIf you feel this was in error you may appeal the ban by opening a ticket on our [Official Server](https://discord.gg/${env.DISCORD_INVITE_CODE})\n\n`,
 			embeds: [embed]
+		}).catch(async (error) => {
+			if (error.code === 50007) {
+			  
+			  await interaction.channel.send(`User's Discord Account was not available to DM`);
+			} else {
+			  console.error('Error:', error);
+			}
 		});
 	} catch (error) {
 		interaction.channel.send('Failed to notify User of ban. Check Logs for more information');
@@ -208,6 +233,14 @@ async function sendGuildBanNotification(guild, reason, interaction) {
 
 		client.users.send(userId, {
 			content: `Your Server has been banned: \n- **ID**: ${guild.id}\n- **Question**: ${guild.name}\n- **Reason**: ${reason}\n\nIf you feel this was in error you may appeal the ban by opening a ticket on our [Official Server](https://discord.gg/${env.DISCORD_INVITE_CODE})\n\n`
+		})
+		.catch(async (error) => {
+			if (error.code === 50007) {
+			  
+			  await interaction.channel.send(`User's Discord Account was not available to DM`);
+			} else {
+			  console.error('Error:', error);
+			}
 		});
 	} catch (error) {
 		interaction.channel.send('Failed to notify User of ban. Check Logs for more information');
@@ -222,15 +255,16 @@ function guidanceEmbed() {
 		.setTitle('Avoiding Bans')
 		.setDescription('Here are some tips to avoid your truths/dares being banned:')
 		.addFields(
-			{ name: 'No dangerous or illegal content', value: '- Keep it safe and legal' },
-			{ name: 'No targeting specific people', value: '- Truths/dares are global and should work for everyone' },
-			{ name: 'No mentions of "the giver"', value: '- Use /give for those types of dares' },
-			{ name: 'Follow Discord guidelines', value: '- No Racism, Underage references etc.' },
+			{ name: 'No Dangerous Or Illegal Content', value: '- Keep it safe and legal' },
+			{ name: 'No Targeting Specific People', value: '- Truths/dares are global and should work for everyone' },
+			{ name: 'No Mentions Of "The Giver"', value: '- Use /give for those types of dares' },
+			{ name: 'Follow Discord Guidelines', value: '- No Racism, Underage references etc.' },
 			{ name: 'Use English', value: '- For bot language support' },
-			{ name: 'No nonsense content', value: '- Avoid keyboard smashing, single letters etc' },
-			{ name: 'No shoutouts', value: '- Using names, "I am awesome!"' },
-			{ name: 'No dares that require more than one person', value: '- This is an **online** bot!' },
-			{ name: 'Check spelling and grammar', value: '- Low-Effort content will not be accepted' },
+			{ name: 'No Nonsense Content', value: '- Avoid keyboard smashing, single letters etc' },
+			{ name: 'No Childish Content', value: '- Could be written by a child/teen, or likely to be ignored'},
+			{ name: 'No Shoutouts', value: '- Using names, "I am awesome!"' },
+			{ name: 'No Dares That Require More Than One Person', value: '- This is an **online** bot!' },
+			{ name: 'Check Spelling And Grammar', value: '- Low-Effort content will not be accepted' },
 			{ name: '\n', value: '\n' },
 			{ name: 'Important Note', value: '**You could be banned from using the bot** if we have to repeatedly ban your dares!' }
 		);
