@@ -31,7 +31,7 @@ class UserHandler extends Handler {
 				interaction.reply({ embeds: [embed] });
 			})
 			else {
-				if (!data.hasAccepted) interaction.reply('Setup has already been started. Please use /accept-terms to continue.');
+				if (!data.hasAccepted) interaction.reply({ embeds: [embed] });
 				else interaction.reply('You have already accepted my terms');
 			}
 		})

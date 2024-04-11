@@ -5,19 +5,17 @@ const Database = require("../database");
 module.exports = {
 	name: Events.InteractionCreate,
 	async execute(interaction) {
-
 		if (interaction.isAutocomplete()) {
 			handleAutoComplete(interaction);
 			return;
 		}
 
-		if (interaction.isChatInputCommand()){
+		if (interaction.isChatInputCommand()) {
 			log(interaction);
-			if(!hasPermission(interaction)) return;
-			console.log("Call RunCommand");
+			if (!hasPermission(interaction)) return;
 			await runCommand(interaction);
 		}
-		
+
 	},
 };
 
@@ -44,34 +42,45 @@ async function handleAutoComplete(interaction) {
 
 function log(interaction) {
 
-	let guildName = interaction.guild.name ?? null;
 
+	if (interaction.guild === null) {
+		const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
+		webhookClient.send(`**Null Server**: ${interaction.commandName} | **server**: INTERACTION.GUILD WAS NULL OR UNDEFINED`);
+	}
+
+	let guildName = interaction.guild.name;
 	const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
 	webhookClient.send(`**Command**: ${interaction.commandName} | **server**: ${guildName ? guildName : "UNKNOWN SERVER NAME"}`);
 }
 
 function hasPermission(interaction) {
+	const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
+
 	const botPermissions = interaction.guild.members.me.permissionsIn(interaction.channel);
 
+	//The bot can respond with interaction.reply without these permissions
+	if (!botPermissions.has('ViewChannel')) {
+		interaction.reply('I do not have permission to view this channel. I require permission to `view channel` to function correctly');
+		webhookClient.send(`Interaction Failed: No Permissions`);
+		return;
+	}
+	//embeds are messages NOT bot responses
+	if (!botPermissions.has('SendMessages')) {
+		interaction.reply('I do not have permission to send messages in this channel. I require permission to `send messages` and `embed links` to function correctly');
+		webhookClient.send(`Interaction Failed: No Permissions`);
+		return;
+	}
 
-		if (!botPermissions.has('SendMessages')) {
-			interaction.reply('I do not have permission to send messages in this channel. I require permission to `send messages` and `embed links` to function correctly');
-			webhookClient.send(`Interaction Failed: No Permissions`);
-			return;
-		}
-
-		if (!botPermissions.has('EmbedLinks')) {
-			interaction.reply('I do not have permission to embed links in this channel. I require permission to `send messages` and `embed links` to function correctly');
-			webhookClient.send(`Interaction Failed: No Permissions`);
-			return;
-		}
-
-		console.log("Permission granted");
-		return true;
+	//embeds require this permission to be accepted by discord
+	if (!botPermissions.has('EmbedLinks')) {
+		interaction.reply('I do not have permission to embed links in this channel. I require permission to `send messages` and `embed links` to function correctly');
+		webhookClient.send(`Interaction Failed: No Permissions`);
+		return;
+	}
+	return true;
 }
 
 async function runCommand(interaction) {
-	console.log("run!");
 	try {
 		const command = interaction.client.commands.get(interaction.commandName);
 
@@ -84,13 +93,10 @@ async function runCommand(interaction) {
 
 		const key = interaction.guildId
 		let guild = await new UserHandler().findGuild(key)
-
-		console.log(guild);
-
-		if(!guild) {
+		if (!guild) {
 			db = new Database();
 			guild = { id: interaction.guildId, name: interaction.guild.name, hasAccepted: 0, isBanned: 0 }
-			//await db.set('guilds', guild);
+			await db.set('guilds', guild);
 		}
 
 		if (guild.isBanned && interaction.commandName !== "help") {
@@ -101,7 +107,7 @@ async function runCommand(interaction) {
 			return;
 		}
 
-		if(shouldExecute(interaction, guild)) await command.execute(interaction);
+		if (shouldExecute(interaction, guild)) await command.execute(interaction);
 	} catch (error) {
 		console.error(`Error executing ${interaction.commandName}`);
 		console.error(error);
@@ -130,7 +136,6 @@ function shouldExecute(interaction, guild) {
 		}
 		db = new Database();
 		db.set('guilds', guild); //We always update the guild so that we can see servers that have been inactive
-		console.log("Command should Execute");
 		return true;
-	}else return true; //Without this, we block setup and accept-terms
+	} else return true; //Without this, we block setup and accept-terms
 }

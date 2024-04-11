@@ -6,7 +6,6 @@ module.exports = {
 		.setName('setup')
 		.setDescription('Required by ALL Servers before users can use any commands'),
 	async execute(interaction) {
-		console.log("EXECUTE!");
 		if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
 			interaction.reply("Only an administrator can run setup commands or accept my terms")
 			return;

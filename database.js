@@ -103,6 +103,13 @@ class Database {
 		return this.query(`DELETE FROM ${table} WHERE id=${id}`);
 	}
 
+	createdWithin(table, interval, creatorId) {
+		const query = `SELECT * FROM ${table} WHERE created >= NOW() - INTERVAL ${interval} MINUTE AND creator = ${this.escape(creatorId)}`;
+
+		return this.query(query);
+	}
+
+
 	list(table, limit = 0, order = 'ASC', page) {
 
 		return this.query(`SELECT * FROM ${table} ORDER BY id ${order} ${limit > 0 ? 'LIMIT ' + limit + " OFFSET " + (limit * page) : ''}`);
