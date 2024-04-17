@@ -1,7 +1,7 @@
 const { EmbedBuilder, WebhookClient } = require('discord.js');
 
-const Handler = require('./handler.js')
-const Question = require('./question.js');
+const Handler = require('../handler.js')
+const Question = require('../question.js');
 const { exit } = require('process');
 client = null;
 

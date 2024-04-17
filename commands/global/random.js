@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require("discord.js");
-const DareHandler = require("../../dareHandler");
-const TruthHandler = require("../../truthHandler");
+const DareHandler = require("../../handlers/dareHandler");
+const TruthHandler = require("../../handlers/truthHandler");
 
 module.exports = {
 	data: new SlashCommandBuilder()

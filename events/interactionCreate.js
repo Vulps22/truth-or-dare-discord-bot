@@ -1,5 +1,5 @@
 const { Events, WebhookClient } = require("discord.js");
-const UserHandler = require("../userHandler");
+const UserHandler = require("../handlers/userHandler");
 const Database = require("../database");
 
 module.exports = {

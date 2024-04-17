@@ -1,6 +1,6 @@
 require('dotenv').config();
 const Database = require("./database");
-const { updateServerCount } = require("./userHandler");
+const { updateServerCount } = require("./handlers/userHandler");
 
 module.exports = class ChannelManager {
 

@@ -6,9 +6,9 @@ const { Routes } = require('discord-api-types/v9');
 const { modCommands } = require('./command.js');
 const { Client, GatewayIntentBits, Collection, WebhookClient } = require('discord.js');
 const Database = require('./database.js'); //import Database class
-const DareHandler = require('./dareHandler.js'); // import DareHandler
-const TruthHandler = require('./truthHandler.js'); // import TruthHandler
-const UserHandler = require('./userHandler.js'); // import TruthHandler
+const DareHandler = require('./handlers/dareHandler.js'); // import DareHandler
+const TruthHandler = require('./handlers/truthHandler.js'); // import TruthHandler
+const UserHandler = require('./handlers/userHandler.js'); // import TruthHandler
 const Question = require('./question.js');
 const { exit } = require('node:process');
 
