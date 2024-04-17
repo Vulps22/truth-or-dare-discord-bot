@@ -3,13 +3,12 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
-const { modCommands } = require('./command.js');
 const { Client, GatewayIntentBits, Collection, WebhookClient } = require('discord.js');
-const Database = require('./database.js'); //import Database class
+const Database = require('./objects/database.js'); //import Database class
 const DareHandler = require('./handlers/dareHandler.js'); // import DareHandler
 const TruthHandler = require('./handlers/truthHandler.js'); // import TruthHandler
 const UserHandler = require('./handlers/userHandler.js'); // import TruthHandler
-const Question = require('./question.js');
+const Question = require('./objects/question.js');
 const { exit } = require('node:process');
 
 console.log('Initialising Bot....');

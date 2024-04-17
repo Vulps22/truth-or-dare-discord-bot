@@ -1,5 +1,5 @@
 const { Events, WebhookClient } = require("discord.js")
-const Database = require("../database")
+const Database = require("../objects/database")
 
 module.exports = {
 	name: Events.GuildDelete,

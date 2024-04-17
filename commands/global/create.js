@@ -1,7 +1,7 @@
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandStringOption, WebhookClient } = require("discord.js");
 const DareHandler = require("../../handlers/dareHandler");
 const TruthHandler = require("../../handlers/truthHandler");
-const Database = require("../../database");
+const Database = require("../../objects/database");
 
 module.exports = {
 	data: new SlashCommandBuilder()

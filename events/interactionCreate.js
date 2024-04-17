@@ -1,6 +1,6 @@
 const { Events, WebhookClient } = require("discord.js");
 const UserHandler = require("../handlers/userHandler");
-const Database = require("../database");
+const Database = require("../objects/database");
 
 module.exports = {
 	name: Events.InteractionCreate,
@@ -9,6 +9,8 @@ module.exports = {
 			handleAutoComplete(interaction);
 			return;
 		}
+
+		const user = UserHandler.getUser(interaction.user.id);
 
 		if (interaction.isChatInputCommand()) {
 			log(interaction);

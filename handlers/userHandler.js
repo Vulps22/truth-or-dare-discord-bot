@@ -1,9 +1,10 @@
 require('dotenv').config();
 const { EmbedBuilder, Embed } = require('discord.js');
+const { User } = require('../objects/user.js');
 
-const Handler = require('../handler.js')
-const Question = require('../question.js');
-const Database = require('../database.js');
+const Handler = require('./handler.js')
+const Question = require('../objects/question.js');
+const Database = require('../objects/database.js');
 const embedder = require('../embedder.js');
 
 class UserHandler extends Handler {
@@ -61,6 +62,10 @@ class UserHandler extends Handler {
 
 	getTerms() {
 		return embedder.terms();
+	}
+
+	async getUser(id, username = undefined) {
+		return new User(id, username);
 	}
 
 }
