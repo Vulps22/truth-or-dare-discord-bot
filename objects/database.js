@@ -55,8 +55,8 @@ class Database {
 		}
 	}
 
-	get(table, id) {
-		return this.query(`SELECT * FROM ${table} WHERE id=${id}`)
+	get(table, id, idField = "id") {
+		return this.query(`SELECT * FROM ${table} WHERE ${idField}=${id}`)
 			.then(rows => rows[0]);
 	}
 

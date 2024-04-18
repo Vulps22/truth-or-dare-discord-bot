@@ -1,7 +1,8 @@
-const { EmbedBuilder, WebhookClient } = require('discord.js');
+const { EmbedBuilder, WebhookClient, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 const Handler = require('./handler.js')
 const Question = require('../objects/question.js');
+const UserDare = require('../objects/userDare.js');
 client = null
 class DareHandler extends Handler {
 
@@ -41,24 +42,28 @@ class DareHandler extends Handler {
 		});
 	}
 
-	dare(interaction) {
-		this.db.list("dares").then((dares) => {
-			if (!dares || dares.length === 0) { interaction.reply("Hmm, I can't find any dares. This might be a bug, try again later"); return; }
+	async dare(interaction) {
+		try {
+			const dares = await this.db.list("dares");
+			if (!dares || dares.length === 0) {
+				return interaction.reply("Hmm, I can't find any dares. This might be a bug, try again later");
+			}
+
 			const unBannedQuestions = dares.filter(q => !q.isBanned);
-			const random = Math.floor(Math.random() * unBannedQuestions.length);
-			const dare = unBannedQuestions[random];
+			const dare = this.selectRandomDare(unBannedQuestions);
+			const creator = this.getCreator(dare, this.client);
 
-			let creator = this.client.users.cache.get(dare.creator);
-			if (creator === undefined) creator = { username: "Somebody" };
+			const embed = this.createDareEmbed(dare, interaction, creator);
+			const row = this.createActionRow();
 
-			const embed = new EmbedBuilder()
-				.setTitle('Dare!')
-				.setDescription(dare.question)
-				.setColor('#6A5ACD')
-				.setFooter({ text: `Requested by ${interaction.user.username} | Created By ${creator.username} | #${dare.id}`, iconURL: interaction.user.displayAvatarURL() });
-			interaction.reply("Here's your Dare!")
-			interaction.channel.send({ embeds: [embed] });
-		});
+			const message = await interaction.reply({ content: "Here's your Dare!", embeds: [embed], components: [row] });
+			await this.saveDareMessageId(message.id, interaction.user.id, dare.id);
+		} catch (error) {
+			console.error('Error in dare function:', error);
+			interaction.reply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:");
+			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
+			await webhookClient.send(`Brain Fart: Error in dare function: ${error}`);
+		}
 	}
 
 	giveDare(interaction) {
@@ -110,6 +115,52 @@ class DareHandler extends Handler {
 			}
 		})
 	}
+
+	selectRandomDare(dares) {
+		const random = Math.floor(Math.random() * dares.length);
+		return dares[random];
+	}
+
+	getCreator(dare, client) {
+		let creator = client.users.cache.get(dare.creator);
+		return creator || { username: "Somebody" };
+	}
+
+	createDareEmbed(dare, interaction, creator) {
+		return new EmbedBuilder()
+			.setTitle('Dare!')
+			.setDescription(dare.question)
+			.setColor('#6A5ACD')
+			.setFooter({ text: `Requested by ${interaction.user.username} | Created By ${creator.username} | #${dare.id}`, iconURL: interaction.user.displayAvatarURL() });
+	}
+
+	createActionRow() {
+		return new ActionRowBuilder()
+			.addComponents(
+				new ButtonBuilder()
+					.setCustomId('dare_done')
+					.setLabel('DONE')
+					.setStyle(ButtonStyle.Success), // Green button
+				new ButtonBuilder()
+					.setCustomId('dare_failed')
+					.setLabel('FAILED')
+					.setStyle(ButtonStyle.Danger), // Red button
+			);
+	}
+
+	async saveDareMessageId(messageId, userId, dareId) {
+		if (!messageId) {
+			await interaction.channel.send("I'm sorry, I couldn't save the dare to track votes. This is a brain fart. Please reach out for support on the official server.");
+			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
+			await webhookClient.send(`Brain Fart: Couldn't save dare to track votes. Message ID missing`);
+		} else {
+			console.log(messageId)
+			const userDare = new UserDare(messageId, userId, dareId);
+			// Assuming userDare.save() is an asynchronous operation to save the data
+			await userDare.save();
+		}
+	}
+
 }
 
 module.exports = DareHandler;
