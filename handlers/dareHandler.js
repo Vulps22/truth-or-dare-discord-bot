@@ -1,7 +1,7 @@
 const { EmbedBuilder, WebhookClient } = require('discord.js');
 
 const Handler = require('./handler.js')
-const Question = require('./question.js');
+const Question = require('../objects/question.js');
 client = null
 class DareHandler extends Handler {
 

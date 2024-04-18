@@ -1,6 +1,6 @@
 const { Events, WebhookClient } = require("discord.js");
-const UserHandler = require("../userHandler");
-const Database = require("../database");
+const UserHandler = require("../handlers/userHandler");
+const Database = require("../objects/database");
 
 module.exports = {
 	name: Events.InteractionCreate,
@@ -8,6 +8,19 @@ module.exports = {
 		if (interaction.isAutocomplete()) {
 			handleAutoComplete(interaction);
 			return;
+		}
+		let user;
+		try {
+			user = await new UserHandler().getUser(interaction.user.id, interaction.user.username);
+		} catch (error) {
+			console.error('Error getting user:', error);
+			// Handle the error appropriately, e.g., by sending a message to the user or logging the error
+			return;
+		}
+		
+		if (!user) {
+			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
+			webhookClient.send(`**Failed to create User during InteractionCreate** | **server**: ${interaction.guild.name}`);
 		}
 
 		if (interaction.isChatInputCommand()) {

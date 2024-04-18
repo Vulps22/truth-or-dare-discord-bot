@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, SlashCommandStringOption, PermissionsBitField } = require('discord.js');
-const Database = require('../../database');
+const Database = require('../../objects/database');
 
 module.exports = {
 

@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require("discord.js");
-const DareHandler = require("../../dareHandler.js");
+const DareHandler = require("../../handlers/dareHandler.js");
 
 
 module.exports = {

@@ -1,8 +1,6 @@
-const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandNumberOption, SlashCommandStringOption, PermissionsBitField, EmbedBuilder } = require("discord.js");
-const Database = require("../../database");
-const Question = require("../../question");
+const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandNumberOption, SlashCommandStringOption, EmbedBuilder } = require("discord.js");
+const Database = require("../../objects/question")
 const { env } = require("process");
-const { Console } = require("console");
 
 banReasonList = [
 	{name: "1 - Breaches Discord T&C or Community Guidelines", value: "Breaches Discord T&C or Community Guidelines"},
