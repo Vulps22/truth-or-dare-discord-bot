@@ -3,8 +3,8 @@ const UserQuestion = require("./userQuestion");
 
 class UserDare extends UserQuestion {
 
-    constructor(messageId, userId, questionId) {
-        super(messageId, userId, questionId, 0, 0);
+    constructor(messageId, userId, questionId, username, image) {
+        super(messageId, userId, questionId, username, image, 0, 0);
         this.type = "dare";
     }
 
@@ -14,22 +14,26 @@ class UserDare extends UserQuestion {
      * It will be ID in the UserQuestion class and on the table
      * @param {*} messageId 
      */
-    load(messageId) {
+    async load(messageId) {
+        console.log("loading dare", messageId)
         const db = new Database();
-        db.get(user_dares, messageId, "message_id").then((row) => {
-            console.log(row);
-            this.id = row.message_id;
-            this.userId = row.user_id;
-            this.questionId = row.dare_id;
-            this.doneCount = row.done_count;
-            this.failedCount = row.failed_count;
-            this.type = "dare";
-        });
+        let dare = await db.get('user_dares', messageId, "message_id");
+        console.log("dare", dare);
+        this.id = dare.message_id;
+        this.userId = dare.user_id;
+        this.questionId = dare.dare_id;
+        this.username = dare.username;
+        this.image = dare.image_url;
+        this.doneCount = dare.done_count;
+        this.failedCount = dare.failed_count;
+        this.type = "dare";
+        return this;
     }
 
     getDareId() {
         return this.questionId;
     }
+
 }
 
 module.exports = UserDare;

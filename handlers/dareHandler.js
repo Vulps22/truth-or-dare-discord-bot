@@ -51,13 +51,13 @@ class DareHandler extends Handler {
 
 			const unBannedQuestions = dares.filter(q => !q.isBanned);
 			const dare = this.selectRandomDare(unBannedQuestions);
-			const creator = this.getCreator(dare, this.client);
+			const creator = this.getCreator(dare, this.client).username;
 
 			const embed = this.createDareEmbed(dare, interaction, creator);
 			const row = this.createActionRow();
 
-			const message = await interaction.reply({ content: "Here's your Dare!", embeds: [embed], components: [row] });
-			await this.saveDareMessageId(message.id, interaction.user.id, dare.id);
+			const message = await interaction.reply({ content: "Here's your Dare!", embeds: [embed], components: [row], fetchReply: true });
+			await this.saveDareMessageId(message.id, interaction.user.id, dare.id, interaction.user.username, interaction.user.displayAvatarURL());
 		} catch (error) {
 			console.error('Error in dare function:', error);
 			interaction.reply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:");
@@ -66,7 +66,7 @@ class DareHandler extends Handler {
 		}
 	}
 
-	giveDare(interaction) {
+	async giveDare(interaction) {
 		const user = interaction.options.getUser('user');
 		const dare = interaction.options.getString('dare');
 
@@ -92,7 +92,7 @@ class DareHandler extends Handler {
 			.setColor('#6A5ACD')
 
 
-		interaction.reply({ embeds: [embed] });
+		messageId = await interaction.reply({ embeds: [embed] });
 	}
 
 	async listAll(interaction) {
@@ -127,11 +127,28 @@ class DareHandler extends Handler {
 	}
 
 	createDareEmbed(dare, interaction, creator) {
+
+		let dareText = `${dare.question}\n\n **Votes:** 0 Done | 0 Failed`;
+
 		return new EmbedBuilder()
 			.setTitle('Dare!')
-			.setDescription(dare.question)
+			.setDescription(dareText)
 			.setColor('#6A5ACD')
-			.setFooter({ text: `Requested by ${interaction.user.username} | Created By ${creator.username} | #${dare.id}`, iconURL: interaction.user.displayAvatarURL() });
+			.setFooter({ text: `Requested by ${interaction.user.username} | Created By ${creator} | #${dare.id}`, iconURL: interaction.user.displayAvatarURL() });
+	}
+
+	async createUpdatedDareEmbed(userDare, interaction) {
+		let dare = await userDare.getQuestion();
+		let question = dare.question;
+		let creator = this.getCreator(dare, this.client);
+
+		let dareText = `${question}\n\n **Votes:** ${userDare.doneCount} Done | ${userDare.failedCount} Failed`;
+
+		return new EmbedBuilder()
+			.setTitle('Dare!')
+			.setDescription(dareText)
+			.setColor('#6A5ACD')
+			.setFooter({ text: `Requested by ${userDare.username} | Created By ${creator.username} | #${dare.id}`, iconURL: userDare.image });
 	}
 
 	createActionRow() {
@@ -148,18 +165,70 @@ class DareHandler extends Handler {
 			);
 	}
 
-	async saveDareMessageId(messageId, userId, dareId) {
+	createPassedActionRow() {
+		return new ActionRowBuilder()
+			.addComponents(
+				new ButtonBuilder()
+					.setCustomId('dare_done')
+					.setLabel('PASSED')
+					.setDisabled(true)
+					.setStyle(ButtonStyle.Success), // Green button
+			);
+	}
+
+	createFailedActionRow() {
+		return new ActionRowBuilder()
+			.addComponents(
+				new ButtonBuilder()
+					.setCustomId('dare_failed')
+					.setLabel('FAILED')
+					.setDisabled(true)
+					.setStyle(ButtonStyle.Danger), // Red button
+			);
+	}
+
+	async saveDareMessageId(messageId, userId, dareId, username, image) {
 		if (!messageId) {
 			await interaction.channel.send("I'm sorry, I couldn't save the dare to track votes. This is a brain fart. Please reach out for support on the official server.");
 			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
 			await webhookClient.send(`Brain Fart: Couldn't save dare to track votes. Message ID missing`);
 		} else {
-			console.log(messageId)
-			const userDare = new UserDare(messageId, userId, dareId);
+			console.log("saving message", messageId)
+			const userDare = new UserDare(messageId, userId, dareId, username, image);
 			// Assuming userDare.save() is an asynchronous operation to save the data
 			await userDare.save();
 		}
 	}
+
+	async vote(interaction) {
+		console.log(`message ID at vote`, interaction.message.id)
+		const userDare = await new UserDare().load(interaction.message.id);
+		console.log('button ID', interaction.customId);
+		const vote = interaction.customId === 'dare_done' ? 'done' : 'failed';
+		console.log('vote', vote);
+		if (!userDare) {
+			await interaction.reply("I'm sorry, I couldn't find the dare to track votes. This is a brain fart. Please reach out for support on the official server.");
+			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
+			await webhookClient.send(`Brain Fart: Couldn't find dare to track votes. Message ID missing`);
+			return;
+		}
+		await userDare.vote(interaction.user.id, vote);
+
+		const embed = await this.createUpdatedDareEmbed(userDare, interaction);
+
+		let row = this.createActionRow();
+
+		if(userDare.doneCount >= 5) {
+			row = this.createPassedActionRow();
+		} else if(userDare.failedCount >= 5) {
+			row = this.createFailedActionRow();
+		}
+
+		//use the userDare.messageId to edit the embed in the message
+		await interaction.message.edit({ embeds: [embed], components: [row]});
+		await interaction.reply({ content: "Your vote has been recorded!", ephemeral: true });
+	}
+
 
 }
 

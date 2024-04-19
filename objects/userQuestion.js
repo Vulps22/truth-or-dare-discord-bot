@@ -1,75 +1,119 @@
 const Database = require("./database");
+const Question = require("./question");
 
 class UserQuestion {
-    id;
-    userId;
-    questionId;
-    doneCount;
-    failedCount;
-    type;
+   id;
+   userId;
+   questionId;
+   username;
+   image;
+   doneCount;
+   failedCount;
+   type;
 
-    constructor(id, userId, questionId, doneCount, failedCount) {
-        this.id = id;
-        this.userId = userId;
-        this.questionId = questionId;
-        this.doneCount = doneCount;
-        this.failedCount = failedCount;
-    }
+   constructor(id, userId, questionId, username, image, doneCount, failedCount) {
+      this.id = id;
+      this.userId = userId;
+      this.questionId = questionId;
+      this.username = username;
+      console.log("image", image);
+      this.image = image;
+      this.doneCount = doneCount;
+      this.failedCount = failedCount;
+   }
 
-    getId() {
-        return this.id;
-    }
+   getId() {
+      return this.id;
+   }
 
-    getUserId() {
-        return this.userId;
-    }
+   getUserId() {
+      return this.userId;
+   }
 
-    getQuestionId() {
-        return this.questionId;
-    }
+   getUsername() {
+      return this.username;
+   }
 
-    getDoneCount() {
-        return this.doneCount;
-    }
+   getQuestionId() {
+      return this.questionId;
+   }
 
-    getFailedCount() {
-        return this.failedCount;
-    }
+   async getQuestion() {
+      const db = new Database();
+      console.log("getting question", this.questionId);
+      return await db.get(this.getQuestionTable(), this.questionId)
 
-    incrementDoneCount() {
-        this.doneCount++;
-    }
+   }
 
-    incrementFailedCount() {
-        this.failedCount++;
-    }
+   getImage() {
+      return this.image;
+   }
 
-    getTable() {
-        switch (this.type) {
-            case "dare":
-                return "user_dares";
-            case "truth":
-                return "user_truths";
-            default:
-                throw new Error("Invalid Question type for UserQuestion object. Must be 'dare' or 'truth'. got: " + this.type);
-        }
-    }
+   getDoneCount() {
+      return this.doneCount;
+   }
 
-    save() {
-        const db = new Database();
+   getFailedCount() {
+      return this.failedCount;
+   }
 
-        let tableSafe = {
-            message_id: this.id,
-            user_id: this.userId,
-            dare_id: this.questionId,
-            done_count: this.doneCount,
-            failed_count: this.failedCount
-        }
+   incrementDoneCount() {
+      this.doneCount++;
+   }
 
-        db.set(this.getTable(), tableSafe).then(() => {
-            console.log("UserQuestion saved");
-        });
-    }
+   incrementFailedCount() {
+      this.failedCount++;
+   }
+
+   vote(userID, vote) {
+      if (vote === "done") {
+         this.doneCount++;
+      } else {
+         this.failedCount++;
+      }
+      this.save();
+      return { done: this.doneCount, failed: this.failedCount };
+   }
+
+   getTable() {
+      switch (this.type) {
+         case "dare":
+            return "user_dares";
+         case "truth":
+            return "user_truths";
+         default:
+            throw new Error("Invalid Question type for UserQuestion object. Must be 'dare' or 'truth'. got: " + this.type);
+      }
+   }
+
+   getQuestionTable() {
+      switch (this.type) {
+         case "dare":
+            return "dares";
+         case "truth":
+            return "truths";
+         default:
+            throw new Error("Invalid Question type for UserQuestion object. Must be 'dare' or 'truth'. got: " + this.type);
+      }
+   }
+
+   save() {
+      const db = new Database();
+      console.log("image", this.image);
+      let tableSafe = {
+         message_id: this.id,
+         user_id: this.userId,
+         dare_id: this.questionId,
+         username: this.username,
+         image_url: this.image ?? '',
+         done_count: this.doneCount,
+         failed_count: this.failedCount
+      }
+
+      db.set(this.getTable(), tableSafe, "message_id").then(() => {
+         console.log("UserQuestion saved");
+      });
+   }
 
 }
 

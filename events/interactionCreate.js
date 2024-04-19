@@ -1,6 +1,7 @@
 const { Events, WebhookClient } = require("discord.js");
 const UserHandler = require("../handlers/userHandler");
 const Database = require("../objects/database");
+const DareHandler = require("../handlers/dareHandler");
 
 module.exports = {
 	name: Events.InteractionCreate,
@@ -9,6 +10,12 @@ module.exports = {
 			handleAutoComplete(interaction);
 			return;
 		}
+
+		//handle button presses
+		if (interaction.isButton()) {
+			handleButton(interaction);
+		}
+
 		let user;
 		try {
 			user = await new UserHandler().getUser(interaction.user.id, interaction.user.username);
@@ -50,6 +57,20 @@ async function handleAutoComplete(interaction) {
 	} catch (error) {
 		console.error(`Error executing autocomplete for ${interaction.commandName}`);
 		console.error(error);
+	}
+}
+
+async function handleButton(interaction) {
+	let buttonId = interaction.customId;
+	//split the id by the _ to get the command name
+	let commandName = buttonId.split('_')[0];
+	switch (commandName) {
+		case "dare":
+			await new DareHandler(interaction.client).vote(interaction);
+			break;
+		case "truth":
+			interaction.reply("Truth Voting is not yet available. Please check back later");
+			break;
 	}
 }
 
