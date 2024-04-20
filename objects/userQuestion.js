@@ -2,7 +2,7 @@ const Database = require("./database");
 const Question = require("./question");
 
 class UserQuestion {
-   id;
+   id; // message_id
    userId;
    questionId;
    username;
@@ -16,7 +16,6 @@ class UserQuestion {
       this.userId = userId;
       this.questionId = questionId;
       this.username = username;
-      console.log("image", image);
       this.image = image;
       this.doneCount = doneCount;
       this.failedCount = failedCount;
@@ -40,7 +39,6 @@ class UserQuestion {
 
    async getQuestion() {
       const db = new Database();
-      console.log("getting question", this.questionId);
       return await db.get(this.getQuestionTable(), this.questionId)
 
    }
@@ -65,12 +63,20 @@ class UserQuestion {
       this.failedCount++;
    }
 
-   vote(userID, vote) {
+   async vote(userID, vote) {
+      const db = new Database();
+      const existingVote = await db.query(`SELECT * FROM user_vote WHERE user_id = ${userID} AND message_id = ${this.id}`);
+      
+      if (existingVote.length > 0) {
+         return false;
+      }
       if (vote === "done") {
          this.doneCount++;
       } else {
          this.failedCount++;
       }
+
+      db.set("user_vote", {message_id: this.id, user_id: userID});
       this.save();
       return { done: this.doneCount, failed: this.failedCount };
    }
@@ -99,7 +105,6 @@ class UserQuestion {
 
    save() {
       const db = new Database();
-      console.log("image", this.image);
       let tableSafe = {
          message_id: this.id,
          user_id: this.userId,
@@ -110,9 +115,7 @@ class UserQuestion {
          failed_count: this.failedCount
       }
 
-      db.set(this.getTable(), tableSafe, "message_id").then(() => {
-         console.log("UserQuestion saved");
-      });
+      db.set(this.getTable(), tableSafe, "message_id");
    }
 
    /**
@@ -121,12 +124,11 @@ class UserQuestion {
      * @param {*} messageId 
      */
    async load(messageId, type) {
-      console.log("loading Question", messageId)
       const db = new Database();
-      if(!type) throw new Error("Type must be provided for UserQuestion load");
+      if (!type) throw new Error("Type must be provided for UserQuestion load");
       this.type = type;
       let question = await db.get(this.getTable(), messageId, "message_id");
-      console.log("question", question);  
+
       this.id = question.message_id;
       this.userId = question.user_id;
       this.questionId = question.question_id;
@@ -134,10 +136,10 @@ class UserQuestion {
       this.image = question.image_url;
       this.doneCount = question.done_count;
       this.failedCount = question.failed_count;
-      
+
 
       return this;
-  }
+   }
 
 }
 

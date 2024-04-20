@@ -204,7 +204,6 @@ class TruthHandler extends Handler {
 			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
 			await webhookClient.send(`Brain Fart: Couldn't save truth to track votes. Message ID missing`);
 		} else {
-			console.log("saving message", messageId)
 			const userTruth = new UserTruth(messageId, userId, truthId, username, image);
 			// Assuming userTruth.save() is an asynchronous operation to save the data
 			await userTruth.save();
@@ -229,7 +228,12 @@ class TruthHandler extends Handler {
 			await webhookClient.send(`Brain Fart: Couldn't find truth to track votes. Message ID missing`);
 			return;
 		}
-		await userTruth.vote(interaction.user.id, vote);
+
+		const couldVote = await userTruth.vote(interaction.user.id, vote);
+		if(!couldVote) {
+			await interaction.reply({content: "You've already voted on this truth!", ephemeral: true});
+			return;
+		}
 
 		const embed = await this.createUpdatedTruthEmbed(userTruth, interaction);
 

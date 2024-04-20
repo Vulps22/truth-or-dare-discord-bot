@@ -40,7 +40,7 @@ class User {
      * @returns {boolean} Whether the user was successfully loaded
      */
     async load() {
-        console.log(`Loading user ${this.id}`);
+
         const db = new Database();
         let user = await db.get('users', this.id)
 
