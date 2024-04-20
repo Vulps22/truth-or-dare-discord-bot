@@ -1,6 +1,8 @@
 const { Events, WebhookClient } = require("discord.js");
 const UserHandler = require("../handlers/userHandler");
 const Database = require("../objects/database");
+const DareHandler = require("../handlers/dareHandler");
+const TruthHandler = require("../handlers/truthHandler");
 
 module.exports = {
 	name: Events.InteractionCreate,
@@ -9,6 +11,12 @@ module.exports = {
 			handleAutoComplete(interaction);
 			return;
 		}
+
+		//handle button presses
+		if (interaction.isButton()) {
+			handleButton(interaction);
+		}
+
 		let user;
 		try {
 			user = await new UserHandler().getUser(interaction.user.id, interaction.user.username);
@@ -17,7 +25,7 @@ module.exports = {
 			// Handle the error appropriately, e.g., by sending a message to the user or logging the error
 			return;
 		}
-		
+
 		if (!user) {
 			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
 			webhookClient.send(`**Failed to create User during InteractionCreate** | **server**: ${interaction.guild.name}`);
@@ -50,6 +58,24 @@ async function handleAutoComplete(interaction) {
 	} catch (error) {
 		console.error(`Error executing autocomplete for ${interaction.commandName}`);
 		console.error(error);
+	}
+}
+
+async function handleButton(interaction) {
+	let buttonId = interaction.customId;
+	//split the id by the _ to get the command name
+	let commandName = buttonId.split('_')[0];
+	switch (commandName) {
+		case "dare":
+			await new DareHandler(interaction.client).vote(interaction);
+			break;
+		case "truth":
+			await new TruthHandler(interaction.client).vote(interaction);
+			break;
+		default:
+			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
+			webhookClient.send(`**Failed to find Button Command** | **server**: ${interaction.guild.name} \n\n**Button ID**: ${buttonId}`);
+			interaction.reply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:");
 	}
 }
 

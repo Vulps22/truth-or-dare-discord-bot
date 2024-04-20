@@ -55,29 +55,29 @@ class Database {
 		}
 	}
 
-	get(table, id) {
-		return this.query(`SELECT * FROM ${table} WHERE id=${id}`)
+	get(table, id, idField = "id") {
+		return this.query(`SELECT * FROM ${table} WHERE ${idField}=${id}`)
 			.then(rows => rows[0]);
 	}
 
-	async set(table, valueObject) {
+	async set(table, valueObject, idField = 'id') {
 
 		const fields = Object.keys(valueObject);
-		const hasId = fields.includes('id');
+		const hasId = fields.includes(idField);
 
 		let sql = `INSERT INTO \`${table}\` (`;
 
 		if (hasId) {
-			sql += '`id`, ';
+			sql += `\`${idField}\`, `;
 		}
 
-		const nonIdFields = fields.filter((field) => field !== 'id');
+		const nonIdFields = fields.filter((field) => field !== idField);
 
 		sql += nonIdFields.join(', ');
 		sql += ') VALUES (';
 
 		if (hasId) {
-			sql += `${this.escape(valueObject.id)}, `;
+			sql += `${this.escape(valueObject[idField])}, `;
 		}
 
 		nonIdFields.forEach((field) => {
@@ -89,12 +89,12 @@ class Database {
 
 		sql += ` ON DUPLICATE KEY UPDATE `;
 		fields.forEach((field) => {
-			if (field !== 'id') {
+			if (field !== idField) {
 				sql += `\`${field}\` = ${this.escape(valueObject[field])}, `;
 			}
 		});
 
-		sql = sql.slice(0, -2); // Remove trailing comma 	  
+		sql = sql.slice(0, -2); // Remove trailing comma
 		return this.query(sql);
 	}
 
