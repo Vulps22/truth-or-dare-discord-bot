@@ -103,7 +103,7 @@ class UserQuestion {
       let tableSafe = {
          message_id: this.id,
          user_id: this.userId,
-         dare_id: this.questionId,
+         question_id: this.questionId,
          username: this.username,
          image_url: this.image ?? '',
          done_count: this.doneCount,
@@ -114,6 +114,30 @@ class UserQuestion {
          console.log("UserQuestion saved");
       });
    }
+
+   /**
+     * Use the message ID as the primary key for the UserDare object
+     * It will be ID in the UserQuestion class and on the table
+     * @param {*} messageId 
+     */
+   async load(messageId, type) {
+      console.log("loading Question", messageId)
+      const db = new Database();
+      if(!type) throw new Error("Type must be provided for UserQuestion load");
+      this.type = type;
+      let question = await db.get(this.getTable(), messageId, "message_id");
+      console.log("question", question);  
+      this.id = question.message_id;
+      this.userId = question.user_id;
+      this.questionId = question.question_id;
+      this.username = question.username;
+      this.image = question.image_url;
+      this.doneCount = question.done_count;
+      this.failedCount = question.failed_count;
+      
+
+      return this;
+  }
 
 }
 

@@ -2,6 +2,7 @@ const { Events, WebhookClient } = require("discord.js");
 const UserHandler = require("../handlers/userHandler");
 const Database = require("../objects/database");
 const DareHandler = require("../handlers/dareHandler");
+const TruthHandler = require("../handlers/truthHandler");
 
 module.exports = {
 	name: Events.InteractionCreate,
@@ -24,7 +25,7 @@ module.exports = {
 			// Handle the error appropriately, e.g., by sending a message to the user or logging the error
 			return;
 		}
-		
+
 		if (!user) {
 			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
 			webhookClient.send(`**Failed to create User during InteractionCreate** | **server**: ${interaction.guild.name}`);
@@ -69,8 +70,12 @@ async function handleButton(interaction) {
 			await new DareHandler(interaction.client).vote(interaction);
 			break;
 		case "truth":
-			interaction.reply("Truth Voting is not yet available. Please check back later");
+			await new TruthHandler(interaction.client).vote(interaction);
 			break;
+		default:
+			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
+			webhookClient.send(`**Failed to find Button Command** | **server**: ${interaction.guild.name} \n\n**Button ID**: ${buttonId}`);
+			interaction.reply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:");
 	}
 }
 

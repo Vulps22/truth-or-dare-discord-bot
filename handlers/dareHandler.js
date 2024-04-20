@@ -202,7 +202,7 @@ class DareHandler extends Handler {
 
 	async vote(interaction) {
 		console.log(`message ID at vote`, interaction.message.id)
-		const userDare = await new UserDare().load(interaction.message.id);
+		const userDare = await new UserDare().load(interaction.message.id, 'dare');
 		console.log('button ID', interaction.customId);
 		const vote = interaction.customId === 'dare_done' ? 'done' : 'failed';
 		console.log('vote', vote);
