@@ -1,3 +1,4 @@
+const User = require("./user");
 const Database = require("./database");
 const Question = require("./question");
 
@@ -27,6 +28,11 @@ class UserQuestion {
 
    getUserId() {
       return this.userId;
+   }
+
+   async getUser() {
+      const user = await new User(this.userId).get();
+      return user;
    }
 
    getUsername() {
@@ -66,9 +72,9 @@ class UserQuestion {
    async vote(userID, vote) {
       const db = new Database();
       const existingVote = await db.query(`SELECT * FROM user_vote WHERE user_id = ${userID} AND message_id = ${this.id}`);
-      
+
       if (existingVote.length > 0) {
-         return false;
+         // return false;
       }
       if (vote === "done") {
          this.doneCount++;
@@ -76,7 +82,7 @@ class UserQuestion {
          this.failedCount++;
       }
 
-      db.set("user_vote", {message_id: this.id, user_id: userID});
+      db.set("user_vote", { message_id: this.id, user_id: userID });
       this.save();
       return { done: this.doneCount, failed: this.failedCount };
    }
@@ -113,7 +119,7 @@ class UserQuestion {
          image_url: this.image ?? '',
          done_count: this.doneCount,
          failed_count: this.failedCount
-      }
+      };
 
       db.set(this.getTable(), tableSafe, "message_id");
    }
