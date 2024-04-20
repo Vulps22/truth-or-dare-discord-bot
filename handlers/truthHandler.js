@@ -212,11 +212,17 @@ class TruthHandler extends Handler {
 	}
 
 	async vote(interaction) {
-		console.log(`message ID at vote`, interaction.message.id)
+
 		const userTruth = await new UserTruth().load(interaction.message.id, 'truth');
-		console.log('button ID', interaction.customId);
+
+		const truthUser = userTruth.getUserId();
+		if (truthUser == interaction.user.id) {
+			await interaction.reply({content: "You can't vote on your own truth!", ephemeral: true});
+			return;
+		}
+
 		const vote = interaction.customId === 'truth_done' ? 'done' : 'failed';
-		console.log('vote', vote);
+
 		if (!userTruth) {
 			await interaction.reply("I'm sorry, I couldn't find the truth to track votes. This is a brain fart. Please reach out for support on the official server.");
 			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });

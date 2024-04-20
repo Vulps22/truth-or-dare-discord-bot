@@ -201,11 +201,17 @@ class DareHandler extends Handler {
 	}
 
 	async vote(interaction) {
-		console.log(`message ID at vote`, interaction.message.id)
+
 		const userDare = await new UserDare().load(interaction.message.id, 'dare');
-		console.log('button ID', interaction.customId);
+
+		const dareUser = userDare.getUserId();
+		if (dareUser == interaction.user.id) {
+			interaction.reply({content: "You can't vote on your own dare!", ephemeral: true});
+			return;
+		}
+
 		const vote = interaction.customId === 'dare_done' ? 'done' : 'failed';
-		console.log('vote', vote);
+
 		if (!userDare) {
 			await interaction.reply("I'm sorry, I couldn't find the dare to track votes. This is a brain fart. Please reach out for support on the official server.");
 			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
