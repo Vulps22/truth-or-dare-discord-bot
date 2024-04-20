@@ -3,8 +3,12 @@ const { EmbedBuilder, WebhookClient, ActionRowBuilder, ButtonBuilder, ButtonStyl
 const Handler = require('./handler.js')
 const Question = require('../objects/question.js');
 const UserDare = require('../objects/userDare.js');
+const User = require('../objects/user.js');
 client = null
 class DareHandler extends Handler {
+
+	successXp = 150;
+	failXp = 50; //this is subtracted from the user's xp when they fail a dare
 
 	constructor(client) {
 		super()
@@ -205,8 +209,8 @@ class DareHandler extends Handler {
 
 		const dareUser = userDare.getUserId();
 		if (dareUser == interaction.user.id) {
-			interaction.reply({content: "You can't vote on your own dare!", ephemeral: true});
-			return;
+			//interaction.reply({content: "You can't vote on your own dare!", ephemeral: true});
+			//return;
 		}
 
 		const vote = interaction.customId === 'dare_done' ? 'done' : 'failed';
@@ -220,8 +224,8 @@ class DareHandler extends Handler {
 
 		const couldVote = await userDare.vote(interaction.user.id, vote);
 		if (!couldVote) {
-			await interaction.reply({content: "You've already voted on this dare!", ephemeral: true});
-			return;
+			//await interaction.reply({content: "You've already voted on this dare!", ephemeral: true});
+			//return;
 		}
 
 		const embed = await this.createUpdatedDareEmbed(userDare, interaction);
@@ -230,8 +234,16 @@ class DareHandler extends Handler {
 
 		if(userDare.doneCount >= 5) {
 			row = this.createPassedActionRow();
+			/** @type {User} */
+			let user = await userDare.getUser()
+			user.addXP(this.successXp);
+			user.save();
 		} else if(userDare.failedCount >= 5) {
 			row = this.createFailedActionRow();
+			/** @type {User} */
+			let user = await userDare.getUser()
+			user.subtractXP(this.failXp);
+			user.save();
 		}
 
 		//use the userDare.messageId to edit the embed in the message
