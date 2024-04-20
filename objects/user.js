@@ -8,6 +8,10 @@ class User {
     isBanned;
     banReason;
 
+    a = 0.0000356;
+    b = 0;
+    c = 0.2;
+
     constructor(id, username) {
         this.id = id;
         this.username = username;
@@ -57,30 +61,36 @@ class User {
         return this.calculateLevel(this.globalXP);
     }
 
-    calculateLevel(xp) {
-        // Coefficients for the quadratic equation ax^2 + bx + c = 0
-        const a = 5;
-        const b = 50;
-        const c = 100 - xp;
+    calculateLevel(x) {
 
-        // Calculate the discriminant
-        const discriminant = b * b - 4 * a * c;
+        const a = this.a; // Make sure a is not 0
+        const b = this.b;
+        const c = this.c;
 
-        // If discriminant is negative, no solution exists
-        if (discriminant < 0) {
-            return -1; // Or handle it the way you'd like, maybe return 0 indicating level can't be calculated
+        let y = (a * x ** 2 + b * x + c);
+        return Math.ceil(y);
+    }
+
+    calculateXpForLevel(y) {
+        const a = this.a;
+        const b = this.b;
+        const c = this.c - y; // Adjust the constant term to account for y
+
+        // Calculate the term under the square root
+        const sqrtTerm = (b * b - 4 * a * c);
+    
+        // Check if the square root term is non-negative
+        if (sqrtTerm < 0) {
+            throw new Error("No real solutions exist for the given inputs.");
         }
-
-        // Calculate the level, only the positive root makes sense
-        const level = (-b + Math.sqrt(discriminant)) / (2 * a);
-
-        // Since level cannot be fractional, we take the floor of the level value
-        return Math.floor(level);
+    
+        // Calculate the potential roots
+        const sqrtValue = Math.sqrt(sqrtTerm);
+        const x1 = (-b + sqrtValue) / (2 * a);
+    
+        return Math.floor(x1);
     }
-
-    calculateXpForLevel(level) {
-        return 100 + (55 * (level - 1)) + (10 * ((level - 2) * (level - 1)) / 2);
-    }
+    
 
     async addXP(xp) {
         this.globalXP += xp;
@@ -91,9 +101,6 @@ class User {
         this.globalXP -= xp;
         this.save();
     }
-
-
-
 }
 
 module.exports = User

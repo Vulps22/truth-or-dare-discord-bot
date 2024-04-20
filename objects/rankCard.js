@@ -32,6 +32,7 @@ class RankCard {
     }
 
     async drawAvatar(ctx) {
+        if(this.avatarURL == 'testMode') return;
         const urlParts = this.avatarURL.split('.');
         urlParts[urlParts.length - 1] = 'png'; // Replace the last item with 'png'
         const avatarURL = urlParts.join('.');
@@ -53,6 +54,9 @@ class RankCard {
             radius: 40 // Radius of the level circle
         };
     
+        const level = this.user.getLevel();
+        console.log('level', level);
+
         // Draw the blue circle outline
         ctx.beginPath();
         ctx.arc(levelCircle.x, levelCircle.y, levelCircle.radius, 0, Math.PI * 2);
@@ -65,7 +69,7 @@ class RankCard {
         ctx.font = '30px sans-serif'; // Adjust the size as needed
         ctx.textAlign = 'center'; // Align text horizontally
         ctx.textBaseline = 'middle'; // Align text vertically
-        ctx.fillText(this.user.getLevel(), levelCircle.x, levelCircle.y);
+        ctx.fillText(level, levelCircle.x, levelCircle.y);
     }
     
     
@@ -84,7 +88,7 @@ class RankCard {
         ctx.fillText(`Truths Failed: ${this.user.truthsFailed ?? 0}`, xright, daresRow);
         ctx.fillText(`Dares Done: ${this.user.daresDone ?? 0}`, xleft, truthsRow);
         ctx.fillText(`Dares Failed: ${this.user.daresFailed ?? 0}`, xright, truthsRow);
-        ctx.fillText(`XP: ${this.user.globalXP ?? 0}`, 285, xpRow);
+        ctx.fillText(`XP: ${this.user.globalXP ?? 0} / ${this.user.calculateXpForLevel(this.user.getLevel() + 1)}`, 335, xpRow);
     }
 
     drawProgressBar(ctx) {
