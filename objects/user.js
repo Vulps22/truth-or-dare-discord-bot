@@ -8,7 +8,7 @@ class User {
     isBanned;
     banReason;
 
-    a = 0.0000356;
+    a = 0.0000156;
     b = 0;
     c = 0.2;
 
@@ -74,21 +74,11 @@ class User {
     calculateXpForLevel(y) {
         const a = this.a;
         const b = this.b;
-        const c = this.c - y; // Adjust the constant term to account for y
+        const c = this.c // Adjust the constant term to account for y
 
-        // Calculate the term under the square root
-        const sqrtTerm = (b * b - 4 * a * c);
-
-        // Check if the square root term is non-negative
-        if (sqrtTerm < 0) {
-            throw new Error("No real solutions exist for the given inputs.");
-        }
-
-        // Calculate the potential roots
-        const sqrtValue = Math.sqrt(sqrtTerm);
-        const x1 = (-b + sqrtValue) / (2 * a);
-
-        return Math.floor(x1);
+        let x = ((-b*c) + Math.sqrt((b**2 * c**2) + (4*a*y)))/(2*a);
+        
+        return Math.floor(x);
     }
 
 
