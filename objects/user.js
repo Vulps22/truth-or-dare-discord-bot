@@ -78,19 +78,19 @@ class User {
 
         // Calculate the term under the square root
         const sqrtTerm = (b * b - 4 * a * c);
-    
+
         // Check if the square root term is non-negative
         if (sqrtTerm < 0) {
             throw new Error("No real solutions exist for the given inputs.");
         }
-    
+
         // Calculate the potential roots
         const sqrtValue = Math.sqrt(sqrtTerm);
         const x1 = (-b + sqrtValue) / (2 * a);
-    
+
         return Math.floor(x1);
     }
-    
+
 
     async addXP(xp) {
         this.globalXP += xp;
@@ -100,6 +100,46 @@ class User {
     async subtractXP(xp) {
         this.globalXP -= xp;
         this.save();
+    }
+
+    /**
+     * Counts the number of dares the user has done successfully
+     */
+    async daresDone() {
+        const db = new Database();
+        //use db.query(sql) to get the number of dares from user_dares where done_count >= 5
+        let dares = await db.query(`SELECT COUNT(*) as count FROM user_dares WHERE user_id = ${this.id} AND done_count >= 5`);
+        return dares[0].count;
+    }
+
+    /**
+     * Counts the number of dares the user has failed
+     */
+    async daresFailed() {
+        const db = new Database();
+        //use db.query(sql) to get the number of dares from user_dares where failed_count >= 5
+        let dares = await db.query(`SELECT COUNT(*) as count FROM user_dares WHERE user_id = ${this.id} AND failed_count >= 5`);
+        return dares[0].count;
+    }
+
+    /**
+     * Counts the number of truths the user has done successfully
+     */
+    async truthsDone() {
+        const db = new Database();
+        //use db.query(sql) to get the number of truths from user_truths where done_count >= 5
+        let truths = await db.query(`SELECT COUNT(*) as count FROM user_truths WHERE user_id = ${this.id} AND done_count >= 5`);
+        return truths[0].count;
+    }
+
+    /**
+     * Counts the number of truths the user has failed
+     */
+    async truthsFailed() {
+        const db = new Database();
+        //use db.query(sql) to get the number of truths from user_truths where failed_count >= 5
+        let truths = await db.query(`SELECT COUNT(*) AS count FROM user_truths WHERE user_id = ${this.id} AND failed_count >= 5`);
+        return truths[0].count;
     }
 }
 

@@ -1,8 +1,10 @@
 const { AttachmentBuilder } = require('discord.js');
 const { createCanvas, loadImage } = require('canvas');
+const User = require('./user');
 
 class RankCard {
     constructor(user, username, avatarURL) {
+        /**@type {User} */
         this.user = user;
         this.username = username;
         this.avatarURL = avatarURL;
@@ -16,7 +18,7 @@ class RankCard {
         await this.drawAvatar(ctx);
         this.drawUsername(ctx);
         this.drawLevel(ctx);
-        this.drawUserStats(ctx);
+        await this.drawUserStats(ctx);
         this.drawProgressBar(ctx);
 
         return new AttachmentBuilder(canvas.toBuffer());
@@ -72,23 +74,33 @@ class RankCard {
         ctx.fillText(level, levelCircle.x, levelCircle.y);
     }
     
-    
-
-
-    drawUserStats(ctx) {
+    async drawUserStats(ctx) {
         const xleft = 320; // X coordinate for the left column text
         const xright = 510; // X coordinate for the right column text
 
         const daresRow = 130; // Y coordinate for the dares row
         const truthsRow = 155; // Y coordinate for the truths row
-        const xpRow = 180; // Y coordinate for the XP row
+        const xpRow = 180;D // Y coordinate for the XP row
+
+        let stats = await this.getStats();
 
         ctx.font = '20px sans-serif'; // Set a smaller font size for the details
-        ctx.fillText(`Truths Done: ${this.user.truthsDone ?? 0}`, xleft, daresRow);
-        ctx.fillText(`Truths Failed: ${this.user.truthsFailed ?? 0}`, xright, daresRow);
-        ctx.fillText(`Dares Done: ${this.user.daresDone ?? 0}`, xleft, truthsRow);
-        ctx.fillText(`Dares Failed: ${this.user.daresFailed ?? 0}`, xright, truthsRow);
-        ctx.fillText(`XP: ${this.user.globalXP ?? 0} / ${this.user.calculateXpForLevel(this.user.getLevel() + 1)}`, 335, xpRow);
+        ctx.fillText(`Truths Done: ${stats.truthsDone ?? 0}`, xleft, daresRow);
+        ctx.fillText(`Truths Failed: ${stats.truthsFailed ?? 0}`, xright, daresRow);
+        ctx.fillText(`Dares Done: ${stats.daresDone ?? 0}`, xleft, truthsRow);
+        ctx.fillText(`Dares Failed: ${stats.daresFailed ?? 0}`, xright, truthsRow);
+        ctx.fillText(`XP: ${this.user.globalXP ?? 0} / ${this.user.calculateXpForLevel(this.user.getLevel())}`, 335, xpRow);
+    }
+
+    async getStats() {
+        let stats = {
+            truthsDone: await this.user.truthsDone(),
+            truthsFailed: await this.user.truthsFailed(),
+            daresDone: await this.user.daresDone(),
+            daresFailed: await this.user.daresFailed()
+        };
+
+        return stats;
     }
 
     drawProgressBar(ctx) {
@@ -107,7 +119,7 @@ class RankCard {
     calculateProgressBarWidth(currentXp, xpForNextLevel) {
         // Calculate the percentage of XP gained towards the next level
         const xpPercentage = (currentXp / xpForNextLevel);
-      
+
         // Calculate the width of the progress bar in pixels based on the percentage
         const progressBarWidth = xpPercentage * 400;
       
