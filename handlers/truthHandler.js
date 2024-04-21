@@ -8,6 +8,8 @@ client = null;
 
 class TruthHandler extends Handler {
 
+	successXp = 50;
+	failXp = -50
 
 	constructor(client) {
 		super()
