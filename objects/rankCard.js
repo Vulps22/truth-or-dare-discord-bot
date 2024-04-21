@@ -80,7 +80,7 @@ class RankCard {
 
         const daresRow = 130; // Y coordinate for the dares row
         const truthsRow = 155; // Y coordinate for the truths row
-        const xpRow = 180;D // Y coordinate for the XP row
+        const xpRow = 180; // Y coordinate for the XP row
 
         let stats = await this.getStats();
 
