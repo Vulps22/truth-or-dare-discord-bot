@@ -8,8 +8,8 @@ client = null;
 
 class TruthHandler extends Handler {
 
-	successXp = 50;
-	failXp = -50
+	successXp = 40;
+	failXp = 40;
 
 	constructor(client) {
 		super()
@@ -218,8 +218,8 @@ class TruthHandler extends Handler {
 
 		const truthUser = userTruth.getUserId();
 		if (truthUser == interaction.user.id) {
-			await interaction.reply({content: "You can't vote on your own truth!", ephemeral: true});
-			return;
+			//await interaction.reply({content: "You can't vote on your own truth!", ephemeral: true});
+			//return;
 		}
 
 		const vote = interaction.customId === 'truth_done' ? 'done' : 'failed';
@@ -233,8 +233,8 @@ class TruthHandler extends Handler {
 
 		const couldVote = await userTruth.vote(interaction.user.id, vote);
 		if(!couldVote) {
-			await interaction.reply({content: "You've already voted on this truth!", ephemeral: true});
-			return;
+			//await interaction.reply({content: "You've already voted on this truth!", ephemeral: true});
+			//return;
 		}
 
 		const embed = await this.createUpdatedTruthEmbed(userTruth, interaction);
@@ -243,8 +243,16 @@ class TruthHandler extends Handler {
 
 		if(userTruth.doneCount >= 5) {
 			row = this.createPassedActionRow();
+			/** @type {User} */
+			let user = await userTruth.getUser()
+			user.addXP(this.successXp);
+			user.save();
 		} else if(userTruth.failedCount >= 5) {
 			row = this.createFailedActionRow();
+			/** @type {User} */
+			let user = await userTruth.getUser()
+			user.subtractXP(this.failXp);
+			user.save();
 		}
 
 		//use the userTruth.messageId to edit the embed in the message

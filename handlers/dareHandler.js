@@ -7,8 +7,8 @@ const User = require('../objects/user.js');
 client = null
 class DareHandler extends Handler {
 
-	successXp = 20;
-	failXp = 10; //this is subtracted from the user's xp when they fail a dare
+	successXp = 50;
+	failXp = 25; //this is subtracted from the user's xp when they fail a dare
 
 	constructor(client) {
 		super()
