@@ -8,9 +8,8 @@ class User {
     isBanned;
     banReason;
 
-    a = 0.0000156;
-    b = 0;
-    c = 0.2;
+    levelRandomiser = 1.254;
+    levelMultiplier = 100;
 
     constructor(id, username) {
         this.id = id;
@@ -61,24 +60,14 @@ class User {
         return this.calculateLevel(this.globalXP);
     }
 
-    calculateLevel(x) {
-
-        const a = this.a; // Make sure a is not 0
-        const b = this.b;
-        const c = this.c;
-
-        let y = (a * x ** 2 + b * x + c);
-        return Math.ceil(y);
+    calculateLevel(xp) {
+        let level = (xp / this.levelRandomiser) / this.levelMultiplier;
+        return Math.floor(level)
     }
 
-    calculateXpForLevel(y) {
-        const a = this.a;
-        const b = this.b;
-        const c = this.c // Adjust the constant term to account for y
-
-        let x = ((-b*c) + Math.sqrt((b**2 * c**2) + (4*a*y)))/(2*a);
-        
-        return Math.floor(x);
+    calculateXpForLevel(level) {
+        let xp = level * this.levelMultiplier * this.levelRandomiser;
+        return Math.ceil(xp);
     }
 
 
