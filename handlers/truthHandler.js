@@ -4,6 +4,8 @@ const Handler = require('./handler.js')
 const Question = require('../objects/question.js');
 const { exit } = require('process');
 const UserTruth = require('../objects/userTruth.js');
+const User = require('../objects/user.js');
+const Server = require('../objects/server.js');
 client = null;
 
 class TruthHandler extends Handler {
@@ -215,6 +217,12 @@ class TruthHandler extends Handler {
 	async vote(interaction) {
 
 		const userTruth = await new UserTruth().load(interaction.message.id, 'truth');
+		/** @type {User} */
+		const $user = await userTruth.getUser();
+		await user.loadServerUser(interaction.guild.id);
+
+		const $server = new Server(interaction.guild.id);
+		await $server.load();
 
 		const truthUser = userTruth.getUserId();
 		if (truthUser == interaction.user.id) {
@@ -243,16 +251,12 @@ class TruthHandler extends Handler {
 
 		if(userTruth.doneCount >= 5) {
 			row = this.createPassedActionRow();
-			/** @type {User} */
-			let user = await userTruth.getUser()
 			user.addXP(this.successXp);
-			user.save();
+			user.addServerXP(server.truth_success_xp);
 		} else if(userTruth.failedCount >= 5) {
 			row = this.createFailedActionRow();
-			/** @type {User} */
-			let user = await userTruth.getUser()
 			user.subtractXP(this.failXp);
-			user.save();
+			user.subtractServerXP(server.truth_fail_xp);
 		}
 
 		//use the userTruth.messageId to edit the embed in the message
