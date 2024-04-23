@@ -1,73 +1,62 @@
 require('dotenv').config();
 const { EmbedBuilder, Embed } = require('discord.js');
 const User = require('../objects/user.js');
-
-const Handler = require('./handler.js')
+const Handler = require('./handler.js');
 const Question = require('../objects/question.js');
 const Database = require('../objects/database.js');
 const embedder = require('../embedder.js');
+const Server = require('../objects/server.js'); // Import the Server class
 
 class UserHandler extends Handler {
+    db;
 
-	db;
+    constructor() {
+        super();
+        this.db = new Database();
+    }
 
-	constructor() {
-		super();
-		this.db = new Database();
-	}
+    async startSetup(interaction) {
+        const embed = this.getTerms();
+        const server = await this.findServer(interaction.guildId);
+        if (!server) {
+            await this.db.set('servers', { id: interaction.guildId, name: interaction.guild.name, hasAccepted: 0, isBanned: 0 });
+            interaction.reply({ embeds: [embed] });
+        } else {
+            if (!server.hasAccepted) interaction.reply({ embeds: [embed] });
+            else interaction.reply('You have already accepted my terms');
+        }
+    }
 
-	async findGuild(id) {
-		if (!id) return;
-		return this.db.get('guilds', id)
-			.then(guild => {
-				return guild;
-			});
-	}
+    async acceptSetup(interaction) {
+        const server = await this.findServer(interaction.guildId);
+        if (!server) {
+            interaction.reply("You must first use /setup and read the Terms of Use");
+            return;
+        }
 
-	startSetup(interaction) {
+        if (server.hasAccepted) {
+            interaction.reply('You have already accepted my terms');
+            return;
+        }
 
-		const embed = this.getTerms();
-		const guild = this.findGuild(interaction.guildId).then((data) => {
-			if (!data) this.db.set('guilds', { id: interaction.guildId, name: interaction.guild.name, hasAccepted: 0, isBanned: 0 }).then(() => {
-				interaction.reply({ embeds: [embed] });
-			})
-			else {
-				if (!data.hasAccepted) interaction.reply({ embeds: [embed] });
-				else interaction.reply('You have already accepted my terms');
-			}
-		})
+        server.hasAccepted = 1;
+        await server.save(); // Save the updated server instance
+        interaction.reply({ embeds: [embedder.accepted()] });
+    }
 
-	}
+    getTerms() {
+        return embedder.terms();
+    }
 
-	async acceptSetup(interaction) {
+    async getUser(id, username = undefined) {
+        return await new User(id, username).get();
+    }
 
-		const guild = await this.findGuild(interaction.guildId).then((data) => {
-			if (!data) {
-				interaction.reply("You must first use /setup and read the Terms of Use");
-				return;
-			}
-
-			if (data.hasAccepted) {
-				interaction.reply('You have already accepted my terms');
-				return;
-			}
-
-			let g = data;
-			g.id = interaction.guildId;
-			g.hasAccepted = 1;
-			this.db.set('guilds', g);
-			interaction.reply({ embeds: [embedder.accepted()] });
-		})
-	}
-
-	getTerms() {
-		return embedder.terms();
-	}
-
-	async getUser(id, username = undefined) {
-		return await new User(id, username).get();
-	}
-
+    async findServer(guildId) {
+        const server = new Server(guildId);
+        await server.load();
+        return server;
+    }
 }
 
-module.exports = UserHandler
+module.exports = UserHandler;

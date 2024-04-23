@@ -4,6 +4,7 @@ const Handler = require('./handler.js')
 const Question = require('../objects/question.js');
 const UserDare = require('../objects/userDare.js');
 const User = require('../objects/user.js');
+const Server = require('../objects/server.js');
 client = null
 class DareHandler extends Handler {
 
@@ -15,7 +16,7 @@ class DareHandler extends Handler {
 		this.client = client
 	}
 
-	createDare(interaction) {
+	async createDare(interaction) {
 		const question = new Question(interaction.options.getString('text'), interaction.user.id);
 		if (!question.question) {
 			interaction.reply("You need to give me a dare!");
@@ -23,27 +24,24 @@ class DareHandler extends Handler {
 			webhookClient.send(`Aborted Dare creation: Nothing Given`);
 			return;
 		}
-		this.db.list("dares").then((dares) => {
-			if (dares.some(q => q.question === question.question)) {
-				interaction.reply("This dare already exists!");
-				const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
-				webhookClient.send(`Aborted Dare creation: Already exists`);
-				return;
-			} else {
-				this.db.set("dares", question).then((data) => {
-					const embed = new EmbedBuilder()
-						.setTitle('New Dare Created!')
-						.setDescription(question.question)
-						.setColor('#00ff00')
-						.setFooter({ text: ' Created by ' + interaction.user.username, iconURL: interaction.user.displayAvatarURL() });
-					interaction.reply("Thank you for your submission. A member of the moderation team will review your dare shortly")
-					interaction.channel.send({ embeds: [embed] });
+		let dares = await this.db.list("dares");
+		if (dares.some(q => q.question === question.question)) {
+			interaction.reply("This dare already exists!");
+			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
+			webhookClient.send(`Aborted Dare creation: Already exists`);
+			return;
+		} else {
+			let createdDare = this.db.set("dares", question);
+			const embed = new EmbedBuilder()
+				.setTitle('New Dare Created!')
+				.setDescription(question.question)
+				.setColor('#00ff00')
+				.setFooter({ text: ' Created by ' + interaction.user.username, iconURL: interaction.user.displayAvatarURL() });
+			interaction.reply({content: "Thank you for your submission. A member of the moderation team will review your dare shortly", embeds: [embed] });
 
-					const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_CREATIONS_URL });
-					webhookClient.send(`**Dare Created** | **server**: ${interaction.guild.name} \n- **Dare**: ${question.question} \n- **ID**: ${data.insertId}`);
-				});
-			}
-		});
+			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_CREATIONS_URL });
+			webhookClient.send(`**Dare Created** | **server**: ${interaction.guild.name} \n- **Dare**: ${question.question} \n- **ID**: ${createdDare.insertId}`);
+		}
 	}
 
 	async dare(interaction) {
@@ -206,6 +204,13 @@ class DareHandler extends Handler {
 	async vote(interaction) {
 
 		const userDare = await new UserDare().load(interaction.message.id, 'dare');
+		//load the user		
+		/** @type {User} */
+		const user = await userDare.getUser();
+		await user.loadServerUser(interaction.guildId);
+		//load the server
+		const server = new Server(interaction.guildId);
+		await server.load();
 
 		const dareUser = userDare.getUserId();
 		if (dareUser == interaction.user.id) {
@@ -232,22 +237,25 @@ class DareHandler extends Handler {
 
 		let row = this.createActionRow();
 
-		if(userDare.doneCount >= 5) {
+		if (userDare.doneCount >= 5) {
 			row = this.createPassedActionRow();
-			/** @type {User} */
+			
 			let user = await userDare.getUser()
+			
 			user.addXP(this.successXp);
-			user.save();
-		} else if(userDare.failedCount >= 5) {
+			user.addServerXP(this.successXp);
+
+		} else if (userDare.failedCount >= 5) {
 			row = this.createFailedActionRow();
 			/** @type {User} */
 			let user = await userDare.getUser()
 			user.subtractXP(this.failXp);
-			user.save();
+			user.subtractServerXP(this.failXp);
+
 		}
 
 		//use the userDare.messageId to edit the embed in the message
-		await interaction.message.edit({ embeds: [embed], components: [row]});
+		await interaction.message.edit({ embeds: [embed], components: [row] });
 		await interaction.reply({ content: "Your vote has been recorded!", ephemeral: true });
 	}
 
