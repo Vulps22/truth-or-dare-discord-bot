@@ -47,7 +47,7 @@ module.exports = {
 				name: '**Utility Commands**',
 				value:
 					'- `/vote` - See a list of Bot lists where you can vote to support our bot and help it grow faster!\n' +
-					'- `terms` - View the Terms of Use this server has agreed to follow.\n\t\tUse `/report guild` if this server has broken those Terms\n' +
+					'- `terms` - View the Terms of Use this server has agreed to follow.\n\t\tUse `/report server` if this server has broken those Terms\n' +
 					'- `/help` - See a list of available commands\n\n'
 			}
 		)

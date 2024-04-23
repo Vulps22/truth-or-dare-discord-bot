@@ -20,7 +20,7 @@ banReasonList = [
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('ban')
-		.setDescription('Ban a Dare|Truth|Guild')
+		.setDescription('Ban a Dare|Truth|Server')
 		.setNSFW(true)
 		.addSubcommand(new SlashCommandSubcommandBuilder()
 			.setName('dare')
@@ -49,11 +49,11 @@ module.exports = {
 							)
 		)
 		.addSubcommand(new SlashCommandSubcommandBuilder()
-			.setName('guild')
-			.setDescription('Ban the specified Guild')
+			.setName('server')
+			.setDescription('Ban the specified Server')
 			.addStringOption(new SlashCommandStringOption()
 				.setName('id')
-				.setDescription('The ID of the Guild to ban')
+				.setDescription('The ID of the Server to ban')
 				.setAutocomplete(true)
 			)
 			.addStringOption(new SlashCommandStringOption()
@@ -72,8 +72,8 @@ module.exports = {
 			case 'truth':
 				banTruth(interaction.options.getNumber('id'), interaction.options.getString('reason'), interaction);
 				break;
-			case 'guild':
-				banGuild(interaction.options.getString('id'), interaction.options.getString('reason'), interaction);
+			case 'server':
+				banServer(interaction.options.getString('id'), interaction.options.getString('reason'), interaction);
 				break;
 			default:
 				interaction.reply('Not an Option');
@@ -109,11 +109,11 @@ module.exports = {
 					}
 					return null;
 				}).filter(choice => choice !== null);
-			} else if (subcommand === 'guild') {
-				const guilds = await db.like('guilds', 'id', `%${id}%`, 20, "DESC");
-				choices = guilds.map(guild => {
-					const name = `${guild.id} - ${guild.name}`;
-					const value = guild.id
+			} else if (subcommand === 'server') {
+				const servers = await db.like('servers', 'id', `%${id}%`, 20, "DESC");
+				choices = servers.map(server => {
+					const name = `${server.id} - ${server.name}`;
+					const value = server.id
 					if (name.length > 0 && value.length > 0) {
 						return { name: truncateString(name, 96), value: value };
 					}
@@ -159,34 +159,34 @@ function banTruth(id, reason, interaction) {
 	});
 }
 
-async function banGuild(id, reason, interaction) {
+async function banServer(id, reason, interaction) {
     const db = new Database();
     
     try {
-        // Get guild data from the database
-        let guild = await db.get('guilds', id);
+        // Get server data from the database
+        let server = await db.get('servers', id);
         
-        // Check if guild data exists
-        if (!guild) {
-            interaction.reply('Guild not found!');
+        // Check if server data exists
+        if (!server) {
+            interaction.reply('Server not found!');
             return;
         }
         
         // Send ban notification
-        sendGuildBanNotification(guild, reason, interaction);
+        sendServerBanNotification(server, reason, interaction);
         
-        // Update guild data
-        guild.isBanned = 1;
-        guild.banReason = reason;
+        // Update server data
+        server.isBanned = 1;
+        server.banReason = reason;
         
-        // Save updated guild data to the database
-        await db.set('guilds', guild);
+        // Save updated server data to the database
+        await db.set('server', server);
         
         // Reply to interaction with ban details
-        interaction.reply(`Guild has been banned!\n- **ID**: ${guild.id}\n- **Name**: ${guild.name}\n- **Reason**: ${reason}`);
+        interaction.reply(`Server has been banned!\n- **ID**: ${server.id}\n- **Name**: ${server.name}\n- **Reason**: ${reason}`);
     } catch (error) {
-        console.error('Error banning guild:', error);
-        interaction.reply('An error occurred while banning the guild.');
+        console.error('Error banning server:', error);
+        interaction.reply('An error occurred while banning the server.');
     }
 }
 
@@ -222,7 +222,7 @@ async function sendBanNotification(question, reason, type, interaction) {
 	}
 }
 
-async function sendGuildBanNotification(guild, reason, interaction) {
+async function sendServerBanNotification(guild, reason, interaction) {
 	client = interaction.client;
 	try {
 
@@ -230,7 +230,7 @@ async function sendGuildBanNotification(guild, reason, interaction) {
 		const userId = server.ownerId;
 
 		client.users.send(userId, {
-			content: `Your Server has been banned: \n- **ID**: ${guild.id}\n- **Question**: ${guild.name}\n- **Reason**: ${reason}\n\nIf you feel this was in error you may appeal the ban by opening a ticket on our [Official Server](https://discord.gg/${env.DISCORD_INVITE_CODE})\n\n`
+			content: `Your Server has been banned: \n- **ID**: ${server.id}\n- **Question**: ${server.name}\n- **Reason**: ${reason}\n\nIf you feel this was in error you may appeal the ban by opening a ticket on our [Official Server](https://discord.gg/${env.DISCORD_INVITE_CODE})\n\n`
 		})
 		.catch(async (error) => {
 			if (error.code === 50007) {
