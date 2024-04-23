@@ -5,7 +5,7 @@ const Database = require("../../objects/database")
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('view')
-        .setDescription('View a Dare|Truth|Guild')
+        .setDescription('View a Dare|Truth|Server')
         .addSubcommand(new SlashCommandSubcommandBuilder()
             .setName('dare')
             .setDescription('View the specified Dare')
@@ -53,7 +53,7 @@ module.exports = {
 
         let db = new Database();
 
-        let table = 'guilds'
+        let table = 'servers'
         switch (subcommand) {
             case 'dare':
                 table = 'dares';
@@ -62,7 +62,7 @@ module.exports = {
                 table = 'truths';
                 break;
             case 'server':
-                table = 'guilds';
+                table = 'servers';
                 break;
             case 'report':
                 table = 'reports';
