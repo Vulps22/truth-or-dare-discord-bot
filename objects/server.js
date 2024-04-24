@@ -26,7 +26,6 @@ class Server {
         // load server from database
         const db = new Database();
         let serverData = await db.get("servers", this.id);
-        console.log(serverData);
 
         if(!serverData) return;
 

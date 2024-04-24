@@ -126,9 +126,7 @@ async function runCommand(interaction) {
         const key = interaction.guildId;
         let server = new Server(key)
 		await server.load();
-		console.log("server loaded");
         if (!server || !server.name) {
-			console.log("server not loaded");
             const db = new Database();
             server = { id: interaction.guildId, name: interaction.guild.name, hasAccepted: 0, isBanned: 0 };
             await db.set('servers', server);
@@ -153,8 +151,7 @@ async function runCommand(interaction) {
 }
 
 function shouldExecute(interaction, server) {
-	console.log("shouldExecute");
-	console.log(server);
+
     if ((!server || !server.hasAccepted) && !(interaction.commandName === "setup" || interaction.commandName === "accept-terms" || interaction.commandName === "help")) {
         interaction.reply("A community Administrator must first run the /setup command before you can use me");
         return false;

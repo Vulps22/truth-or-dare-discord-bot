@@ -3,6 +3,7 @@ const DareHandler = require("../../handlers/dareHandler");
 const TruthHandler = require("../../handlers/truthHandler");
 const UserHandler = require("../../handlers/userHandler");
 const RankCard = require("../../objects/rankCard");
+const User = require("../../objects/user");
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -10,7 +11,9 @@ module.exports = {
 		.setDescription('View Your Rank and XP!'),
 	async execute(interaction) {
         const handler = new UserHandler();
+        /** @type {User} */
         const user = await handler.getUser(interaction.user.id, interaction.user.username);
+        await user.loadServerUser(interaction.guild.id);
         if (!user) {
             interaction.reply("Hmm, I can't find your user data. This might be a bug, try again later");
             return;
