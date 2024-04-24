@@ -174,7 +174,11 @@ function shouldExecute(interaction, server) {
 
 async function registerServerUser(interaction) {
 	let user = new User(interaction.user.id, interaction.user.username);
+        
 		await user.load();
+        await user.save()
 		await user.loadServerUser(interaction.guildId);
+        
+        await user.saveServerUser()
 		return user;
 }

@@ -9,5 +9,6 @@ module.exports = {
         let user = new User(member.id, member.username);
         await user.get();
         await user.loadServerUser(member.guild.id);
+		user.save()
 	}
 }

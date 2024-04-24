@@ -75,10 +75,11 @@ class Leaderboard {
         ctx.fillText(positionText, 150, avatarY + (avatarSize / 2)); // Adjust as necessary
         ctx.textBaseline = 'top'; // Reset the text baseline for the rest of the text
         // Hardcoded user ID for testing
-        const testUserID = '914368203482890240'; // Replace 'YOUR_USER_ID' with your actual user ID
-        player.id = testUserID;
+       // const testUserID = '914368203482890240'; // Replace 'YOUR_USER_ID' with your actual user ID
+        //player.id = testUserID;
+        console.log(player.id)
         // Use the hardcoded user ID to fetch the avatar
-        let avatarURL = this.client.users.cache.get(testUserID).displayAvatarURL();
+        let avatarURL = this.client.users.cache.get(player.id).avatarURL()
 
         // Fetching the avatar URL and ensuring it's a PNG
         const urlParts = avatarURL.split('.');

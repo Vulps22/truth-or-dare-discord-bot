@@ -23,6 +23,7 @@ class User {
         this.id = id;
         this.username = username;
         this.globalXP = 0;
+        this.globalLevelXP = 0;
         this.serverXP = 0;
         this.isBanned = false;
         this.banReason = '';
@@ -88,6 +89,9 @@ class User {
     async addServerUser(serverId) {
         const db = new Database();
         await db.set('server_users', { user_id: this.id, server_id: serverId, server_xp: 0, server_level_xp: 0 });
+        this.serverId = serverId,
+        this.serverXP = 0;
+        this.serverLevelXP = 0;
         this.serverUserLoaded = true;
     }
 
