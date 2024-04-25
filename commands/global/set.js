@@ -44,6 +44,7 @@ module.exports = {
                 .setMinValue(0)
             )
         ),
+    administrator: true,
     async execute(interaction) {
         //Log the parameters that have reached this point
 
