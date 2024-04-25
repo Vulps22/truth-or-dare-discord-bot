@@ -20,7 +20,7 @@ class User {
 
     serverUserLoaded = false;
 
-    constructor(id, username, client) {
+    constructor(id, username) {
         this.id = id;
         this.username = username;
         this.globalLevel = 0;
@@ -154,6 +154,10 @@ class User {
         return newXp >= xpForNextLevel;
     }
 
+    async getImage() {
+        let discordUser = await global.client.users.fetch(this.id);
+        return await discordUser.displayAvatarURL();
+    }
 
 
     async addXP(xp) {
@@ -259,7 +263,7 @@ class User {
     /**
      * Counts the number of dares the user has failed
      */
-    async daresFailed(serverId) {
+    async daresFailed(serverId = false) {
         const db = new Database();
         //use db.query(sql) to get the number of dares from user_dares where failed_count >= 5
         let dares = await db.query(`SELECT COUNT(*) as count FROM user_dares WHERE user_id = ${this.id} AND failed_count >= 5 ${serverId ? `AND server_id = ${serverId}` : ''}`);
@@ -269,7 +273,7 @@ class User {
     /**
      * Counts the number of truths the user has done successfully
      */
-    async truthsDone(serverId) {
+    async truthsDone(serverId = false) {
         const db = new Database();
         //use db.query(sql) to get the number of truths from user_truths where done_count >= 5
         let truths = await db.query(`SELECT COUNT(*) as count FROM user_truths WHERE user_id = ${this.id} AND done_count >= 5 ${serverId ? `AND server_id = ${serverId}` : ''}`);
@@ -279,7 +283,7 @@ class User {
     /**
      * Counts the number of truths the user has failed
      */
-    async truthsFailed(ServerId) {
+    async truthsFailed(serverId = false) {
         const db = new Database();
         //use db.query(sql) to get the number of truths from user_truths where failed_count >= 5
         let truths = await db.query(`SELECT COUNT(*) AS count FROM user_truths WHERE user_id = ${this.id} AND failed_count >= 5 ${serverId ? `AND server_id = ${serverId}` : ''}`);

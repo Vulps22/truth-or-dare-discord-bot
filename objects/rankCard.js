@@ -3,10 +3,10 @@ const { createCanvas, loadImage } = require('canvas');
 const User = require('./user');
 
 class RankCard {
-    constructor(user, username, avatarURL) {
+    constructor(user, avatarURL) {
         /**@type {User} */
         this.user = user;
-        this.username = username;
+        this.username = user.username;
         this.avatarURL = avatarURL;
     }
 
