@@ -12,10 +12,11 @@ class UserQuestion {
    failedCount;
    type;
 
-   constructor(id, userId, questionId, username, image, doneCount, failedCount) {
+   constructor(id, userId, questionId, serverId, username, image, doneCount, failedCount) {
       this.id = id;
       this.userId = userId;
       this.questionId = questionId;
+      this.serverId = serverId;
       this.username = username;
       this.image = image;
       this.doneCount = doneCount;
@@ -41,6 +42,10 @@ class UserQuestion {
 
    getQuestionId() {
       return this.questionId;
+   }
+
+   getServerId() {
+      return this.serverId;
    }
 
    async getQuestion() {
@@ -114,6 +119,7 @@ class UserQuestion {
       let tableSafe = {
          message_id: this.id,
          user_id: this.userId,
+         server_id: this.serverId,
          question_id: this.questionId,
          username: this.username,
          image_url: this.image ?? '',
@@ -138,6 +144,7 @@ class UserQuestion {
       this.id = question.message_id;
       this.userId = question.user_id;
       this.questionId = question.question_id;
+      this.serverId = question.server_id;
       this.username = question.username;
       this.image = question.image_url;
       this.doneCount = question.done_count;

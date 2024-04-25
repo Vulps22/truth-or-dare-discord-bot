@@ -9,7 +9,7 @@ class User {
     isBanned;
     banReason;
 
-    globalXP;
+    globalLevel;
     globalLevelXP;
 
     serverLevel;
@@ -248,40 +248,41 @@ class User {
     /**
      * Counts the number of dares the user has done successfully
      */
-    async daresDone() {
+    async daresDone(serverId) {
+
         const db = new Database();
         //use db.query(sql) to get the number of dares from user_dares where done_count >= 5
-        let dares = await db.query(`SELECT COUNT(*) as count FROM user_dares WHERE user_id = ${this.id} AND done_count >= 5`);
+        let dares = await db.query(`SELECT COUNT(*) as count FROM user_dares WHERE user_id = ${this.id} AND done_count >= 5 ${serverId ? `AND server_id = ${serverId}` : ''}`);
         return dares[0].count;
     }
 
     /**
      * Counts the number of dares the user has failed
      */
-    async daresFailed() {
+    async daresFailed(serverId) {
         const db = new Database();
         //use db.query(sql) to get the number of dares from user_dares where failed_count >= 5
-        let dares = await db.query(`SELECT COUNT(*) as count FROM user_dares WHERE user_id = ${this.id} AND failed_count >= 5`);
+        let dares = await db.query(`SELECT COUNT(*) as count FROM user_dares WHERE user_id = ${this.id} AND failed_count >= 5 ${serverId ? `AND server_id = ${serverId}` : ''}`);
         return dares[0].count;
     }
 
     /**
      * Counts the number of truths the user has done successfully
      */
-    async truthsDone() {
+    async truthsDone(serverId) {
         const db = new Database();
         //use db.query(sql) to get the number of truths from user_truths where done_count >= 5
-        let truths = await db.query(`SELECT COUNT(*) as count FROM user_truths WHERE user_id = ${this.id} AND done_count >= 5`);
+        let truths = await db.query(`SELECT COUNT(*) as count FROM user_truths WHERE user_id = ${this.id} AND done_count >= 5 ${serverId ? `AND server_id = ${serverId}` : ''}`);
         return truths[0].count;
     }
 
     /**
      * Counts the number of truths the user has failed
      */
-    async truthsFailed() {
+    async truthsFailed(ServerId) {
         const db = new Database();
         //use db.query(sql) to get the number of truths from user_truths where failed_count >= 5
-        let truths = await db.query(`SELECT COUNT(*) AS count FROM user_truths WHERE user_id = ${this.id} AND failed_count >= 5`);
+        let truths = await db.query(`SELECT COUNT(*) AS count FROM user_truths WHERE user_id = ${this.id} AND failed_count >= 5 ${serverId ? `AND server_id = ${serverId}` : ''}`);
         return truths[0].count;
     }
 }

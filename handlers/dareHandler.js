@@ -1,4 +1,4 @@
-const { EmbedBuilder, WebhookClient, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { Interaction, EmbedBuilder, WebhookClient, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 const Handler = require('./handler.js')
 const Question = require('../objects/question.js');
@@ -44,6 +44,12 @@ class DareHandler extends Handler {
 		}
 	}
 
+	/**
+	 * 
+	 * @param {Interaction} interaction 
+	 * @returns 
+	 */
+
 	async dare(interaction) {
 		try {
 			const dares = await this.db.list("dares");
@@ -59,7 +65,7 @@ class DareHandler extends Handler {
 			const row = this.createActionRow();
 
 			const message = await interaction.reply({ content: "Here's your Dare!", embeds: [embed], components: [row], fetchReply: true });
-			await this.saveDareMessageId(message.id, interaction.user.id, dare.id, interaction.user.username, interaction.user.displayAvatarURL());
+			await this.saveDareMessageId(message.id, interaction.user.id, dare.id, interaction.guildId, interaction.user.username, interaction.user.displayAvatarURL());
 		} catch (error) {
 			console.error('Error in dare function:', error);
 			interaction.reply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:");
@@ -189,13 +195,13 @@ class DareHandler extends Handler {
 			);
 	}
 
-	async saveDareMessageId(messageId, userId, dareId, username, image) {
+	async saveDareMessageId(messageId, userId, dareId, serverId, username, image) {
 		if (!messageId) {
 			await interaction.channel.send("I'm sorry, I couldn't save the dare to track votes. This is a brain fart. Please reach out for support on the official server.");
 			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
 			await webhookClient.send(`Brain Fart: Couldn't save dare to track votes. Message ID missing`);
 		} else {
-			const userDare = new UserDare(messageId, userId, dareId, username, image);
+			const userDare = new UserDare(messageId, userId, dareId, serverId, username, image);
 			// Assuming userDare.save() is an asynchronous operation to save the data
 			await userDare.save();
 		}

@@ -121,7 +121,7 @@ class RankCard {
         ctx.fillText(`Dares Failed: ${stats.daresFailed ?? 0}`, xright, truthsRow);
         ctx.textAlign = 'left'; // Align text to the left for the XP row
         ctx.fillText(`Global XP: ${this.user.globalLevelXP ?? 0} / ${this.user.calculateXpForLevel(this.user.globalLevel + 1)}`, 240, xpRow);
-        ctx.fillText(`Server XP: ${this.user.serverLevelXP ?? 0} / ${this.user.calculateXpForLevel(this.user.ServerLevel + 1)}`, 240, serverXpRow);
+        ctx.fillText(`Server XP: ${this.user.serverLevelXP ?? 0} / ${this.user.calculateXpForLevel(this.user.serverLevel + 1)}`, 240, serverXpRow);
         ctx.textAlign = 'center'; // Reset text alignment to 'center'
     }
 
@@ -149,7 +149,7 @@ class RankCard {
         const progressBarWidthServer = this.calculateProgressBarWidth(this.user.serverLevelXP, xpForNextServerLevel);
 
 
-        ctx.fillStyle = '#4169E1'; // Server Bar fill color
+        ctx.fillStyle = '#4169E1'; // global Bar fill color
         ctx.fillRect(240, 190, progressBarWidth, 17.5);
         ctx.fillStyle = '#2e8b57'; // Server Bar fill color
         ctx.fillRect(240, 190 + 17.5, progressBarWidthServer, 17.5);
