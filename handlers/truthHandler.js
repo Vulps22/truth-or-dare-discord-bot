@@ -223,7 +223,7 @@ class TruthHandler extends Handler {
 
 		const userTruth = await new UserTruth().load(interaction.message.id, 'truth');
 		/** @type {User} */
-		const $user = await userTruth.getUser();
+		const user = await userTruth.getUser();
 		await user.loadServerUser(interaction.guild.id);
 
 		const $server = new Server(interaction.guild.id);
@@ -231,8 +231,8 @@ class TruthHandler extends Handler {
 
 		const truthUser = userTruth.getUserId();
 		if (truthUser == interaction.user.id) {
-			//await interaction.reply({content: "You can't vote on your own truth!", ephemeral: true});
-			//return;
+			await interaction.reply({content: "You can't vote on your own truth!", ephemeral: true});
+			return;
 		}
 
 		const vote = interaction.customId === 'truth_done' ? 'done' : 'failed';
@@ -246,8 +246,8 @@ class TruthHandler extends Handler {
 
 		const couldVote = await userTruth.vote(interaction.user.id, vote);
 		if(!couldVote) {
-			//await interaction.reply({content: "You've already voted on this truth!", ephemeral: true});
-			//return;
+			await interaction.reply({content: "You've already voted on this truth!", ephemeral: true});
+			return;
 		}
 
 		const embed = await this.createUpdatedTruthEmbed(userTruth, interaction);

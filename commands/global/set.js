@@ -46,10 +46,10 @@ module.exports = {
         ),
     async execute(interaction) {
         //Log the parameters that have reached this point
-       // console.log(interaction.options);
 
+        
         const command = interaction.options.getSubcommand();
-        console.log(command);
+
         switch (command) {
             case 'channel':
                 await setChannel(interaction);
@@ -75,8 +75,7 @@ async function setChannel(interaction) {
             console.log(`Setting announcements to ${channel}`);
             break;
         case 'levelup':
-            console.log(`Setting levelup to ${channel}`);
-            setLevelUpChannel(channel, interaction);
+        setLevelUpChannel(channel, interaction);
             break;
         default:
             console.log(`Invalid event ${event}`);
@@ -90,7 +89,6 @@ async function setChannel(interaction) {
  * @param {TextChannel} channel 
  */
 async function setLevelUpChannel(channel, interaction) {
-    console.log(`Setting levelup to ${channel}`);
 
     if(!hasPermission(channel)) {
         interaction.reply('I need permission to view, send messages, and attach files in that channel');

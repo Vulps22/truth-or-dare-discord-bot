@@ -1,6 +1,4 @@
 const { SlashCommandBuilder, SlashCommandUserOption } = require("discord.js");
-const DareHandler = require("../../handlers/dareHandler");
-const TruthHandler = require("../../handlers/truthHandler");
 const UserHandler = require("../../handlers/userHandler");
 const RankCard = require("../../objects/rankCard");
 const User = require("../../objects/user");
@@ -17,9 +15,9 @@ module.exports = {
 	async execute(interaction) {
         let user_id = interaction.options.getUser('user').id;
         if(!user_id) user_id = interaction.user.id;
-        console.log(user_id);
+
         const handler = new UserHandler();
-        
+
         /** @type {User} */
         const user = await handler.getUser(user_id);
         

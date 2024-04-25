@@ -100,12 +100,7 @@ class Leaderboard {
 
         ctx.fillText(positionText, 150, avatarY + (avatarSize / 2)); // Adjust as necessary
         ctx.textBaseline = 'top'; // Reset the text baseline for the rest of the text
-        // Hardcoded user ID for testing
-        // const testUserID = '914368203482890240'; // Replace 'YOUR_USER_ID' with your actual user ID
-        //player.id = testUserID;
-        console.log(player.id)
-        // Use the hardcoded user ID to fetch the avatar
-        //console.log(this.client)
+
         const playerData = this.client.users.cache.get(player.id);
         let avatarURL;
         if (!playerData) avatarURL = 'https://cdn.discordapp.com/embed/avatars/0.png';
@@ -138,7 +133,7 @@ class Leaderboard {
         this.drawAndTruncateText(ctx, player.username, textX - 120, avatarY + 60, 700, 60, 90);
 
         let level = global ? player.globalLevel : player.serverLevel;
-        console.log(level);
+
         this.drawLevel(ctx, level, global, avatarY + 115);
 
 
@@ -175,8 +170,6 @@ class Leaderboard {
             y: yPosition,  // Y coordinate for the level circle
             radius: 95 // Radius of the level circle
         };
-
-        console.log('level', level);
 
         // Draw the blue circle outline
         ctx.beginPath();

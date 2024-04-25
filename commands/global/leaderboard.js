@@ -16,10 +16,10 @@ module.exports = {
 		),
 	async execute(interaction) {
 		let command = interaction.options.getSubcommand();
-		console.log("command: " + command);
+
 		let leaderboard = new Leaderboard(interaction, interaction.client);
 		let card = await leaderboard.generateLeaderboard(command == 'global');
-		console.log("card generated");
+
 		interaction.reply({ files: [card] });
 
 	}

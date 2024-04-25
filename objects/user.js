@@ -46,9 +46,7 @@ class User {
      */
     async save() {
         const db = new Database();
-        console.log(this.id, this.username, this.globalLevel, this.globalLevelXP, this.isBanned, this.banReason)
         await db.set('users', { id: this.id, username: this.username, global_Level: this.globalLevel, global_level_xp: this.globalLevelXP, is_banned: this.isBanned, ban_reason: this.banReason });
-        console.log("saved user");
         if(this.serverUserLoaded) await this.saveServerUser();
     }
 
@@ -101,10 +99,8 @@ class User {
     }
 
     async saveServerUser() {
-        console.log("saving server user");
         if (!this.serverUserLoaded) return;
         const db = new Database();
-        console.log(this.serverLevel, this.serverLevelXP, this.id, this.serverId)
         await db.query(`UPDATE server_users SET server_level = ${this.serverLevel}, server_level_xp = ${this.serverLevelXP} WHERE user_id = ${this.id} AND server_id = ${this.serverId}`);
     }
 
@@ -167,11 +163,10 @@ class User {
         this.globalLevelXP += xp;  // Directly add XP to the current level XP.
 
         let xpNeededForNextLevel = this.calculateXpForLevel(this.globalLevel + 1);
-        console.log("globalLevel", this.globalLevel);
+
         while (this.globalLevelXP >= xpNeededForNextLevel) {
             this.globalLevelXP -= xpNeededForNextLevel;  // Remove the XP needed for the next level, handling overflow.
             this.globalLevel++;  // Increment the level.
-            console.log("Level up! Remaining XP: " + this.globalLevelXP);
 
             // Re-calculate the XP needed for the next level after the level-up
             xpNeededForNextLevel = this.calculateXpForLevel(this.globalLevel + 1);
@@ -216,7 +211,6 @@ class User {
         while (this.serverLevelXP >= xpNeededForNextLevel) {
             this.serverLevelXP -= xpNeededForNextLevel;  // Remove the XP needed for the next level, handling overflow.
             this.serverLevel++;  // Increment the level.
-            console.log("Level up! Remaining XP: " + this.serverLevelXP);
 
             // Re-calculate the XP needed for the next level after the level-up
             xpNeededForNextLevel = this.calculateXpForLevel(this.serverLevel + 1);

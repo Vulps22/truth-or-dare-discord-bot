@@ -133,7 +133,7 @@ async function runCommand(interaction) {
         }
 
         if (server.isBanned && interaction.commandName !== "help") {
-			console.log("server banned");
+
             interaction.reply('Your Community has been banned for violating the bot\'s Terms of Use');
             const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
             webhookClient.send(`Command Aborted: **Banned** | **server**: ${interaction.guild.name}`);
