@@ -33,7 +33,7 @@ process.on('uncaughtException', (err, origin) => {
 });
 
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+global.client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 const db = new Database()
 db.list("dares").then((dares) => {

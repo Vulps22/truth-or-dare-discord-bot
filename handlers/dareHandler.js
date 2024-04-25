@@ -237,20 +237,17 @@ class DareHandler extends Handler {
 
 		let row = this.createActionRow();
 
-		if (userDare.doneCount >= 5) {
+		if (userDare.doneCount >= 1) {
 			row = this.createPassedActionRow();
-			
-			let user = await userDare.getUser()
-			
+						
 			user.addXP(this.successXp);
-			user.addServerXP(this.successXp);
+			user.addServerXP(server.dare_success_xp);
 
-		} else if (userDare.failedCount >= 5) {
+		} else if (userDare.failedCount >= 1) {
 			row = this.createFailedActionRow();
-			/** @type {User} */
-			let user = await userDare.getUser()
+
 			user.subtractXP(this.failXp);
-			user.subtractServerXP(this.failXp);
+			user.subtractServerXP(server.dare_fail_xp);
 
 		}
 

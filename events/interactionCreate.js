@@ -126,9 +126,7 @@ async function runCommand(interaction) {
         const key = interaction.guildId;
         let server = new Server(key)
 		await server.load();
-		console.log("server loaded");
         if (!server || !server.name) {
-			console.log("server not loaded");
             const db = new Database();
             server = { id: interaction.guildId, name: interaction.guild.name, hasAccepted: 0, isBanned: 0 };
             await db.set('servers', server);
@@ -153,8 +151,7 @@ async function runCommand(interaction) {
 }
 
 function shouldExecute(interaction, server) {
-	console.log("shouldExecute");
-	console.log(server);
+
     if ((!server || !server.hasAccepted) && !(interaction.commandName === "setup" || interaction.commandName === "accept-terms" || interaction.commandName === "help")) {
         interaction.reply("A community Administrator must first run the /setup command before you can use me");
         return false;
@@ -177,7 +174,37 @@ function shouldExecute(interaction, server) {
 
 async function registerServerUser(interaction) {
 	let user = new User(interaction.user.id, interaction.user.username);
-		await user.load();
+        
+		didLoad = await user.load();
+        if(!didLoad) await user.save()
 		await user.loadServerUser(interaction.guildId);
+        
+        if(!user.serverUserLoaded) await user.saveServerUser()
 		return user;
+}
+
+function hasPermission(interaction) {
+    const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
+
+    const botPermissions = interaction.guild.members.me.permissionsIn(interaction.channel);
+
+    if (!botPermissions.has('ViewChannel')) {
+        interaction.reply('I do not have permission to view this channel. I require permission to `view channel` to function correctly');
+        webhookClient.send(`Interaction Failed: No Permissions`);
+        return false;
+    }
+
+    if (!botPermissions.has('SendMessages')) {
+        interaction.reply('I do not have permission to send messages in this channel. I require permission to `send messages` and `embed links` to function correctly');
+        webhookClient.send(`Interaction Failed: No Permissions`);
+        return false;
+    }
+
+    if (!botPermissions.has('EmbedLinks')) {
+        interaction.reply('I do not have permission to embed links in this channel. I require permission to `send messages` and `embed links` to function correctly');
+        webhookClient.send(`Interaction Failed: No Permissions`);
+        return false;
+    }
+
+    return true;
 }
