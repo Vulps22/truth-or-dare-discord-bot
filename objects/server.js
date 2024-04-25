@@ -49,6 +49,40 @@ class Server {
         db.set("servers", this);
     }
 
+    async setLevelRole(roleId, level) {
+        let role = await this.getLevelRole(level) // check if role already exists
+        if(role) {
+            // update role
+            const db = new Database();
+            await db.query(`UPDATE server_level_roles SET role_id = '${roleId}' WHERE server_id = '${this.id}' AND level = ${level}`);
+        } else {
+            // add role
+            const db = new Database();
+            await db.query(`INSERT INTO server_level_roles (server_id, role_id, level) VALUES ('${this.id}', '${roleId}', ${level})`);
+        }
+    }
+
+    async getLevelRole(level) {
+        // Get the role for a specific level
+        const db = new Database();
+    
+        // Adjusted query to get the highest level less than or equal to the given level
+        const query = `
+            SELECT role_id 
+            FROM server_level_roles 
+            WHERE server_id = '${this.id}' AND level <= ${level}
+            ORDER BY level DESC
+            LIMIT 1
+        `;
+    
+        const results = await db.query(query);
+        if (results.length > 0) {
+            return results[0].role_id;  // Assuming the query returns at least one result
+        } else {
+            return null;  // No roles found for this level or below
+        }
+    }
+    
 
 }
 
