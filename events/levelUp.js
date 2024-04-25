@@ -13,7 +13,6 @@ module.exports = {
          */
         async execute(user, type) {
                 const client = global.client;
-                console.log(client);
                 if (!user.serverUserLoaded) await user.loadServerUser();
 
                 if (!user.serverId) throw new Error("Level up was triggered but no server ID was present to notify the user");

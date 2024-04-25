@@ -218,15 +218,15 @@ class User {
             didLevelUp = true;
         }
 
-        if (didLevelUp) global.client.emit(Events.LevelUp, this, "server");
         await this.save();  // Save changes to the database.
+        if (didLevelUp) global.client.emit(Events.LevelUp, this, "server");
     }
 
 
     async subtractServerXP(xp) {
         if (!this.serverUserLoaded) return;
         if (this.serverLevel == 0 && this.serverLevelXP == 0) return;  // Avoid operation if no XP.
-
+        let didLevelDown = false;  // Flag to determine if a level-down event should be emitted.
         this.serverLevelXP -= xp;
         while (this.serverLevelXP < 0) {
             if (this.serverLevel == 0) {
@@ -236,9 +236,13 @@ class User {
             // Subtract the deficit from the XP requirement of the current level, then decrement the level.
             this.serverLevelXP += this.calculateXpForLevel(this.serverLevel);
             this.serverLevel--;
+            didLevelDown = true;
         }
 
         await this.save();  // Save changes.
+        console.log("Will Level Down", didLevelDown)
+        if (didLevelDown) global.client.emit(Events.LevelDown, this, "server");
+
     }
 
 
