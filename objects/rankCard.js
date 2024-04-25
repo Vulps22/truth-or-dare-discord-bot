@@ -61,7 +61,7 @@ class RankCard {
             radius: 35 // Radius of the level circle
         };
     
-        const level = this.user.getLevel();
+        const level = this.user.globalLevel;
         console.log('level', level);
 
         // Draw the blue circle outline
@@ -86,7 +86,7 @@ class RankCard {
             radius: 35 // Radius of the level circle
         };
     
-        const level = this.user.getServerLevel();
+        const level = this.user.ServerLevel;
 
         // Draw the blue circle outline
         ctx.beginPath();
@@ -121,8 +121,8 @@ class RankCard {
         ctx.fillText(`Dares Done: ${stats.daresDone ?? 0}`, xleft, truthsRow);
         ctx.fillText(`Dares Failed: ${stats.daresFailed ?? 0}`, xright, truthsRow);
         ctx.textAlign = 'left'; // Align text to the left for the XP row
-        ctx.fillText(`Global XP: ${this.user.globalLevelXP ?? 0} / ${this.user.calculateXpForLevel(this.user.getLevel() + 1)}`, 240, xpRow);
-        ctx.fillText(`Server XP: ${this.user.serverLevelXP ?? 0} / ${this.user.calculateXpForLevel(this.user.getServerLevel() + 1)}`, 240, serverXpRow);
+        ctx.fillText(`Global XP: ${this.user.globalLevelXP ?? 0} / ${this.user.calculateXpForLevel(this.user.globalLevel + 1)}`, 240, xpRow);
+        ctx.fillText(`Server XP: ${this.user.serverLevelXP ?? 0} / ${this.user.calculateXpForLevel(this.user.ServerLevel + 1)}`, 240, serverXpRow);
         ctx.textAlign = 'center'; // Reset text alignment to 'center'
     }
 
@@ -141,11 +141,11 @@ class RankCard {
         ctx.fillStyle = '#444444'; // Bar background color
         ctx.fillRect(240, 190, 400, 35);
 
-        const currentLevel = this.user.getLevel();
+        const currentLevel = this.user.globalLevel;
         const xpForNextLevel = this.user.calculateXpForLevel(currentLevel + 2);
         const progressBarWidth = this.calculateProgressBarWidth(this.user.globalLevelXP, xpForNextLevel);
 
-        const currentServerLevel = this.user.getServerLevel();
+        const currentServerLevel = this.user.ServerLevel;
         const xpForNextServerLevel = this.user.calculateXpForLevel(currentServerLevel + 2);
         const progressBarWidthServer = this.calculateProgressBarWidth(this.user.serverLevelXP, xpForNextServerLevel);
 

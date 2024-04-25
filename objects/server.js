@@ -1,12 +1,13 @@
 const Database = require("./database");
 
 class Server {
-    // declare without initialising id, name, hasAccepted, isBanned, banReason, date_created, date_updated, dare_success_xp, dare_fail_xp, truth_success_xp, truth_fail_xp
+    
     id;
     name;
     hasAccepted;
     isBanned;
     banReason;
+    level_up_channel;
 
     date_created;
     date_updated;
@@ -39,7 +40,7 @@ class Server {
         this.dare_fail_xp = serverData.dare_fail_xp;
         this.truth_success_xp = serverData.truth_success_xp;
         this.truth_fail_xp = serverData.truth_fail_xp;
-
+        this.level_up_channel = serverData.level_up_channel;
     }
 
     save() {
