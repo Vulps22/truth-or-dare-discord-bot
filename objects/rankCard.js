@@ -79,7 +79,7 @@ class RankCard {
     }
 
     drawServerLevel(ctx) {
-        const globalLevelCircle = {
+        const serverLevelCircle = {
             x: 630, // X coordinate for the level circle
             y: 70,  // Y coordinate for the level circle
             radius: 35 // Radius of the level circle
@@ -89,7 +89,7 @@ class RankCard {
 
         // Draw the blue circle outline
         ctx.beginPath();
-        ctx.arc(globalLevelCircle.x, globalLevelCircle.y, globalLevelCircle.radius, 0, Math.PI * 2);
+        ctx.arc(serverLevelCircle.x, serverLevelCircle.y, serverLevelCircle.radius, 0, Math.PI * 2);
         ctx.strokeStyle = '#2e8b57'; // Dark Green color
         ctx.lineWidth = 4; // Set the line width for the circle
         ctx.stroke();
@@ -99,7 +99,7 @@ class RankCard {
         ctx.font = '30px sans-serif'; // Adjust the size as needed
         ctx.textAlign = 'center'; // Align text horizontally
         ctx.textBaseline = 'middle'; // Align text vertically
-        ctx.fillText(level, globalLevelCircle.x, globalLevelCircle.y);
+        ctx.fillText(level, serverLevelCircle.x, serverLevelCircle.y);
     }
 
 
@@ -141,13 +141,14 @@ class RankCard {
         ctx.fillRect(240, 190, 400, 35);
 
         const currentLevel = this.user.globalLevel;
-        const xpForNextLevel = this.user.calculateXpForLevel(currentLevel + 2);
+        const xpForNextLevel = this.user.calculateXpForLevel(currentLevel + 1);
         const progressBarWidth = this.calculateProgressBarWidth(this.user.globalLevelXP, xpForNextLevel);
 
-        const currentServerLevel = this.user.ServerLevel;
-        const xpForNextServerLevel = this.user.calculateXpForLevel(currentServerLevel + 2);
+        const currentServerLevel = this.user.serverLevel;
+        const xpForNextServerLevel = this.user.calculateXpForLevel(currentServerLevel + 1);
+        console.log('xpForNextServerLevel', xpForNextServerLevel)
         const progressBarWidthServer = this.calculateProgressBarWidth(this.user.serverLevelXP, xpForNextServerLevel);
-
+        console.log('progressBarWidthServer', progressBarWidthServer)
 
         ctx.fillStyle = '#4169E1'; // global Bar fill color
         ctx.fillRect(240, 190, progressBarWidth, 17.5);

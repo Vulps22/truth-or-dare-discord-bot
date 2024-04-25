@@ -59,6 +59,7 @@ class Leaderboard {
             // The user instantiation might need 'id' instead of 'user_id' based on your query structure
             let user = new User(userInfo.id || userInfo.user_id); // Handling both global and server-specific cases
             let player = await user.get();
+            player.loadServerUser(this.interaction.guild.id);
             users.push(player);
         }
 
@@ -131,6 +132,8 @@ class Leaderboard {
         ctx.fillStyle = '#ffffff';
 
         this.drawAndTruncateText(ctx, player.username, textX - 120, avatarY + 60, 700, 60, 90);
+
+        console.log("global", global)
 
         let level = global ? player.globalLevel : player.serverLevel;
 

@@ -4,23 +4,25 @@ const RankCard = require("../../objects/rankCard");
 const User = require("../../objects/user");
 
 module.exports = {
-	data: new SlashCommandBuilder()
-		.setName('rank')
-		.setDescription('View Your Rank and XP!')
+    data: new SlashCommandBuilder()
+        .setName('rank')
+        .setDescription('View Your Rank and XP!')
         .addUserOption(new SlashCommandUserOption()
-        .setName('user')
-        .setDescription('The user you want to view the rank of')
-        .setRequired(false)
-    ),
-	async execute(interaction) {
-        let user_id = interaction.options.getUser('user').id;
-        if(!user_id) user_id = interaction.user.id;
+            .setName('user')
+            .setDescription('The user you want to view the rank of')
+            .setRequired(false)
+        ),
+    async execute(interaction) {
+        let discordUser = interaction.options.getUser('user');
+        let user_id;
+        if(discordUser)user_id = interaction.options.getUser('user').id;
+        else user_id = interaction.user.id;
 
         const handler = new UserHandler();
 
         /** @type {User} */
         const user = await handler.getUser(user_id);
-        
+
         if (!user) {
             interaction.reply("Hmm, I can't find your user data. This might be a bug, try again later");
             return;
@@ -30,6 +32,6 @@ module.exports = {
         let rankCard = new RankCard(user, image);
         let card = await rankCard.generateCard();
         interaction.reply({ files: [card] });
-		
-	}
+
+    }
 }
