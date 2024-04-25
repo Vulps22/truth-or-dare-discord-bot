@@ -1,4 +1,4 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, WebhookClient } = require('discord.js');
+const { Interaction, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, WebhookClient } = require('discord.js');
 
 const Handler = require('./handler.js')
 const Question = require('../objects/question.js');
@@ -50,6 +50,11 @@ class TruthHandler extends Handler {
 		});
 	}
 
+	/**
+	 * 
+	 * @param {Interaction} interaction 
+	 * @returns 
+	 */
 	async truth(interaction) {
 		try{
 		const truths = await this.db.list("truths")
@@ -62,7 +67,7 @@ class TruthHandler extends Handler {
 			const row = this.createActionRow();
 
 			const message = await interaction.reply({ content: "Here's your Truth!", embeds: [embed], components: [row], fetchReply: true });
-			await this.saveTruthMessageId(message.id, interaction.user.id, truth.id, interaction.user.username, interaction.user.displayAvatarURL());
+			await this.saveTruthMessageId(message.id, interaction.user.id, truth.id, interaction.guildId, interaction.user.username, interaction.user.displayAvatarURL());
 		} catch (error) {
 			console.error('Error in truth function:', error);
 			interaction.reply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:");
@@ -202,13 +207,13 @@ class TruthHandler extends Handler {
 			);
 	}
 
-	async saveTruthMessageId(messageId, userId, truthId, username, image) {
+	async saveTruthMessageId(messageId, userId, truthId, serverId, username, image) {
 		if (!messageId) {
 			await interaction.channel.send("I'm sorry, I couldn't save the truth to track votes. This is a brain fart. Please reach out for support on the official server.");
 			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
 			await webhookClient.send(`Brain Fart: Couldn't save truth to track votes. Message ID missing`);
 		} else {
-			const userTruth = new UserTruth(messageId, userId, truthId, username, image);
+			const userTruth = new UserTruth(messageId, userId, truthId, serverId, username, image);
 			// Assuming userTruth.save() is an asynchronous operation to save the data
 			await userTruth.save();
 		}
@@ -218,7 +223,7 @@ class TruthHandler extends Handler {
 
 		const userTruth = await new UserTruth().load(interaction.message.id, 'truth');
 		/** @type {User} */
-		const $user = await userTruth.getUser();
+		const user = await userTruth.getUser();
 		await user.loadServerUser(interaction.guild.id);
 
 		const $server = new Server(interaction.guild.id);
@@ -226,8 +231,8 @@ class TruthHandler extends Handler {
 
 		const truthUser = userTruth.getUserId();
 		if (truthUser == interaction.user.id) {
-			//await interaction.reply({content: "You can't vote on your own truth!", ephemeral: true});
-			//return;
+			await interaction.reply({content: "You can't vote on your own truth!", ephemeral: true});
+			return;
 		}
 
 		const vote = interaction.customId === 'truth_done' ? 'done' : 'failed';
@@ -241,8 +246,8 @@ class TruthHandler extends Handler {
 
 		const couldVote = await userTruth.vote(interaction.user.id, vote);
 		if(!couldVote) {
-			//await interaction.reply({content: "You've already voted on this truth!", ephemeral: true});
-			//return;
+			await interaction.reply({content: "You've already voted on this truth!", ephemeral: true});
+			return;
 		}
 
 		const embed = await this.createUpdatedTruthEmbed(userTruth, interaction);

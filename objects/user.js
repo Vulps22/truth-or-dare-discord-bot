@@ -9,7 +9,7 @@ class User {
     isBanned;
     banReason;
 
-    globalXP;
+    globalLevel;
     globalLevelXP;
 
     serverLevel;
@@ -20,7 +20,7 @@ class User {
 
     serverUserLoaded = false;
 
-    constructor(id, username, client) {
+    constructor(id, username) {
         this.id = id;
         this.username = username;
         this.globalLevel = 0;
@@ -46,9 +46,7 @@ class User {
      */
     async save() {
         const db = new Database();
-        console.log(this.id, this.username, this.globalLevel, this.globalLevelXP, this.isBanned, this.banReason)
         await db.set('users', { id: this.id, username: this.username, global_Level: this.globalLevel, global_level_xp: this.globalLevelXP, is_banned: this.isBanned, ban_reason: this.banReason });
-        console.log("saved user");
         if(this.serverUserLoaded) await this.saveServerUser();
     }
 
@@ -101,10 +99,8 @@ class User {
     }
 
     async saveServerUser() {
-        console.log("saving server user");
         if (!this.serverUserLoaded) return;
         const db = new Database();
-        console.log(this.serverLevel, this.serverLevelXP, this.id, this.serverId)
         await db.query(`UPDATE server_users SET server_level = ${this.serverLevel}, server_level_xp = ${this.serverLevelXP} WHERE user_id = ${this.id} AND server_id = ${this.serverId}`);
     }
 
@@ -154,6 +150,10 @@ class User {
         return newXp >= xpForNextLevel;
     }
 
+    async getImage() {
+        let discordUser = await global.client.users.fetch(this.id);
+        return await discordUser.displayAvatarURL();
+    }
 
 
     async addXP(xp) {
@@ -163,11 +163,10 @@ class User {
         this.globalLevelXP += xp;  // Directly add XP to the current level XP.
 
         let xpNeededForNextLevel = this.calculateXpForLevel(this.globalLevel + 1);
-        console.log("globalLevel", this.globalLevel);
+
         while (this.globalLevelXP >= xpNeededForNextLevel) {
             this.globalLevelXP -= xpNeededForNextLevel;  // Remove the XP needed for the next level, handling overflow.
             this.globalLevel++;  // Increment the level.
-            console.log("Level up! Remaining XP: " + this.globalLevelXP);
 
             // Re-calculate the XP needed for the next level after the level-up
             xpNeededForNextLevel = this.calculateXpForLevel(this.globalLevel + 1);
@@ -212,7 +211,6 @@ class User {
         while (this.serverLevelXP >= xpNeededForNextLevel) {
             this.serverLevelXP -= xpNeededForNextLevel;  // Remove the XP needed for the next level, handling overflow.
             this.serverLevel++;  // Increment the level.
-            console.log("Level up! Remaining XP: " + this.serverLevelXP);
 
             // Re-calculate the XP needed for the next level after the level-up
             xpNeededForNextLevel = this.calculateXpForLevel(this.serverLevel + 1);
@@ -248,40 +246,41 @@ class User {
     /**
      * Counts the number of dares the user has done successfully
      */
-    async daresDone() {
+    async daresDone(serverId) {
+
         const db = new Database();
         //use db.query(sql) to get the number of dares from user_dares where done_count >= 5
-        let dares = await db.query(`SELECT COUNT(*) as count FROM user_dares WHERE user_id = ${this.id} AND done_count >= 5`);
+        let dares = await db.query(`SELECT COUNT(*) as count FROM user_dares WHERE user_id = ${this.id} AND done_count >= 5 ${serverId ? `AND server_id = ${serverId}` : ''}`);
         return dares[0].count;
     }
 
     /**
      * Counts the number of dares the user has failed
      */
-    async daresFailed() {
+    async daresFailed(serverId = false) {
         const db = new Database();
         //use db.query(sql) to get the number of dares from user_dares where failed_count >= 5
-        let dares = await db.query(`SELECT COUNT(*) as count FROM user_dares WHERE user_id = ${this.id} AND failed_count >= 5`);
+        let dares = await db.query(`SELECT COUNT(*) as count FROM user_dares WHERE user_id = ${this.id} AND failed_count >= 5 ${serverId ? `AND server_id = ${serverId}` : ''}`);
         return dares[0].count;
     }
 
     /**
      * Counts the number of truths the user has done successfully
      */
-    async truthsDone() {
+    async truthsDone(serverId = false) {
         const db = new Database();
         //use db.query(sql) to get the number of truths from user_truths where done_count >= 5
-        let truths = await db.query(`SELECT COUNT(*) as count FROM user_truths WHERE user_id = ${this.id} AND done_count >= 5`);
+        let truths = await db.query(`SELECT COUNT(*) as count FROM user_truths WHERE user_id = ${this.id} AND done_count >= 5 ${serverId ? `AND server_id = ${serverId}` : ''}`);
         return truths[0].count;
     }
 
     /**
      * Counts the number of truths the user has failed
      */
-    async truthsFailed() {
+    async truthsFailed(serverId = false) {
         const db = new Database();
         //use db.query(sql) to get the number of truths from user_truths where failed_count >= 5
-        let truths = await db.query(`SELECT COUNT(*) AS count FROM user_truths WHERE user_id = ${this.id} AND failed_count >= 5`);
+        let truths = await db.query(`SELECT COUNT(*) AS count FROM user_truths WHERE user_id = ${this.id} AND failed_count >= 5 ${serverId ? `AND server_id = ${serverId}` : ''}`);
         return truths[0].count;
     }
 }
