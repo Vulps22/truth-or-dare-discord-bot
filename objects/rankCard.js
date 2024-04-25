@@ -34,7 +34,7 @@ class RankCard {
     }
 
     async drawAvatar(ctx) {
-        if(this.avatarURL == 'testMode') return;
+        if (this.avatarURL == 'testMode') return;
         const urlParts = this.avatarURL.split('.');
         urlParts[urlParts.length - 1] = 'png'; // Replace the last item with 'png'
         const avatarURL = urlParts.join('.');
@@ -45,8 +45,7 @@ class RankCard {
 
     drawUsername(ctx) {
         ctx.fillStyle = '#ffffff'; // Text color
-        ctx.font = '70px sans-serif'; // Text font
-        ctx.fillText(this.username, 240, 100);
+        this.drawAndTruncateText(ctx, this.username, 240, 70, 260, 30, 70);
     }
 
     drawLevels(ctx) {
@@ -60,7 +59,7 @@ class RankCard {
             y: 70,  // Y coordinate for the level circle
             radius: 35 // Radius of the level circle
         };
-    
+
         const level = this.user.globalLevel;
         console.log('level', level);
 
@@ -70,7 +69,7 @@ class RankCard {
         ctx.strokeStyle = '#4169E1'; // Royal blue color
         ctx.lineWidth = 4; // Set the line width for the circle
         ctx.stroke();
-    
+
         // Draw the level text
         ctx.fillStyle = '#ffffff'; // White color for the text
         ctx.font = '30px sans-serif'; // Adjust the size as needed
@@ -85,8 +84,8 @@ class RankCard {
             y: 70,  // Y coordinate for the level circle
             radius: 35 // Radius of the level circle
         };
-    
-        const level = this.user.ServerLevel;
+
+        const level = this.user.serverLevel;
 
         // Draw the blue circle outline
         ctx.beginPath();
@@ -94,7 +93,7 @@ class RankCard {
         ctx.strokeStyle = '#2e8b57'; // Dark Green color
         ctx.lineWidth = 4; // Set the line width for the circle
         ctx.stroke();
-    
+
         // Draw the level text
         ctx.fillStyle = '#ffffff'; // White color for the text
         ctx.font = '30px sans-serif'; // Adjust the size as needed
@@ -103,7 +102,7 @@ class RankCard {
         ctx.fillText(level, globalLevelCircle.x, globalLevelCircle.y);
     }
 
-    
+
     async drawUserStats(ctx) {
         const xleft = 320; // X coordinate for the left column text
         const xright = 510; // X coordinate for the right column text
@@ -162,11 +161,33 @@ class RankCard {
 
         // Calculate the width of the progress bar in pixels based on the percentage
         const progressBarWidth = xpPercentage * 400;
-      
+
         // Ensure that progress bar width does not exceed 400
         return Math.min(progressBarWidth, 400);
-      }
-      
+    }
+
+    drawAndTruncateText(ctx, text, x, y, maxWidth, minFontSize, maxFontSize) {
+
+        let fontSize = maxFontSize;  // Starting font size
+        ctx.font = `${fontSize}px Arial`;
+        ctx.textAlign = 'left'; // Align text horizontally
+        ctx.textBaseline = 'middle'; // Align text vertically
+        // Scale down the font size until it fits or reaches the minimum font size
+        while (ctx.measureText(text).width > maxWidth && fontSize > minFontSize) {
+            fontSize--;
+            ctx.font = `${fontSize}px Arial`;
+        }
+    
+        // If the text still doesn't fit, truncate it
+        if (ctx.measureText(text).width > maxWidth) {
+            while (ctx.measureText(text + '...').width > maxWidth) {
+                text = text.slice(0, -1);
+            }
+            text += '...';
+        }
+    
+        ctx.fillText(text, x, y); // Draw the text at the desired location (adjust y as needed)
+    }
 
 }
 
