@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, PermissionsBitField } = require("discord.js");
 const UserHandler = require("../../handlers/userHandler");
 const { ignoreSetup } = require("./accept-terms");
+const SetupHandler = require("../../handlers/setupHandler");
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -10,6 +11,6 @@ module.exports = {
 	administrator: true,
 	ignoreSetup: true,
 	async execute(interaction) {
-		new UserHandler().startSetup(interaction);
+		new SetupHandler().startSetup(interaction);
 	}
 }

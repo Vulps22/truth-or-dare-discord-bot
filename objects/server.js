@@ -1,13 +1,14 @@
 const Database = require("./database");
 
 class Server {
-    
+
     id;
     name;
     hasAccepted;
     isBanned;
     banReason;
     level_up_channel;
+    announcement_channel;
 
     date_created;
     date_updated;
@@ -18,8 +19,9 @@ class Server {
     truth_success_xp;
     truth_fail_xp;
 
-    constructor(id) {
+    constructor(id, name) {
         this.id = id;
+        this.name = name;
     }
 
 
@@ -28,7 +30,7 @@ class Server {
         const db = new Database();
         let serverData = await db.get("servers", this.id);
 
-        if(!serverData) return;
+        if (!serverData) return;
 
         this.name = serverData.name;
         this.hasAccepted = serverData.hasAccepted;
@@ -41,6 +43,7 @@ class Server {
         this.truth_success_xp = serverData.truth_success_xp;
         this.truth_fail_xp = serverData.truth_fail_xp;
         this.level_up_channel = serverData.level_up_channel;
+        this.announcement_channel = serverData.announcement_channel;
     }
 
     save() {
@@ -51,7 +54,7 @@ class Server {
 
     async setLevelRole(roleId, level) {
         let role = await this.getLevelRole(level) // check if role already exists
-        if(role) {
+        if (role) {
             // update role
             const db = new Database();
             await db.query(`UPDATE server_level_roles SET role_id = '${roleId}' WHERE server_id = '${this.id}' AND level = ${level}`);
@@ -65,7 +68,7 @@ class Server {
     async getLevelRole(level) {
         // Get the role for a specific level
         const db = new Database();
-    
+
         // Adjusted query to get the highest level less than or equal to the given level
         const query = `
             SELECT role_id 
@@ -74,7 +77,7 @@ class Server {
             ORDER BY level DESC
             LIMIT 1
         `;
-    
+
         const results = await db.query(query);
         if (results.length > 0) {
             return results[0].role_id;  // Assuming the query returns at least one result
@@ -82,8 +85,6 @@ class Server {
             return null;  // No roles found for this level or below
         }
     }
-    
-
 }
 
 module.exports = Server;
