@@ -12,10 +12,12 @@ module.exports = {
             .setDescription('The user you want to view the rank of')
             .setRequired(false)
         ),
+    nsfw: false,
+    administrator: false,
     async execute(interaction) {
         let discordUser = interaction.options.getUser('user');
         let user_id;
-        if(discordUser)user_id = interaction.options.getUser('user').id;
+        if (discordUser) user_id = interaction.options.getUser('user').id;
         else user_id = interaction.user.id;
 
         const handler = new UserHandler();

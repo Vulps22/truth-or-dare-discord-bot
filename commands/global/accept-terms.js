@@ -11,9 +11,9 @@ module.exports = {
 			return;
 		} else {
 			new UserHandler().acceptSetup(interaction).then(() => {
-				const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_SERVER_URL});
+				const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_SERVER_URL });
 
-			webhookClient.send(`${interaction.guild.name} has accepted Terms and is now using the Bot!`);
+				webhookClient.send(`${interaction.guild.name} has accepted Terms and is now using the Bot!`);
 			});
 		}
 	}

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandNumberOption, SlashCommandStringOption, SlashCommandChannelOption, TextChannel } = require("discord.js");
+const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandNumberOption, SlashCommandStringOption, SlashCommandChannelOption, TextChannel, SlashCommandRoleOption } = require("discord.js");
 const Server = require("../../objects/server");
 
 module.exports = {
@@ -43,12 +43,28 @@ module.exports = {
                 .setDescription('The amount of xp gained or lost')
                 .setMinValue(0)
             )
+        )
+        .addSubcommand(new SlashCommandSubcommandBuilder()
+            .setName('level-for-role')
+            .setDescription('Set the level required for a role')
+            .addRoleOption(new SlashCommandRoleOption()
+                .setName('role')
+                .setDescription('The role to set the level for')
+                .setRequired(true)
+            )
+            .addNumberOption(new SlashCommandNumberOption()
+                .setName('level')
+                .setRequired(true)
+                .setDescription('The level required for the role')
+                .setMinValue(0)
+            )
         ),
+    nsfw: false,
     administrator: true,
     async execute(interaction) {
         //Log the parameters that have reached this point
 
-        
+
         const command = interaction.options.getSubcommand();
 
         switch (command) {
@@ -57,6 +73,9 @@ module.exports = {
                 break;
             case 'xp':
                 await setXP(interaction);
+                break;
+            case 'level-for-role':
+                await setLevelForRole(interaction);
                 break;
             default:
                 interaction.reply('Invalid subcommand');
@@ -71,12 +90,12 @@ async function setChannel(interaction) {
     const channel = interaction.options.getChannel('channel');
 
     //Log the parameters that have reached this point
-    switch( event ) {
+    switch (event) {
         case 'announcements':
             console.log(`Setting announcements to ${channel}`);
             break;
         case 'levelup':
-        setLevelUpChannel(channel, interaction);
+            setLevelUpChannel(channel, interaction);
             break;
         default:
             console.log(`Invalid event ${event}`);
@@ -91,7 +110,7 @@ async function setChannel(interaction) {
  */
 async function setLevelUpChannel(channel, interaction) {
 
-    if(!hasPermission(channel)) {
+    if (!hasPermission(channel)) {
         interaction.reply('I need permission to view, send messages, and attach files in that channel');
         return;
     }
@@ -102,6 +121,18 @@ async function setLevelUpChannel(channel, interaction) {
     await server.save();
 
     channel.send('Level up notifications will be sent here');
+}
+
+async function setLevelForRole(interaction) {
+    const role = interaction.options.getRole('role');
+    const level = interaction.options.getNumber('level');
+
+    const server = new Server(interaction.guildId);
+    await server.load();
+    server.setLevelRole(role.id, level);
+    await server.save();
+
+    interaction.reply(`Set <@&${role.id}> to level ${level}`);
 }
 
 function hasPermission(channel) {

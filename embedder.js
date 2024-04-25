@@ -87,20 +87,4 @@ module.exports = {
 			.setTitle("Terms Accepted")
 			.setDescription("We hope you enjoy playing Truth or Dare with our massive global database of dares! 🙂");
 	},
-	vote() {
-		return new EmbedBuilder()
-			.setTitle('Vote for the Bot')
-			.setDescription('More servers means more users, which means more dares 😈\nMore votes means more servers 😉')
-			.addFields([
-				{ name: 'Top.gg', value: '- [Vote on Top.gg](https://top.gg/bot/1079207025315164331)' },
-				{ name: 'Discord Bot List', value: '- [Vote on Discord Bot List](https://discordbotlist.com/bots/truth-or-dare-online-18)' },
-				{ name: ' ', value: ' ' },
-				{ name: 'Rewards', value: 'We are in active discussion on which new features we could add as rewards for voting for the Bot.\nIf you have any suggestions, Come share them on our Support Server\n\n' },
-			])
-			.addFields(
-				{ name: 'Links', value: ' ' },
-				{ name: 'For updates and help', value: ` [Join Our Support Server](https://discord.gg/${process.env.DISCORD_INVITE_CODE})`, inline: true },
-				{ name: 'Got your own community?', value: `[Add The Bot](${process.env.BOT_INVITE_URL})\n\n`, inline: true },
-			)
-	}	
 }
