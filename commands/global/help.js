@@ -6,6 +6,9 @@ module.exports = {
 	data: new SlashCommandBuilder()
 		.setName("help")
 		.setDescription("Show a list of commands and helpful information"),
+	nsfw: false,
+	administrator: false,
+	ignoreSetup: true,
 	async execute(interaction) {
 		db = new Database();
 		const isSetup = db.get('servers', interaction.guildId)

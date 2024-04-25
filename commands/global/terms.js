@@ -5,6 +5,8 @@ module.exports = {
 	data: new SlashCommandBuilder()
 		.setName("terms")
 		.setDescription("View the Terms of Use"),
+	nsfw: false,
+	administrator: false,
 	async execute(interaction) {
 		interaction.reply({ embeds: [new UserHandler().getTerms()] });
 	}

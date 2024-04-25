@@ -34,10 +34,12 @@ module.exports = {
 				.setRequired(true)
 			)
 		),
-	async execute(interaction) { 
+	nsfw: true,
+	administrator: false,
+	async execute(interaction) {
 		const subcommand = interaction.options.getSubcommand();
 
-		switch(subcommand) {
+		switch (subcommand) {
 			case 'truth':
 				new TruthHandler(interaction.client).giveTruth(interaction);
 				break;

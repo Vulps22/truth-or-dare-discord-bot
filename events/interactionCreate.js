@@ -140,7 +140,7 @@ async function runCommand(interaction) {
             return;
         }
 
-        if (shouldExecute(interaction, server)) await command.execute(interaction);
+        if (shouldExecute(interaction, command, server)) await command.execute(interaction);
     } catch (error) {
         console.error(`Error executing ${interaction.commandName}`);
         console.error(error);
@@ -150,26 +150,37 @@ async function runCommand(interaction) {
     }
 }
 
-function shouldExecute(interaction, server) {
+function shouldExecute(interaction, command, server) {
+    // Ensure server setup for commands that do not ignore setup requirements
+    if (!command.ignoreSetup) {
+        if (!server || !server.hasAccepted) {
+            interaction.reply("A community Administrator must first run the /setup command before you can use me.");
+            return false;
+        }
+    }
 
-    if ((!server || !server.hasAccepted) && !(interaction.commandName === "setup" || interaction.commandName === "accept-terms" || interaction.commandName === "help")) {
-        interaction.reply("A community Administrator must first run the /setup command before you can use me");
+    // Check NSFW requirement for commands that specify it
+    if (command.nsfw && !interaction.channel.nsfw) {
+        interaction.reply("My commands can only be used on channels marked as NSFW (`Age Restricted`).\nFor more information use `/help`.");
         return false;
     }
-    if (!(interaction.commandName === "setup" || interaction.commandName === "accept-terms")) { //only run checks for non setup commands
-        if (interaction.commandName !== "help") {
-            if (!interaction.channel.nsfw) {
-                interaction.reply("My commands can only be used on channels marked as NSFW (`Age Restricted`)\nFor more information use `/help`");
-                return false;
-            }
-        }
-        if (server && (server.name === undefined || server.name === null)) {
-            server.name = interaction.guild.name; //set the name if it's null
-        }
-        const db = new Database();
-        db.set('servers', server); //We always update the server so that we can see servers that have been inactive
-        return true;
-    } else return true; //Without this, we block setup and accept-terms
+
+    // Check for Administrator role for commands that require it
+    if (command.administrator && !interaction.member.permissions.has("Administrator")) {
+        interaction.reply("You need the Administrator role to use this command.");
+        return false;
+    }
+
+    // Set server name if not already set and if there's a valid server object
+    if (server && ((server.name === undefined || server.name === null) || server.name !== interaction.guild.name)) {
+        server.name = interaction.guild.name;
+    }
+
+    // Always update the server in the database to track active servers
+    const db = new Database();
+    db.set('servers', server);
+
+    return true; // If none of the conditions fail, allow the command to execute
 }
 
 async function registerServerUser(interaction) {

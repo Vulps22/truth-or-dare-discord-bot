@@ -44,6 +44,8 @@ module.exports = {
                 .setDescription('Why are you reporting this Server?')
             )
         ),
+    nsfw: false,
+    administrator: false,
     async execute(interaction) {
         const subcommand = interaction.options.getSubcommand();
         const reason = interaction.options.getString('reason');

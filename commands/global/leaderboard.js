@@ -14,6 +14,8 @@ module.exports = {
 			.setName('server')
 			.setDescription('View the top 10 server players!')
 		),
+	nsfw: false,
+	administrator: false,
 	async execute(interaction) {
 		let command = interaction.options.getSubcommand();
 

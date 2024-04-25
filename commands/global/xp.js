@@ -35,6 +35,7 @@ module.exports = {
             )
 
         ),
+    nsfw: false,
     administrator: true,
     async execute(interaction) {
         //Log the parameters that have reached this point

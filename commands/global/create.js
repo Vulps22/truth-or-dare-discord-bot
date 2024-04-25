@@ -2,6 +2,7 @@ const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandStringOp
 const DareHandler = require("../../handlers/dareHandler");
 const TruthHandler = require("../../handlers/truthHandler");
 const Database = require("../../objects/database");
+const { administrator } = require("./xp");
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -25,14 +26,16 @@ module.exports = {
 				.setRequired(true)
 			)
 		),
+	nsfw: true,
+	administrator: false,
 	async execute(interaction) {
 		//handle different subcommands
 		const subcommand = interaction.options.getSubcommand();
 		const db = new Database();
 		lastDare = await db.createdWithin('dares', 2, interaction.user.id);
 		lastTruth = await db.createdWithin('truths', 2, interaction.user.id);
-		if(lastDare.length > 0 || lastTruth.length > 0) {
-			interaction.reply({content: `Aborted creation: User attempted to create a Truth or Dare within 2 minutes`, ephemeral: true});
+		if (lastDare.length > 0 || lastTruth.length > 0) {
+			interaction.reply({ content: `Aborted creation: User attempted to create a Truth or Dare within 2 minutes`, ephemeral: true });
 			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
 			webhookClient.send(`Aborted creation: User attempted to create a Truth or Dare within 2 minutes`);
 
