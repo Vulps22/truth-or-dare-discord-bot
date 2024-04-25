@@ -121,6 +121,7 @@ async function setLevelUpChannel(channel, interaction) {
     await server.save();
 
     channel.send('Level up notifications will be sent here');
+    interaction.reply(`Level up notifications will be sent to <#${channel.id}>`);
 }
 
 async function setLevelForRole(interaction) {
