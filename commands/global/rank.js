@@ -14,6 +14,7 @@ module.exports = {
         ),
     nsfw: false,
     administrator: false,
+    developer: true,
     async execute(interaction) {
         let discordUser = interaction.options.getUser('user');
         let user_id;

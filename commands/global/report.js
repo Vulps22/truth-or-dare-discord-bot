@@ -46,6 +46,7 @@ module.exports = {
         ),
     nsfw: false,
     administrator: false,
+    developer: false,
     async execute(interaction) {
         const subcommand = interaction.options.getSubcommand();
         const reason = interaction.options.getString('reason');

@@ -10,6 +10,13 @@ module.exports = {
     name: Events.InteractionCreate,
     async execute(interaction) {
 
+        const BETA = process.env['BETA'] ?? false;
+        if (BETA) {
+            if (interaction.guildId !== process.env['GUILD_ID']) { //IF NOT THE DEV SERVER, STOP THE COMMAND
+                return;
+            }
+        }
+
 		await registerServerUser(interaction);
 
         if (interaction.isAutocomplete()) {

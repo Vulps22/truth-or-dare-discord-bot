@@ -9,6 +9,7 @@ module.exports = {
 	nsfw: false,
 	administrator: true,
 	ignoreSetup: true,
+	developer: false,
 	async execute(interaction) {
 		new UserHandler().startSetup(interaction);
 	}

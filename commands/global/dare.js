@@ -8,6 +8,7 @@ module.exports = {
 		.setDescription('Get a Dare. Remember to prove you did it ;)'),
 	nsfw: true,
 	administrator: false,
+	developer: false,
 	async execute(interaction) {
 		new DareHandler(interaction.client).dare(interaction);
 	}

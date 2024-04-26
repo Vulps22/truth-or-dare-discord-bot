@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder } = require("discord.js");
 const UserHandler = require("../../handlers/userHandler");
 const Leaderboard = require("../../objects/leaderboard");
+const { developer } = require("./accept-terms");
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -16,6 +17,7 @@ module.exports = {
 		),
 	nsfw: false,
 	administrator: false,
+	developer: true,
 	async execute(interaction) {
 		let command = interaction.options.getSubcommand();
 

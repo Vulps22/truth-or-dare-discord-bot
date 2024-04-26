@@ -7,6 +7,7 @@ module.exports = {
 		.setDescription("View the Terms of Use"),
 	nsfw: false,
 	administrator: false,
+	developer: false,
 	async execute(interaction) {
 		interaction.reply({ embeds: [new UserHandler().getTerms()] });
 	}
