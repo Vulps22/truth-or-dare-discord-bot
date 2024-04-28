@@ -1,5 +1,6 @@
 const Events = require("../events/Events");
 const Database = require("./database");
+const Server = require("./server");
 
 class User {
 
@@ -17,6 +18,9 @@ class User {
 
     levelRandomiser = 1.254;
     levelMultiplier = 100;
+
+    /** @type {Server} */
+    server;
 
     serverUserLoaded = false;
 
@@ -85,6 +89,10 @@ class User {
         this.serverId = serverUser.server_id;
         this.serverLevel = serverUser.server_level;
         this.serverLevelXP = serverUser.server_level_xp;
+
+        this.server = new Server(serverId);
+        await this.server.load();
+
         this.serverUserLoaded = true;
         return true;
     }
@@ -200,8 +208,9 @@ class User {
 
 
     async addServerXP(xp) {
+    
         if (!this.serverUserLoaded) return;  // Ensure the server user is loaded before proceeding.
-
+        if(!this.server || !this.server.hasPremium()) return;
         let didLevelUp = false;  // Flag to determine if a level-up event should be emitted.
 
         this.serverLevelXP += xp;  // Directly add XP to the current level XP.
@@ -224,6 +233,7 @@ class User {
 
 
     async subtractServerXP(xp) {
+        if(!this.server || !this.server.hasPremium()) return;
         if (!this.serverUserLoaded) return;
         if (this.serverLevel == 0 && this.serverLevelXP == 0) return;  // Avoid operation if no XP.
         let didLevelDown = false;  // Flag to determine if a level-down event should be emitted.
