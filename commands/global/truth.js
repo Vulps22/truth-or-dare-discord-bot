@@ -8,7 +8,6 @@ module.exports = {
 		.setDescription('Get a Truth question. Remember, you **must** answer honestly!'),
 	nsfw: true,
 	administrator: false,
-	developer: false,
 	async execute(interaction) {
 
 		new TruthHandler(interaction.client).truth(interaction);

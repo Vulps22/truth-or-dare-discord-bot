@@ -8,7 +8,6 @@ module.exports = {
 		.setDescription('Get a random Truth or Dare, let the bot decide!'),
 	nsfw: true,
 	administrator: false,
-	developer: false,
 	async execute(interaction) {
 		const random = Math.floor(Math.random() * 2);
 		if (random == 1) new DareHandler(interaction.client).dare(interaction);

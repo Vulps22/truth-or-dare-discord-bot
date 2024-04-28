@@ -3,7 +3,6 @@ const DareHandler = require("../../handlers/dareHandler");
 const TruthHandler = require("../../handlers/truthHandler");
 const Database = require("../../objects/database");
 const { administrator } = require("./xp");
-const { developer } = require("./accept-terms");
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -29,7 +28,6 @@ module.exports = {
 		),
 	nsfw: true,
 	administrator: false,
-	developer: false,
 	async execute(interaction) {
 		//handle different subcommands
 		const subcommand = interaction.options.getSubcommand();

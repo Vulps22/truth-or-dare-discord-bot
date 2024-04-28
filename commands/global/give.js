@@ -36,7 +36,6 @@ module.exports = {
 		),
 	nsfw: true,
 	administrator: false,
-	developer: false,
 	async execute(interaction) {
 		const subcommand = interaction.options.getSubcommand();
 
