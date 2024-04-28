@@ -19,6 +19,8 @@ class Server {
     truth_success_xp;
     truth_fail_xp;
 
+    _loaded = false;
+
     constructor(id, name) {
         this.id = id;
         this.name = name;
@@ -44,12 +46,26 @@ class Server {
         this.truth_fail_xp = serverData.truth_fail_xp;
         this.level_up_channel = serverData.level_up_channel;
         this.announcement_channel = serverData.announcement_channel;
+        this.is_entitled = serverData.is_entitled;
+        this.entitlement_end_date = serverData.entitlement_end_date;
+
+        this._loaded = true;
     }
 
     save() {
         // save server to database
         const db = new Database();
-        db.set("servers", this);
+
+        //create an object of every property that doesn't have an underscore
+        let serverData = {};
+        for (let key in this) {
+            if (key.startsWith("_")) continue;
+            serverData[key] = this[key];
+        }
+
+        db.set("servers", serverData);
+
+        this._loaded = true;
     }
 
     async setLevelRole(roleId, level) {
@@ -85,6 +101,29 @@ class Server {
             return null;  // No roles found for this level or below
         }
     }
+
+    async hasPremium() {
+        if(!this.loaded) await this.load();
+        return this.is_entitled && this.entitlement_end_date > Date.now();
+    }
+
+    setXpRate(type, amount) {
+        switch (type) {
+            case 'dare_success':
+                this.dare_success_xp = amount;
+                break;
+            case 'dare_fail':
+                this.dare_fail_xp = amount;
+                break;
+            case 'truth_success':
+                this.truth_success_xp = amount;
+                break;
+            case 'truth_fail':
+                this.truth_fail_xp = amount;
+                break;
+        }
+    }
+
 }
 
 module.exports = Server;

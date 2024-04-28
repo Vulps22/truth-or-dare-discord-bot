@@ -219,7 +219,7 @@ class DareHandler extends Handler {
 		await server.load();
 
 		const dareUser = userDare.getUserId();
-		if (dareUser == interaction.user.id) {
+		if (dareUser == interaction.user.id && !this.ALPHA) {
 			interaction.reply({content: "You can't vote on your own dare!", ephemeral: true});
 			return;
 		}
@@ -234,7 +234,7 @@ class DareHandler extends Handler {
 		}
 
 		const couldVote = await userDare.vote(interaction.user.id, vote);
-		if (!couldVote) {
+		if (!couldVote && !this.ALPHA) {
 			await interaction.reply({content: "You've already voted on this dare!", ephemeral: true});
 			return;
 		}
@@ -243,13 +243,13 @@ class DareHandler extends Handler {
 
 		let row = this.createActionRow();
 
-		if (userDare.doneCount >= 5) {
+		if (userDare.doneCount >= this.vote_count) {
 			row = this.createPassedActionRow();
 						
 			user.addXP(this.successXp);
 			user.addServerXP(server.dare_success_xp);
 
-		} else if (userDare.failedCount >= 5) {
+		} else if (userDare.failedCount >= this.vote_count) {
 			row = this.createFailedActionRow();
 
 			user.subtractXP(this.failXp);

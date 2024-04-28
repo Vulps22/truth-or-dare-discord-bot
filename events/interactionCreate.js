@@ -1,4 +1,4 @@
-const { Events, WebhookClient } = require("discord.js");
+const { Events, WebhookClient, Interaction } = require("discord.js");
 const UserHandler = require("../handlers/userHandler");
 const Database = require("../objects/database");
 const DareHandler = require("../handlers/dareHandler");
@@ -9,6 +9,11 @@ const SetupHandler = require("../handlers/setupHandler");
 
 module.exports = {
     name: Events.InteractionCreate,
+    /**
+     * 
+     * @param {Interaction} interaction 
+     * @returns 
+     */
     async execute(interaction) {
 
         await registerServerUser(interaction);
@@ -154,13 +159,20 @@ async function runCommand(interaction) {
         webhookClient.send(`New Brain Fart occurred!\nCommand: ${interaction.commandName}\nError: ${error.message}`);
     }
 }
-
+/**
+ * 
+ * @param {Interaction} interaction 
+ * @param {*} command 
+ * @param {Server} server 
+ * @returns 
+ */
 function shouldExecute(interaction, command, server) {
 
-    console.log(interaction);
-
-    if(command.isPremium) {
-        
+    if (command.premium) {
+        if (!server.is_entitled) {
+            interaction.sendPremiumRequired();
+            return false;
+        }
     }
 
     // Ensure server setup for commands that do not ignore setup requirements
@@ -186,11 +198,8 @@ function shouldExecute(interaction, command, server) {
     // Set server name if not already set and if there's a valid server object
     if (server && ((server.name === undefined || server.name === null) || server.name !== interaction.guild.name)) {
         server.name = interaction.guild.name;
+        server.save();
     }
-
-    // Always update the server in the database to track active servers
-    const db = new Database();
-    db.set('servers', server);
 
     return true; // If none of the conditions fail, allow the command to execute
 }

@@ -226,11 +226,11 @@ class TruthHandler extends Handler {
 		const user = await userTruth.getUser();
 		await user.loadServerUser(interaction.guild.id);
 
-		const $server = new Server(interaction.guild.id);
-		await $server.load();
+		const server = new Server(interaction.guild.id);
+		await server.load();
 
 		const truthUser = userTruth.getUserId();
-		if (truthUser == interaction.user.id) {
+		if (truthUser == interaction.user.id && !this.ALPHA) {
 			await interaction.reply({content: "You can't vote on your own truth!", ephemeral: true});
 			return;
 		}
@@ -245,7 +245,7 @@ class TruthHandler extends Handler {
 		}
 
 		const couldVote = await userTruth.vote(interaction.user.id, vote);
-		if(!couldVote) {
+		if(!couldVote && !this.ALPHA) {
 			await interaction.reply({content: "You've already voted on this truth!", ephemeral: true});
 			return;
 		}
@@ -254,11 +254,11 @@ class TruthHandler extends Handler {
 
 		let row = this.createActionRow();
 
-		if(userTruth.doneCount >= 5) {
+		if(userTruth.doneCount >= this.vote_count) {
 			row = this.createPassedActionRow();
 			user.addXP(this.successXp);
 			user.addServerXP(server.truth_success_xp);
-		} else if(userTruth.failedCount >= 5) {
+		} else if(userTruth.failedCount >= this.vote_count) {
 			row = this.createFailedActionRow();
 			user.subtractXP(this.failXp);
 			user.subtractServerXP(server.truth_fail_xp);
