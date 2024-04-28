@@ -198,11 +198,8 @@ function shouldExecute(interaction, command, server) {
     // Set server name if not already set and if there's a valid server object
     if (server && ((server.name === undefined || server.name === null) || server.name !== interaction.guild.name)) {
         server.name = interaction.guild.name;
+        server.save();
     }
-
-    // Always update the server in the database to track active servers
-    const db = new Database();
-    db.set('servers', server);
 
     return true; // If none of the conditions fail, allow the command to execute
 }

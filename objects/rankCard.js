@@ -3,6 +3,11 @@ const { createCanvas, loadImage } = require('canvas');
 const User = require('./user');
 
 class RankCard {
+    user;
+    username;
+    avatarURL;
+    premium = false;
+
     constructor(user, avatarURL) {
         /**@type {User} */
         this.user = user;
@@ -11,6 +16,7 @@ class RankCard {
     }
 
     async generateCard() {
+        this.premium = await this.user.server.hasPremium();
         const canvas = this.createCanvas();
         const ctx = canvas.getContext('2d');
 
@@ -50,7 +56,8 @@ class RankCard {
 
     drawLevels(ctx) {
         this.drawGlobalLevel(ctx);
-        this.drawServerLevel(ctx);
+        if (this.premium)
+            this.drawServerLevel(ctx);
     }
 
     drawGlobalLevel(ctx) {
@@ -114,6 +121,9 @@ class RankCard {
 
         let stats = await this.getStats();
 
+        let serverText = `${this.user.serverLevelXP ?? 0} / ${this.user.calculateXpForLevel(this.user.serverLevel + 1)}`;
+        if (!this.premium) serverText = 'GET PREMIUM TO VIEW';
+
         ctx.font = '20px sans-serif'; // Set a smaller font size for the details
         ctx.fillText(`Truths Done: ${stats.truthsDone ?? 0}`, xleft, daresRow);
         ctx.fillText(`Truths Failed: ${stats.truthsFailed ?? 0}`, xright, daresRow);
@@ -121,7 +131,7 @@ class RankCard {
         ctx.fillText(`Dares Failed: ${stats.daresFailed ?? 0}`, xright, truthsRow);
         ctx.textAlign = 'left'; // Align text to the left for the XP row
         ctx.fillText(`Global XP: ${this.user.globalLevelXP ?? 0} / ${this.user.calculateXpForLevel(this.user.globalLevel + 1)}`, 240, xpRow);
-        ctx.fillText(`Server XP: ${this.user.serverLevelXP ?? 0} / ${this.user.calculateXpForLevel(this.user.serverLevel + 1)}`, 240, serverXpRow);
+        ctx.fillText(`Server XP: ${serverText}`, 240, serverXpRow);
         ctx.textAlign = 'center'; // Reset text alignment to 'center'
     }
 
@@ -136,6 +146,10 @@ class RankCard {
         return stats;
     }
 
+    /**
+     * 
+     * @param {CanvasRenderingContext2D} ctx 
+     */
     drawProgressBars(ctx) {
         ctx.fillStyle = '#444444'; // Bar background color
         ctx.fillRect(240, 190, 400, 35);
@@ -153,7 +167,13 @@ class RankCard {
         ctx.fillStyle = '#4169E1'; // global Bar fill color
         ctx.fillRect(240, 190, progressBarWidth, 17.5);
         ctx.fillStyle = '#2e8b57'; // Server Bar fill color
-        ctx.fillRect(240, 190 + 17.5, progressBarWidthServer, 17.5);
+        if (this.premium) ctx.fillRect(240, 190 + 17.5, progressBarWidthServer, 17.5);
+        else {
+            //draw the word PREMIUM over the bar
+            ctx.fillStyle = '#ffffff'; // White color for the text
+            ctx.font = '15px sans-serif'; // Adjust the size as needed
+            ctx.fillText('GET PREMIUM TO VIEW', 440, 195 + 22);
+        }
     }
 
     calculateProgressBarWidth(currentXp, xpForNextLevel) {
@@ -178,7 +198,7 @@ class RankCard {
             fontSize--;
             ctx.font = `${fontSize}px Arial`;
         }
-    
+
         // If the text still doesn't fit, truncate it
         if (ctx.measureText(text).width > maxWidth) {
             while (ctx.measureText(text + '...').width > maxWidth) {
@@ -186,7 +206,7 @@ class RankCard {
             }
             text += '...';
         }
-    
+
         ctx.fillText(text, x, y); // Draw the text at the desired location (adjust y as needed)
     }
 
