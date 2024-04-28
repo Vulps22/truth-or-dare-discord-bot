@@ -87,4 +87,29 @@ module.exports = {
 			.setTitle("Terms Accepted")
 			.setDescription("We hope you enjoy playing Truth or Dare with our massive global database of dares! 🙂");
 	},
+
+	premiumFeatures() {
+        return new EmbedBuilder()
+            .setTitle("Unlock Premium Features")
+            .setDescription("Enhance your Truth or Dare experience with exclusive premium features!")
+            .addFields([
+                {
+                    name: "Server-only Levelling System",
+                    value: "Track XP gained by users within your server, separately from the global XP system."
+                },
+                {
+                    name: "Server-only Leaderboard",
+                    value: "Have a dedicated leaderboard that ranks users based on their server-only XP."
+                },
+                {
+                    name: "Role Assignment by Levels",
+                    value: "Automatically assign roles to users as they reach new levels within your server."
+                },
+                {
+                    name: "Server-only Truth/Dare Pool (Coming Soon)",
+                    value: "Create and use a private pool of truths and dares exclusive to your server."
+                }
+            ])
+            .setFooter({ text: "Interested in going premium? Use /upgrade to learn more and subscribe!" });
+    },
 }

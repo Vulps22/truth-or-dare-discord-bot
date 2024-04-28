@@ -5,12 +5,13 @@ const DareHandler = require("../handlers/dareHandler");
 const TruthHandler = require("../handlers/truthHandler");
 const Server = require("../objects/server");
 const User = require("../objects/user");
+const SetupHandler = require("../handlers/setupHandler");
 
 module.exports = {
     name: Events.InteractionCreate,
     async execute(interaction) {
 
-		await registerServerUser(interaction);
+        await registerServerUser(interaction);
 
         if (interaction.isAutocomplete()) {
             await handleAutoComplete(interaction);
@@ -62,13 +63,17 @@ async function handleAutoComplete(interaction) {
 
 async function handleButton(interaction) {
     let buttonId = interaction.customId;
-    let commandName = buttonId.split('_')[0];
+    let idComponents = buttonId.split('_')
+    let commandName = idComponents[0];
     switch (commandName) {
         case "dare":
             await new DareHandler(interaction.client).vote(interaction);
             break;
         case "truth":
             await new TruthHandler(interaction.client).vote(interaction);
+            break;
+        case "setup":
+            handleSetupButton(interaction, idComponents[1]);
             break;
         default:
             const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
@@ -125,7 +130,7 @@ async function runCommand(interaction) {
 
         const key = interaction.guildId;
         let server = new Server(key)
-		await server.load();
+        await server.load();
         if (!server || !server.name) {
             const db = new Database();
             server = { id: interaction.guildId, name: interaction.guild.name, hasAccepted: 0, isBanned: 0 };
@@ -151,6 +156,13 @@ async function runCommand(interaction) {
 }
 
 function shouldExecute(interaction, command, server) {
+
+    console.log(interaction);
+
+    if(command.isPremium) {
+        
+    }
+
     // Ensure server setup for commands that do not ignore setup requirements
     if (!command.ignoreSetup) {
         if (!server || !server.hasAccepted) {
@@ -184,14 +196,14 @@ function shouldExecute(interaction, command, server) {
 }
 
 async function registerServerUser(interaction) {
-	let user = new User(interaction.user.id, interaction.user.username);
-        
-		didLoad = await user.load();
-        if(!didLoad) await user.save()
-		await user.loadServerUser(interaction.guildId);
-        
-        if(!user.serverUserLoaded) await user.saveServerUser()
-		return user;
+    let user = new User(interaction.user.id, interaction.user.username);
+
+    didLoad = await user.load();
+    if (!didLoad) await user.save()
+    await user.loadServerUser(interaction.guildId);
+
+    if (!user.serverUserLoaded) await user.saveServerUser()
+    return user;
 }
 
 function hasPermission(interaction) {
@@ -218,4 +230,15 @@ function hasPermission(interaction) {
     }
 
     return true;
+}
+
+function handleSetupButton(interaction, step) {
+    const setupHandler = new SetupHandler();
+    console.log(step)
+    switch (step) {
+        case "1":
+            console.log('step 1')
+            setupHandler.action_1(interaction);
+            break;
+    }
 }

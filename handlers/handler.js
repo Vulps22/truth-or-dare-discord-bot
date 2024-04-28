@@ -2,9 +2,9 @@ const Database = require('../objects/database.js');
 const Question = require('../objects/question.js');
 
 class Handler {
+  db;
   constructor() {
     this.db = new Database();
-    this.Question = Question;
   }
 
   async getQuestions(key) {
