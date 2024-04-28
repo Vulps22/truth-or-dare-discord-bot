@@ -44,6 +44,8 @@ class Server {
         this.truth_fail_xp = serverData.truth_fail_xp;
         this.level_up_channel = serverData.level_up_channel;
         this.announcement_channel = serverData.announcement_channel;
+        this.is_entitled = serverData.is_entitled;
+        this.entitlement_end_date = serverData.entitlement_end_date;
     }
 
     save() {
@@ -85,6 +87,28 @@ class Server {
             return null;  // No roles found for this level or below
         }
     }
+
+    hasPremium() {
+        return this.is_entitled && this.entitlement_end_date > Date.now();
+    }
+
+    setXpRate(type, amount) {
+        switch (type) {
+            case 'dare_success':
+                this.dare_success_xp = amount;
+                break;
+            case 'dare_fail':
+                this.dare_fail_xp = amount;
+                break;
+            case 'truth_success':
+                this.truth_success_xp = amount;
+                break;
+            case 'truth_fail':
+                this.truth_fail_xp = amount;
+                break;
+        }
+    }
+
 }
 
 module.exports = Server;

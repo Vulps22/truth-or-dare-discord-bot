@@ -92,7 +92,7 @@ async function setChannel(interaction) {
     //Log the parameters that have reached this point
     switch (event) {
         case 'announcements':
-            console.log(`Setting announcements to ${channel}`);
+            setAnnouncementChannel(channel, interaction);
             break;
         case 'levelup':
             setLevelUpChannel(channel, interaction);
@@ -101,12 +101,47 @@ async function setChannel(interaction) {
             console.log(`Invalid event ${event}`);
             break;
     }
-    //interaction.reply(`Setting ${event} notifications to ${channel}`);
+}
+
+async function setXP(interaction) {
+    const type = interaction.options.getString('type');
+    const amount = interaction.options.getNumber('amount');
+
+    if(amount < 0) {
+        interaction.reply('You cannot set negative XP');
+        return;
+    }
+
+    const server = new Server(interaction.guildId);
+    await server.load();
+
+    server.setXpRate(type, amount);
+    await server.save();
+
+    interaction.reply(`Set ${type} XP to ${amount}`);
+}
+
+
+async function setAnnouncementChannel(channel, interaction) {
+
+    if (!hasPermission(channel)) {
+        interaction.reply('I need permission to view, send messages, and attach files in that channel');
+        return;
+    }
+
+    const server = new Server(channel.guildId);
+    await server.load();
+    server.announcement_channel = channel.id;
+    await server.save();
+
+    channel.send('Announcements will be sent here');
+    interaction.reply(`Announcements will be sent to <#${channel.id}>`);
 }
 
 /**
  * 
  * @param {TextChannel} channel 
+ * @param {Interaction} interaction
  */
 async function setLevelUpChannel(channel, interaction) {
 
@@ -117,6 +152,12 @@ async function setLevelUpChannel(channel, interaction) {
 
     const server = new Server(channel.guildId);
     await server.load();
+    
+    if(!server.hasPremium()) {
+        interaction.sendPremiumRequired();
+        return;
+    }
+
     server.level_up_channel = channel.id;
     await server.save();
 
@@ -125,6 +166,12 @@ async function setLevelUpChannel(channel, interaction) {
 }
 
 async function setLevelForRole(interaction) {
+    
+    if(!server.hasPremium()) {
+        interaction.sendPremiumRequired();
+        return;
+    }
+
     const role = interaction.options.getRole('role');
     const level = interaction.options.getNumber('level');
 

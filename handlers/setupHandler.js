@@ -88,19 +88,24 @@ class SetupHandler extends Handler {
     async action_2(interaction) {
         let server = new Server(interaction.guildId);
         await server.load();
-        let channel = interaction.values[0];
-        console.log(channel)
-        if (!hasPermission(interaction.guildId, channel)) {
+        let channelId = interaction.values[0];
+        console.log(channelId);
+        if (!hasPermission(interaction.guildId, channelId)) {
             interaction.reply('I need permission to view, send messages, embed links, and attach files in that channel');
             return;
         }
 
-        server.announcement_channel = channel;
+        server.announcement_channel = channelId;
         await server.save();
 
-        await interaction.reply(`Announcement channel set to <#${channel}>`);
-        
-        interaction.reply('Setup complete');
+        //SEND A MESSAGE TO THE CHANNEL
+        const guild = global.client.guilds.cache.get(interaction.guildId);
+        const channel = guild.channels.cache.get(channelId);
+        channel.send({ embeds: [embedder.v5()] })
+
+        await interaction.reply(`Announcement channel set to ${channel}`);
+
+        interaction.followUp('Setup complete');
 
     }
 
