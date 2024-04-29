@@ -7,6 +7,7 @@ const User = require('../objects/user.js');
 const Server = require('../objects/server.js');
 const Dare = require('../objects/dare.js');
 const Logger = require('../objects/logger.js');
+const logger = require('../objects/logger.js');
 client = null
 class DareHandler extends Handler {
 
@@ -24,15 +25,13 @@ class DareHandler extends Handler {
 		dare.question = interaction.options.getString('text');
 		if (!dare.question) {
 			interaction.reply("You need to give me a dare!");
-			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
-			webhookClient.send(`Aborted Dare creation: Nothing Given`);
+			logger.error(`Aborted Dare creation: Nothing Given`);
 			return;
 		}
 		let dares = await this.db.list("dares");
 		if (dares.some(q => q.question === dare.question)) {
 			interaction.reply("This dare already exists!");
-			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
-			webhookClient.send(`Aborted Dare creation: Already exists`);
+			logger.error(`Aborted Dare creation: Already exists`);
 			return;
 		} else {
 			let createdDare = await dare.create(interaction.options.getString('text'), interaction.user.id, interaction.guildId);
@@ -45,7 +44,6 @@ class DareHandler extends Handler {
 			interaction.reply({ content: "Thank you for your submission. A member of the moderation team will review your dare shortly", embeds: [embed] });
 
 			Logger.newDare(createdDare);
-			//webhookClient.send(`**Dare Created** | **server**: ${interaction.guild.name} \n- **Dare**: ${question.question} \n- **ID**: ${createdDare.insertId}`);
 		}
 	}
 
@@ -75,8 +73,7 @@ class DareHandler extends Handler {
 		} catch (error) {
 			console.error('Error in dare function:', error);
 			interaction.reply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:");
-			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
-			await webhookClient.send(`Brain Fart: Error in dare function: ${error}`);
+			logger.error(`Brain Fart: Error in dare function: ${error}`);
 		}
 	}
 
@@ -204,8 +201,7 @@ class DareHandler extends Handler {
 	async saveDareMessageId(messageId, userId, dareId, serverId, username, image) {
 		if (!messageId) {
 			await interaction.channel.send("I'm sorry, I couldn't save the dare to track votes. This is a brain fart. Please reach out for support on the official server.");
-			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
-			await webhookClient.send(`Brain Fart: Couldn't save dare to track votes. Message ID missing`);
+			logger.error(`Brain Fart: Couldn't save dare to track votes. Message ID missing`);
 		} else {
 			const userDare = new UserDare(messageId, userId, dareId, serverId, username, image);
 			// Assuming userDare.save() is an asynchronous operation to save the data
@@ -234,8 +230,7 @@ class DareHandler extends Handler {
 
 		if (!userDare) {
 			await interaction.reply("I'm sorry, I couldn't find the dare to track votes. This is a brain fart. Please reach out for support on the official server.");
-			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
-			await webhookClient.send(`Brain Fart: Couldn't find dare to track votes. Message ID missing`);
+			logger.error(`Brain Fart: Couldn't find dare to track votes. Message ID missing`);
 			return;
 		}
 

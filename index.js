@@ -8,6 +8,7 @@ const Database = require('./objects/database.js'); //import Database class
 const DareHandler = require('./handlers/dareHandler.js'); // import DareHandler
 const TruthHandler = require('./handlers/truthHandler.js'); // import TruthHandler
 const UserHandler = require('./handlers/userHandler.js'); // import TruthHandler
+const logger = require('./objects/logger.js'); // import Logger
 const Question = require('./objects/question.js');
 const { exit } = require('node:process');
 
@@ -28,8 +29,7 @@ process.on('uncaughtException', (err, origin) => {
 	console.log(message);
 	console.log('Stack: ', err.stack);
 
-	const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
-	webhookClient.send(message);
+	logger.error(message);
 });
 
 */

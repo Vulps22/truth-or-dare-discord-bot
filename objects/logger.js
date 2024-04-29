@@ -1,8 +1,16 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, TextChannel } = require('discord.js');
 const Dare = require('./dare.js');
 module.exports = {
+
+    async error(message) {
+        let channel = getChannel(process.env['LOG_ERROR_CHANNEL_ID']);
+        let embed = new EmbedBuilder()
+            .setTitle("Error")
+            .setDescription(message)
+        channel.send({ embeds: [embed] });
+    },
+
     /**
-     * 
      * @param {Dare} dare 
      */
     async newDare(dare) {

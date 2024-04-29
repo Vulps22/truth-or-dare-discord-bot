@@ -2,6 +2,7 @@ const { Interaction } = require("discord.js");
 const DareHandler = require("./dareHandler");
 const TruthHandler = require("./truthHandler");
 const BanHandler = require("./banHandler");
+const logger = require("../objects/logger");
 
 class ButtonEventHandler {
     /**
@@ -32,8 +33,7 @@ class ButtonEventHandler {
             handleContentResponse(this.interaction, idComponents);
             break;
         default:
-            const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
-            webhookClient.send(`**Failed to find Button Command** | **server**: ${interaction.guild.name} \n\n**Button ID**: ${buttonId}`);
+            await logger.error(`**Failed to find Button Command** | **server**: ${interaction.guild.name} \n\n**Button ID**: ${buttonId}`);
             interaction.reply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:");
     }
   }

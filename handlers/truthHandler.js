@@ -26,15 +26,13 @@ class TruthHandler extends Handler {
 		truth.question = interaction.options.getString('text');
 		if (!truth.question) {
 			interaction.reply("You need to give me a truth!");
-			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
-			webhookClient.send(`Aborted Truth creation: Nothing Given`);
+			logger.error(`Aborted Truth creation: Nothing Given`);
 			return;
 		}
 		let truths = await this.db.list("truths");
 		if (truths.some(q => q.question === truth.question)) {
 			interaction.reply("This Truth already exists!");
-			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
-			webhookClient.send(`Aborted Truth creation: Already exists`);
+			logger.error(`Aborted Truth creation: Already exists`);
 			return;
 		} else {
 			let createdTruth = await truth.create(interaction.options.getString('text'), interaction.user.id, interaction.guildId);
@@ -47,7 +45,6 @@ class TruthHandler extends Handler {
 			interaction.reply({ content: "Thank you for your submission. A member of the moderation team will review your dare shortly", embeds: [embed] });
 
 			Logger.newTruth(createdTruth);
-			//webhookClient.send(`**Dare Created** | **server**: ${interaction.guild.name} \n- **Dare**: ${question.question} \n- **ID**: ${createdDare.insertId}`);
 		}
 	}
 
@@ -73,8 +70,7 @@ class TruthHandler extends Handler {
 		} catch (error) {
 			console.error('Error in truth function:', error);
 			interaction.reply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:");
-			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
-			await webhookClient.send(`Brain Fart: Error in truth function: ${error}`);
+			logger.error(`Brain Fart: Error in truth function: ${error}`);
 		}
 	}
 
@@ -212,8 +208,7 @@ class TruthHandler extends Handler {
 	async saveTruthMessageId(messageId, userId, truthId, serverId, username, image) {
 		if (!messageId) {
 			await interaction.channel.send("I'm sorry, I couldn't save the truth to track votes. This is a brain fart. Please reach out for support on the official server.");
-			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
-			await webhookClient.send(`Brain Fart: Couldn't save truth to track votes. Message ID missing`);
+			logger.error(`Brain Fart: Couldn't save truth to track votes. Message ID missing`);
 		} else {
 			const userTruth = new UserTruth(messageId, userId, truthId, serverId, username, image);
 			// Assuming userTruth.save() is an asynchronous operation to save the data
@@ -241,8 +236,7 @@ class TruthHandler extends Handler {
 
 		if (!userTruth) {
 			await interaction.reply("I'm sorry, I couldn't find the truth to track votes. This is a brain fart. Please reach out for support on the official server.");
-			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
-			await webhookClient.send(`Brain Fart: Couldn't find truth to track votes. Message ID missing`);
+			logger.error(`Brain Fart: Couldn't find truth to track votes. Message ID missing`);
 			return;
 		}
 
