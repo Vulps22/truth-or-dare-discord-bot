@@ -23,6 +23,7 @@ class Question {
 		this.type = type;
 		this.question = null;
 		this.creator = null;
+		this.isApproved = 0;
 		this.isBanned = 0
 		this.banReason = null;
 		this.messageId = null;
@@ -36,9 +37,11 @@ class Question {
 		if(!dare) return;
 		this.question = dare.question;
         this.creator = dare.creator;
+		this.isApproved = dare.isApproved;
         this.isBanned = dare.isBanned;
         this.banReason = dare.banReason;
 		this.messageId = dare.messageId;
+		console.log(this.isApproved)
         if (dare.serverId) {
             this.server = new Server(dare.serverId);
             await this.server.load();
@@ -64,6 +67,7 @@ class Question {
 			question: this.question,
 			creator: this.creator,
 			isBanned: this.isBanned,
+			isApproved: this.isApproved,
 			banReason: this.banReason,
 			serverId: this.server.id
 		});
@@ -76,15 +80,18 @@ class Question {
 	async save() {
 		const table = this.type + "s";
 		this.exists = true;
-		return await this.db.set(table, {
+		let savable = {
 			id: this.id,
 			question: this.question,
 			creator: this.creator,
+			isApproved: this.isApproved,
 			isBanned: this.isBanned,
 			banReason: this.banReason,
 			serverId: this.server.id,
 			messageId: this.messageId,
-		})
+		}
+
+		return await this.db.set(table, savable)
 	}
 
 async find(messageId) {
@@ -105,7 +112,7 @@ async find(messageId) {
 
 	async approve() {
 		this.isApproved = 1;
-		return this.save();
+		await this.save();
 	}
 
 

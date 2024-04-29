@@ -60,7 +60,8 @@ class TruthHandler extends Handler {
 		try {
 			const truths = await this.db.list("truths")
 			if (!truths || truths.length === 0) { interaction.reply("Hmm, I can't find any truths. This might be a bug, try again later"); return; }
-			const unBannedQuestions = truths.filter(q => !q.isBanned);
+			const unBannedQuestions = truths.filter(q => !q.isBanned && q.isApproved);
+			if(unBannedQuestions.length === 0) { interaction.reply("There are no approved truths to give."); return; }
 			const truth = this.selectRandomTruth(unBannedQuestions);
 			const creator = this.getCreator(truth, this.client);
 
@@ -279,7 +280,6 @@ class TruthHandler extends Handler {
 		let truth = await new Truth().find(interaction.message.id);
 		switch (decision) {
 			case "ban":
-
 				this.getBanReason(interaction, truth.id);
 				break;
 			case "approve":

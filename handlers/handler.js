@@ -4,6 +4,7 @@ const Database = require('../objects/database.js');
 const { Interaction, StringSelectMenuOptionBuilder, StringSelectMenuBuilder, ComponentType, ButtonBuilder, ButtonStyle } = require('discord.js');
 const BanHandler = require('./banHandler.js');
 const logger = require('../objects/logger.js');
+const Question = require('../objects/question.js');
 
 class Handler {
   /**
@@ -124,10 +125,14 @@ class Handler {
           .setDisabled(true),
       );
   }
-
+/**
+ * 
+ * @param {Interaction} interaction 
+ * @param {Question} question 
+ */
   async approve(interaction, question) {
     await question.load();
-    question.approve();
+    await question.approve();
     const message = interaction.message;
     const actionRow = this.createApprovedActionRow();
     await message.edit({ components: [actionRow] });

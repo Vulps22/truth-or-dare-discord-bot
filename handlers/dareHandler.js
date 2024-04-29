@@ -62,7 +62,8 @@ class DareHandler extends Handler {
 				return interaction.reply("Hmm, I can't find any dares. This might be a bug, try again later");
 			}
 
-			const unBannedQuestions = dares.filter(q => !q.isBanned);
+			const unBannedQuestions = dares.filter(q => !q.isBanned && q.isApproved);
+			if (unBannedQuestions.length === 0) { interaction.reply("There are no approved truths to give"); return;}
 			const dare = this.selectRandomDare(unBannedQuestions);
 			const creator = this.getCreator(dare, this.client).username;
 
@@ -279,7 +280,7 @@ class DareHandler extends Handler {
 				this.getBanReason(interaction, dare.id);
 				break;
 			case "approve":
-				dare.approve();
+				this.approve(interaction, dare);
 				break;
 		}
 
