@@ -1,11 +1,9 @@
 const { Events, WebhookClient, Interaction } = require("discord.js");
 const UserHandler = require("../handlers/userHandler");
 const Database = require("../objects/database");
-const DareHandler = require("../handlers/dareHandler");
-const TruthHandler = require("../handlers/truthHandler");
 const Server = require("../objects/server");
 const User = require("../objects/user");
-const SetupHandler = require("../handlers/setupHandler");
+const ButtonEventHandler = require("../handlers/buttonEventHandler");
 
 module.exports = {
     name: Events.InteractionCreate,
@@ -24,7 +22,8 @@ module.exports = {
         }
 
         if (interaction.isButton()) {
-            await handleButton(interaction);
+            await new ButtonEventHandler(interaction).execute();
+            return;
         }
 
         let user;
@@ -63,27 +62,6 @@ async function handleAutoComplete(interaction) {
     } catch (error) {
         console.error(`Error executing autocomplete for ${interaction.commandName}`);
         console.error(error);
-    }
-}
-
-async function handleButton(interaction) {
-    let buttonId = interaction.customId;
-    let idComponents = buttonId.split('_')
-    let commandName = idComponents[0];
-    switch (commandName) {
-        case "dare":
-            await new DareHandler(interaction.client).vote(interaction);
-            break;
-        case "truth":
-            await new TruthHandler(interaction.client).vote(interaction);
-            break;
-        case "setup":
-            handleSetupButton(interaction, idComponents[1]);
-            break;
-        default:
-            const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
-            webhookClient.send(`**Failed to find Button Command** | **server**: ${interaction.guild.name} \n\n**Button ID**: ${buttonId}`);
-            interaction.reply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:");
     }
 }
 
@@ -239,15 +217,4 @@ function hasPermission(interaction) {
     }
 
     return true;
-}
-
-function handleSetupButton(interaction, step) {
-    const setupHandler = new SetupHandler();
-    console.log(step)
-    switch (step) {
-        case "1":
-            console.log('step 1')
-            setupHandler.action_1(interaction);
-            break;
-    }
 }

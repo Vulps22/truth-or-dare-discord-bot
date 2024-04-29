@@ -35,11 +35,11 @@ module.exports = {
 		lastDare = await db.createdWithin('dares', 2, interaction.user.id);
 		lastTruth = await db.createdWithin('truths', 2, interaction.user.id);
 		if (lastDare.length > 0 || lastTruth.length > 0) {
-			interaction.reply({ content: `Aborted creation: User attempted to create a Truth or Dare within 2 minutes`, ephemeral: true });
-			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
-			webhookClient.send(`Aborted creation: User attempted to create a Truth or Dare within 2 minutes`);
+			//interaction.reply({ content: `Aborted creation: User attempted to create a Truth or Dare within 2 minutes`, ephemeral: true });
+			//const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
+			//webhookClient.send(`Aborted creation: User attempted to create a Truth or Dare within 2 minutes`);
 
-			return;
+			//return;
 		}
 
 		switch (subcommand) {

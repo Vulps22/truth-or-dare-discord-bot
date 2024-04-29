@@ -5,6 +5,8 @@ const Question = require('../objects/question.js');
 const UserDare = require('../objects/userDare.js');
 const User = require('../objects/user.js');
 const Server = require('../objects/server.js');
+const Dare = require('../objects/dare.js');
+const Logger = require('../objects/logger.js');
 client = null
 class DareHandler extends Handler {
 
@@ -12,35 +14,38 @@ class DareHandler extends Handler {
 	failXp = 25; //this is subtracted from the user's xp when they fail a dare
 
 	constructor(client) {
-		super()
+		super("dare")
 		this.client = client
 	}
 
 	async createDare(interaction) {
-		const question = new Question(interaction.options.getString('text'), interaction.user.id);
-		if (!question.question) {
+		const dare = new Dare();
+
+		dare.question = interaction.options.getString('text');
+		if (!dare.question) {
 			interaction.reply("You need to give me a dare!");
 			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
 			webhookClient.send(`Aborted Dare creation: Nothing Given`);
 			return;
 		}
 		let dares = await this.db.list("dares");
-		if (dares.some(q => q.question === question.question)) {
+		if (dares.some(q => q.question === dare.question)) {
 			interaction.reply("This dare already exists!");
 			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
 			webhookClient.send(`Aborted Dare creation: Already exists`);
 			return;
 		} else {
-			let createdDare = this.db.set("dares", question);
+			let createdDare = await dare.create(interaction.options.getString('text'), interaction.user.id, interaction.guildId);
+
 			const embed = new EmbedBuilder()
 				.setTitle('New Dare Created!')
-				.setDescription(question.question)
+				.setDescription(dare.question)
 				.setColor('#00ff00')
 				.setFooter({ text: ' Created by ' + interaction.user.username, iconURL: interaction.user.displayAvatarURL() });
-			interaction.reply({content: "Thank you for your submission. A member of the moderation team will review your dare shortly", embeds: [embed] });
+			interaction.reply({ content: "Thank you for your submission. A member of the moderation team will review your dare shortly", embeds: [embed] });
 
-			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_CREATIONS_URL });
-			webhookClient.send(`**Dare Created** | **server**: ${interaction.guild.name} \n- **Dare**: ${question.question} \n- **ID**: ${createdDare.insertId}`);
+			Logger.newDare(createdDare);
+			//webhookClient.send(`**Dare Created** | **server**: ${interaction.guild.name} \n- **Dare**: ${question.question} \n- **ID**: ${createdDare.insertId}`);
 		}
 	}
 
@@ -220,7 +225,7 @@ class DareHandler extends Handler {
 
 		const dareUser = userDare.getUserId();
 		if (dareUser == interaction.user.id && !this.ALPHA) {
-			interaction.reply({content: "You can't vote on your own dare!", ephemeral: true});
+			interaction.reply({ content: "You can't vote on your own dare!", ephemeral: true });
 			return;
 		}
 
@@ -235,7 +240,7 @@ class DareHandler extends Handler {
 
 		const couldVote = await userDare.vote(interaction.user.id, vote);
 		if (!couldVote && !this.ALPHA) {
-			await interaction.reply({content: "You've already voted on this dare!", ephemeral: true});
+			await interaction.reply({ content: "You've already voted on this dare!", ephemeral: true });
 			return;
 		}
 
@@ -245,7 +250,7 @@ class DareHandler extends Handler {
 
 		if (userDare.doneCount >= this.vote_count) {
 			row = this.createPassedActionRow();
-						
+
 			user.addXP(this.successXp);
 			user.addServerXP(server.dare_success_xp);
 
@@ -261,7 +266,24 @@ class DareHandler extends Handler {
 		await interaction.message.edit({ embeds: [embed], components: [row] });
 		await interaction.reply({ content: "Your vote has been recorded!", ephemeral: true });
 	}
+	/**
+	 * mark the dare as approved or banned
+	 * @param {Interaction} interaction 
+	 * @param {string<"ban"|"approve"} decision 
+	 */
+	async setDare(interaction, decision) {
+		let dare = await new Dare().find(interaction.message.id);
+		switch (decision) {
+			case "ban":
 
+				this.getBanReason(interaction, dare.id);
+				break;
+			case "approve":
+				dare.approve();
+				break;
+		}
+
+	}
 
 }
 

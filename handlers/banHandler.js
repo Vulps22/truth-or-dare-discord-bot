@@ -1,9 +1,10 @@
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder} = require("discord.js");
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require("discord.js");
 const Database = require("../objects/database");
 const { env } = require("process");
 const Dare = require("../objects/dare");
+const Handler = require("./handler");
 
-class BanHandler {
+class BanHandler{
     constructor() {
         this.banReasonList = [
             { name: "1 - Breaches Discord T&C or Community Guidelines", value: "Breaches Discord T&C or Community Guidelines" },
@@ -18,6 +19,10 @@ class BanHandler {
             { name: "10 - Shoutout Content", value: "Shoutout Content" },
             { name: "11 - Suspected U-18 Server", value: "Suspected U-18 Server" }
         ];
+    }
+
+    getBanReasons() {
+        return this.banReasonList;
     }
 
     async sendBanNotification(question, reason, type, interaction) {
@@ -67,7 +72,7 @@ class BanHandler {
 
     async updateActionRow(messageId) {
         console.log('Updating Action Row', messageId);
-        if(messageId === 'pre-v5') return false;
+        if (messageId === 'pre-v5') return false;
         const client = global.client;
         const channel = client.channels.cache.get(env.LOG_DARE_CHANNEL_ID);
         const message = await channel.messages.fetch(messageId);
@@ -80,6 +85,7 @@ class BanHandler {
                     .setDisabled(true)
             );
         await message.edit({ components: [actionRow] });
+        return true;
     }
 
     guidanceEmbed() {
@@ -128,7 +134,7 @@ class BanHandler {
             await dare.save();
 
             let didUpdate = await this.updateActionRow(dare.messageId);
-            if(!didUpdate) {
+            if (!didUpdate) {
                 interaction.reply(`Banned: Failed to update Action Row: Pre-V5 Dare\n\nId: ${dare.id} \n\n Question: ${dare.question}\n\nReason: ${reason}`);
             }
             return true;
@@ -142,57 +148,57 @@ class BanHandler {
         const db = new Database();
         try {
             const truth = await db.get('truths', id);
-    
+
             if (!truth) {
                 await interaction.reply(`Attempted to ban unknown truth with ID: ${id}`);
                 return false;
             }
-    
+
             this.sendBanNotification(truth, reason, 'truth', interaction);
             truth.isBanned = 1;
             truth.banReason = reason;
             await db.set('truths', truth);
-    
+
             let didUpdate = await this.updateActionRow(truth.messageId);
             if (!didUpdate) {
                 interaction.reply(`Banned: Failed to update Action Row for Pre-V5 Truth\n\nID: ${truth.id} \n\nQuestion: ${truth.question}\n\nReason: ${reason}`);
             }
-            
+
             return true;
         } catch (error) {
             console.error('Error banning truth:', error);
             return false;
         }
     }
-    
+
     async banServer(id, reason, interaction) {
         const db = new Database();
         try {
             let server = await db.get('servers', id);
-    
+
             if (!server) {
                 await interaction.reply('Server not found!');
                 return false;
             }
-    
+
             this.sendServerBanNotification(server, reason, interaction);
-    
+
             server.isBanned = 1;
             server.banReason = reason;
             await db.set('servers', server);
-    
+
             let didUpdate = await this.updateActionRow(server.messageId);
             if (!didUpdate) {
                 interaction.reply(`Server has been banned, but failed to update Action Row for Pre-V5 Server\n\nID: ${server.id} \n\nName: ${server.name}\n\nReason: ${reason}`);
             }
-            
+
             return true;
         } catch (error) {
             console.error('Error banning server:', error);
             return false;
         }
     }
-    
+
 }
 
 module.exports = BanHandler;

@@ -2,10 +2,11 @@ const Server = require("../objects/server");
 const Handler = require("./handler");
 const embedder = require('../embedder.js');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelSelectMenuBuilder, ChannelType, ComponentType } = require("discord.js");
+const { Console } = require("console");
 
 class SetupHandler extends Handler {
     constructor() {
-        super();
+        super("setup");
     }
 
     async startSetup(interaction) {
@@ -68,6 +69,7 @@ class SetupHandler extends Handler {
             });
 
             collector.on('collect', async i => {
+
                 if (i.customId === 'setup_2_channel') {
                     await this.action_2(i);
                     collector.stop();
