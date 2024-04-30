@@ -1,7 +1,6 @@
-const { Interaction, EmbedBuilder, WebhookClient, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { Interaction, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 const Handler = require('./handler.js')
-const Question = require('../objects/question.js');
 const UserDare = require('../objects/userDare.js');
 const User = require('../objects/user.js');
 const Server = require('../objects/server.js');

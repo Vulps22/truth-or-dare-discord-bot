@@ -59,7 +59,7 @@ class Handler {
    */
   async getBanReason(interaction, id) {
     const banHandler = new BanHandler();
-    const banReasons = banHandler.getBanReasons();
+    const banReasons = this.type == 'server' ? banHandler.getServerBanReasons() : banHandler.getBanReasons();
     let reasons = [];
 
     reasons[0] = new StringSelectMenuOptionBuilder()
@@ -108,10 +108,14 @@ class Handler {
       case 'truth':
         didBan = await new BanHandler().banTruth(id, reason);
         break;
+      case 'server':
+        didBan = await new BanHandler().banServer(id, reason, interaction);
+        break;
     }
 
+
     if (didBan) {
-      await interaction.update({ content: 'Question has been banned', components: [], ephemeral: true });
+      await interaction.update({ content: (this.type == 'server' ? 'Server' : 'Question') + ' has been banned', components: [], ephemeral: true });
     }
   }
 

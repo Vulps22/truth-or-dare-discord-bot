@@ -2,30 +2,45 @@ const Database = require("./database");
 
 class Server {
 
+    _db;
+
     id;
-    name;
-    hasAccepted;
-    isBanned;
-    banReason;
-    level_up_channel;
-    announcement_channel;
+    name = null;
+    hasAccepted = 0;
+    isBanned = 0;
+    banReason = null;
+    level_up_channel = null;
+    announcement_channel = null;
+    message_id = null;
 
-    date_created;
-    date_updated;
+    _date_created;
+    _date_updated;
 
-    dare_success_xp;
-    dare_fail_xp;
+    dare_success_xp = 50;
+    dare_fail_xp = 25;
 
-    truth_success_xp;
-    truth_fail_xp;
+    truth_success_xp = 40;
+    truth_fail_xp = 40;
 
     _loaded = false;
 
     constructor(id, name) {
         this.id = id;
         this.name = name;
+
+        this._db = new Database();
     }
 
+
+    async find(messageId) {
+		const table = this.type + "s";
+		const server = await this._db.query(`select id FROM servers WHERE message_id = ${messageId}`);
+		const serverId = server[0].id;
+		this.id = serverId;
+		console.log(this.id);
+		await this.load();
+		return this;
+}
 
     async load() {
         // load server from database
@@ -38,8 +53,8 @@ class Server {
         this.hasAccepted = serverData.hasAccepted;
         this.isBanned = serverData.isBanned;
         this.banReason = serverData.banReason;
-        this.date_created = serverData.date_created;
-        this.date_updated = serverData.date_updated;
+        this._date_created = serverData.date_created;
+        this._date_updated = serverData.date_updated;
         this.dare_success_xp = serverData.dare_success_xp;
         this.dare_fail_xp = serverData.dare_fail_xp;
         this.truth_success_xp = serverData.truth_success_xp;
@@ -48,6 +63,7 @@ class Server {
         this.announcement_channel = serverData.announcement_channel;
         this.is_entitled = serverData.is_entitled;
         this.entitlement_end_date = serverData.entitlement_end_date;
+        this.message_id = serverData.message_id;
 
         this._loaded = true;
     }
@@ -59,10 +75,10 @@ class Server {
         //create an object of every property that doesn't have an underscore
         let serverData = {};
         for (let key in this) {
+            console.log(key, this[key])
             if (key.startsWith("_")) continue;
             serverData[key] = this[key];
         }
-
         db.set("servers", serverData);
 
         this._loaded = true;
@@ -122,6 +138,14 @@ class Server {
                 this.truth_fail_xp = amount;
                 break;
         }
+    }
+
+    acceptedString() {
+        return this.hasAccepted ? "Yes" : "No";
+    }
+
+    bannedString() {
+        return this.isBanned ? "Yes" : "No";
     }
 
 }

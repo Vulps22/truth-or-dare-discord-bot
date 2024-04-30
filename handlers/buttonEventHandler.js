@@ -3,6 +3,8 @@ const DareHandler = require("./dareHandler");
 const TruthHandler = require("./truthHandler");
 const BanHandler = require("./banHandler");
 const logger = require("../objects/logger");
+const SetupHandler = require("./setupHandler");
+const ServerHandler = require("./serverHandler");
 
 class ButtonEventHandler {
     /**
@@ -63,5 +65,8 @@ function handleContentResponse(interaction, idComponents) {
         case "truth":
             new TruthHandler(interaction.client).setTruth(interaction, decision);
             break;
+        case "server":
+            new ServerHandler(interaction.client).banServer(interaction)
+            
     }
 }

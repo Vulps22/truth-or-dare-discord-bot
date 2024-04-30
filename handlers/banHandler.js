@@ -3,8 +3,9 @@ const Database = require("../objects/database");
 const { env } = require("process");
 const Dare = require("../objects/dare");
 const Handler = require("./handler");
+const Server = require("../objects/server");
 
-class BanHandler{
+class BanHandler {
     constructor() {
         this.banReasonList = [
             { name: "1 - Breaches Discord T&C or Community Guidelines", value: "Breaches Discord T&C or Community Guidelines" },
@@ -19,10 +20,22 @@ class BanHandler{
             { name: "10 - Shoutout Content", value: "Shoutout Content" },
             { name: "11 - Suspected U-18 Server", value: "Suspected U-18 Server" }
         ];
+
+        this.serverBanReasonList = [
+            { name: "1 - Breaches Discord T&C or Community Guidelines", value: "Breaches Discord T&C or Community Guidelines" },
+            { name: "2 - Server Name suggests members could be under 18", value: "Server Name suggests members could be under 18" },
+            { name: "3 - Server Name contains Hate Speech", value: "Server Name contains Hate Speech" },
+            { name: "4 - Confirmed server members are under 18", value: "Confirmed members are under 18" },
+            { name: "5 - Server-wide creation spam", value: "Server-wide creation spam" },
+        ];
     }
 
     getBanReasons() {
         return this.banReasonList;
+    }
+
+    getServerBanReasons() {
+        return this.serverBanReasonList;
     }
 
     async sendBanNotification(question, reason, type, interaction) {
@@ -49,7 +62,7 @@ class BanHandler{
     }
 
     async sendServerBanNotification(guild, reason, interaction) {
-        client = interaction.client;
+        client = global.client;
         try {
             const server = client.guilds.cache.get(guild.id);
             const userId = server.ownerId;
@@ -79,10 +92,15 @@ class BanHandler{
         const actionRow = new ActionRowBuilder()
             .addComponents(
                 new ButtonBuilder()
-                    .setCustomId('new_dare_ban')
+                    .setCustomId('ban_server')
                     .setLabel('Banned')
                     .setStyle(ButtonStyle.Danger)
-                    .setDisabled(true)
+                    .setDisabled(true),
+                    new ButtonBuilder()
+                    .setCustomId('unban_server')
+                    .setLabel('Unban')
+                    .setStyle(ButtonStyle.Primary)
+                    .setDisabled(false)
             );
         await message.edit({ components: [actionRow] });
         return true;
@@ -172,12 +190,12 @@ class BanHandler{
     }
 
     async banServer(id, reason, interaction) {
-        const db = new Database();
         try {
-            let server = await db.get('servers', id);
+            let server = new Server(id);
+            await server.load();
 
-            if (!server) {
-                await interaction.reply('Server not found!');
+            if (!server._loaded) {
+                await interaction.reply('Server not found! It probably removed the bot.');
                 return false;
             }
 
@@ -185,9 +203,9 @@ class BanHandler{
 
             server.isBanned = 1;
             server.banReason = reason;
-            await db.set('servers', server);
+            server.save();
 
-            let didUpdate = await this.updateActionRow(server.messageId);
+            let didUpdate = await this.updateActionRow(server.message_id);
             if (!didUpdate) {
                 interaction.reply(`Server has been banned, but failed to update Action Row for Pre-V5 Server\n\nID: ${server.id} \n\nName: ${server.name}\n\nReason: ${reason}`);
             }

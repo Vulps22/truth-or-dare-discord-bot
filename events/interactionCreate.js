@@ -1,4 +1,4 @@
-const { Events, WebhookClient, Interaction } = require("discord.js");
+const { Events, Interaction } = require("discord.js");
 const UserHandler = require("../handlers/userHandler");
 const Database = require("../objects/database");
 const Server = require("../objects/server");
@@ -39,7 +39,6 @@ module.exports = {
         }
 
         if (interaction.isChatInputCommand()) {
-            await log(interaction);
             if (!hasPermission(interaction)) return;
             await runCommand(interaction);
         }

@@ -3,6 +3,7 @@ const Handler = require("./handler");
 const embedder = require('../embedder.js');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelSelectMenuBuilder, ChannelType, ComponentType } = require("discord.js");
 const { Console } = require("console");
+const logger = require("../objects/logger.js");
 
 class SetupHandler extends Handler {
     constructor() {
@@ -39,7 +40,7 @@ class SetupHandler extends Handler {
         if (choice === 'accept') {
             server.hasAccepted = 1;
             await server.save();
-
+            logger.updateServer(server);
             const actionRow = new ActionRowBuilder()
                 .addComponents(
                     new ButtonBuilder()
@@ -48,6 +49,8 @@ class SetupHandler extends Handler {
                         .setStyle(ButtonStyle.Success)
                         .setDisabled(true)
                 );
+
+                
 
             const channelMenu = new ChannelSelectMenuBuilder()
                 .setCustomId('setup_2_channel')
