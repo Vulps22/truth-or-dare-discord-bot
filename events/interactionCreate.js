@@ -14,7 +14,7 @@ module.exports = {
      * @returns 
      */
     async execute(interaction) {
-        if(isMaintenance() && interaction.commandName !== 'lockdown') {
+        if(isMaintenance() && interaction.guildId !== process.env.GUILD_ID) {
             interaction.reply('Truth Or Dare Online 18+ has been disabled globally for essential maintenance: ' + global.config.maintenance_reason);
             return;
         }
