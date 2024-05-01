@@ -1,6 +1,5 @@
 require('dotenv').config();
 const { Events } = require('discord.js');
-const UserHandler = require('../userHandler');
 const ChannelManager = require('../channelManager');
 
 module.exports = {

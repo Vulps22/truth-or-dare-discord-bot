@@ -1,15 +1,23 @@
-const { Events, WebhookClient } = require("discord.js")
-const Database = require("../database");
+const { Events, Guild } = require("discord.js")
+const Server = require("../objects/server");
+const logger = require("../objects/logger");
 
 module.exports = {
 	name: Events.GuildCreate,
-	async execute(guild) {
-		const db = new Database();
-		db.delete('guilds', guild.id).then(() => {
-			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_SERVER_URL });
-
-			webhookClient.send(`Bot has been added to server: ${guild.name}\n\n || ID: ${guild.id} ||`);
-		})
-
+	/**
+	 * 
+	 * @param {Guild} server 
+	 */
+	async execute(server) {
+		
+		const newServer = new Server(server.id);
+		await newServer.load();
+		if(!newServer._loaded){
+			newServer.name = server.name;
+			await newServer.save();
+			await newServer.load();
+		}
+		console.log("Got here!")
+		await logger.newServer(newServer);
 	}
 }

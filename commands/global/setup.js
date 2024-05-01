@@ -1,17 +1,15 @@
 const { SlashCommandBuilder, PermissionsBitField } = require("discord.js");
-const UserHandler = require("../../userHandler");
+const UserHandler = require("../../handlers/userHandler");
+const SetupHandler = require("../../handlers/setupHandler");
 
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('setup')
 		.setDescription('Required by ALL Servers before users can use any commands'),
+	nsfw: false,
+	administrator: true,
+	ignoreSetup: true,
 	async execute(interaction) {
-		console.log("EXECUTE!");
-		if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-			interaction.reply("Only an administrator can run setup commands or accept my terms")
-			return;
-		} else {
-			new UserHandler().startSetup(interaction);
-		}
+		new SetupHandler().startSetup(interaction);
 	}
 }

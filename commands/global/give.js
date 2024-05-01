@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandUserOption, SlashCommandStringOption } = require("discord.js");
-const TruthHandler = require("../../truthHandler");
-const DareHandler = require("../../dareHandler");
+const TruthHandler = require("../../handlers/truthHandler");
+const DareHandler = require("../../handlers/dareHandler");
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -34,10 +34,12 @@ module.exports = {
 				.setRequired(true)
 			)
 		),
-	async execute(interaction) { 
+	nsfw: true,
+	administrator: false,
+	async execute(interaction) {
 		const subcommand = interaction.options.getSubcommand();
 
-		switch(subcommand) {
+		switch (subcommand) {
 			case 'truth':
 				new TruthHandler(interaction.client).giveTruth(interaction);
 				break;

@@ -1,6 +1,8 @@
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandStringOption } = require("discord.js");
-const DareHandler = require("../../dareHandler");
-const TruthHandler = require("../../truthHandler");
+const DareHandler = require("../../handlers/dareHandler");
+const TruthHandler = require("../../handlers/truthHandler");
+const Database = require("../../objects/database");
+const logger = require("../../objects/logger");
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -24,9 +26,20 @@ module.exports = {
 				.setRequired(true)
 			)
 		),
+	nsfw: true,
+	administrator: false,
 	async execute(interaction) {
 		//handle different subcommands
 		const subcommand = interaction.options.getSubcommand();
+		const db = new Database();
+		lastDare = await db.createdWithin('dares', 2, interaction.user.id);
+		lastTruth = await db.createdWithin('truths', 2, interaction.user.id);
+		if (lastDare.length > 0 || lastTruth.length > 0) {
+			interaction.reply({ content: `Aborted creation: User attempted to create a Truth or Dare within 2 minutes`, ephemeral: true });
+			logger.error(`Aborted creation: User attempted to create a Truth or Dare within 2 minutes`);
+
+			return;
+		}
 
 		switch (subcommand) {
 			case 'dare':
@@ -40,8 +53,7 @@ module.exports = {
 				break;
 
 			default:
-				const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
-				webhookClient.send(`Aborted creation: Invalid type specified`);
+				logger.error(`Aborted creation: Invalid type specified`);
 				break;
 		}
 	}

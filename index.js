@@ -3,13 +3,13 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
-const { modCommands } = require('./command.js');
 const { Client, GatewayIntentBits, Collection, WebhookClient } = require('discord.js');
-const Database = require('./database.js'); //import Database class
-const DareHandler = require('./dareHandler.js'); // import DareHandler
-const TruthHandler = require('./truthHandler.js'); // import TruthHandler
-const UserHandler = require('./userHandler.js'); // import TruthHandler
-const Question = require('./question.js');
+const Database = require('./objects/database.js'); //import Database class
+const DareHandler = require('./handlers/dareHandler.js'); // import DareHandler
+const TruthHandler = require('./handlers/truthHandler.js'); // import TruthHandler
+const UserHandler = require('./handlers/userHandler.js'); // import TruthHandler
+const logger = require('./objects/logger.js'); // import Logger
+const Question = require('./objects/question.js');
 const { exit } = require('node:process');
 
 console.log('Initialising Bot....');
@@ -21,7 +21,7 @@ console.log("Starting in ", ALPHA ? "ALPHA Mode" : "PRODUCTION Mode");
 const TOKEN = ALPHA ? process.env['aTOKEN'] : process.env['TOKEN']
 const CLIENT_ID = ALPHA ? process.env['aCLIENT_ID'] : process.env['CLIENT_ID']
 const GUILD_ID = process.env['GUILD_ID']
-
+/*
 process.on('uncaughtException', (err, origin) => {
 
 	const message = `${process.env.ALPHA ? '[ALPHA]' : ''} UNHANDLED EXCEPTION CAUGHT AT SURFACE LEVEL\n- ${err}\n- ${origin}`;
@@ -29,18 +29,29 @@ process.on('uncaughtException', (err, origin) => {
 	console.log(message);
 	console.log('Stack: ', err.stack);
 
-	const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
-	webhookClient.send(message);
+	logger.error(message);
 });
 
-
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+*/
+global.client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 const db = new Database()
 db.list("dares").then((dares) => {
 	db.list("truths").then((truths) => {
 		console.log("loaded: ", dares.length + truths.length)
 	})
+})
+
+global.config = {
+	maintenance_mode: false,
+	dares_log: '1160740531094159492',
+	truths_log: '1160740531094159492',
+	servers_log: '1160740531094159492',
+}
+
+db.get('config', 1).then((data) => {
+	global.config = data;
+	console.log(global.config)
 })
 
 

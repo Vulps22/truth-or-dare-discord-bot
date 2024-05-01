@@ -1,136 +1,214 @@
-const { Events, WebhookClient } = require("discord.js");
-const UserHandler = require("../userHandler");
-const Database = require("../database");
+const { Events, Interaction } = require("discord.js");
+const UserHandler = require("../handlers/userHandler");
+const Database = require("../objects/database");
+const Server = require("../objects/server");
+const User = require("../objects/user");
+const ButtonEventHandler = require("../handlers/buttonEventHandler");
+const logger = require("../objects/logger");
 
 module.exports = {
-	name: Events.InteractionCreate,
-	async execute(interaction) {
+    name: Events.InteractionCreate,
+    /**
+     * 
+     * @param {Interaction} interaction 
+     * @returns 
+     */
+    async execute(interaction) {
+        if(isMaintenance() && interaction.commandName !== 'lockdown') {
+            interaction.reply('Truth Or Dare Online 18+ has been disabled globally for essential maintenance: ' + global.config.maintenance_reason);
+            return;
+        }
+        await registerServer(interaction);
+        await registerServerUser(interaction);
 
-		if (interaction.isAutocomplete()) {
-			handleAutoComplete(interaction);
-			return;
-		}
+        if (interaction.isAutocomplete()) {
+            await handleAutoComplete(interaction);
+            return;
+        }
 
-		if (interaction.isChatInputCommand()){
-			log(interaction);
-			if(!hasPermission(interaction)) return;
-			console.log("Call RunCommand");
-			await runCommand(interaction);
-		}
-		
-	},
+        if (interaction.isButton()) {
+            await new ButtonEventHandler(interaction).execute();
+            return;
+        }
+
+        let user;
+        try {
+            user = await new UserHandler().getUser(interaction.user.id, interaction.user.username);
+        } catch (error) {
+            console.error('Error getting user:', error);
+            return;
+        }
+
+        if (!user) {
+           logger.error(`**Failed to create User during InteractionCreate** | **server**: ${interaction.guild.name}`);
+        }
+
+        if (interaction.isChatInputCommand()) {
+            if (!hasPermission(interaction)) return;
+            await runCommand(interaction);
+        }
+    }
 };
 
-
 async function handleAutoComplete(interaction) {
+    const command = interaction.client.commands.get(interaction.commandName);
 
-	// Handle autocomplete interaction
-	const command = interaction.client.commands.get(interaction.commandName);
+    if (!command) {
+        console.error(`No command matching ${interaction.commandName} was found.`);
+        return;
+    }
 
-	if (!command) {
-		console.error(`No command matching ${interaction.commandName} was found.`);
-		return;
-	}
-
-	try {
-		if (command.autocomplete) {
-			await command.autocomplete(interaction);
-		}
-	} catch (error) {
-		console.error(`Error executing autocomplete for ${interaction.commandName}`);
-		console.error(error);
-	}
-}
-
-function log(interaction) {
-
-	let guildName = interaction.guild.name ?? null;
-
-	const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
-	webhookClient.send(`**Command**: ${interaction.commandName} | **server**: ${guildName ? guildName : "UNKNOWN SERVER NAME"}`);
+    try {
+        if (command.autocomplete) {
+            await command.autocomplete(interaction);
+        }
+    } catch (error) {
+        console.error(`Error executing autocomplete for ${interaction.commandName}`);
+        console.error(error);
+    }
 }
 
 function hasPermission(interaction) {
-	const botPermissions = interaction.guild.members.me.permissionsIn(interaction.channel);
+    
 
+    const botPermissions = interaction.guild.members.me.permissionsIn(interaction.channel);
 
-		if (!botPermissions.has('SendMessages')) {
-			interaction.reply('I do not have permission to send messages in this channel. I require permission to `send messages` and `embed links` to function correctly');
-			webhookClient.send(`Interaction Failed: No Permissions`);
-			return;
-		}
+    if (!botPermissions.has('ViewChannel')) {
+        interaction.reply('I do not have permission to view this channel. I require permission to `view channel` to function correctly');
+        return false;
+    }
 
-		if (!botPermissions.has('EmbedLinks')) {
-			interaction.reply('I do not have permission to embed links in this channel. I require permission to `send messages` and `embed links` to function correctly');
-			webhookClient.send(`Interaction Failed: No Permissions`);
-			return;
-		}
+    if (!botPermissions.has('SendMessages')) {
+        interaction.reply('I do not have permission to send messages in this channel. I require permission to `send messages` and `embed links` to function correctly');
+        return false;
+    }
 
-		console.log("Permission granted");
-		return true;
+    if (!botPermissions.has('EmbedLinks')) {
+        interaction.reply('I do not have permission to embed links in this channel. I require permission to `send messages` and `embed links` to function correctly');
+        return false;
+    }
+
+    return true;
 }
 
 async function runCommand(interaction) {
-	console.log("run!");
-	try {
-		const command = interaction.client.commands.get(interaction.commandName);
+    try {
+        const command = interaction.client.commands.get(interaction.commandName);
 
-		if (!command) {
-			console.error(
-				`No command matching ${interaction.commandName} was found.`
-			);
-			return;
-		}
+        if (!command) {
+            console.error(`No command matching ${interaction.commandName} was found.`);
+            return;
+        }
 
-		const key = interaction.guildId
-		let guild = await new UserHandler().findGuild(key)
+        const key = interaction.guildId;
+        let server = new Server(key)
+        await server.load();
+        if (!server || !server.name) {
+            const db = new Database();
+            server = { id: interaction.guildId, name: interaction.guild.name, hasAccepted: 0, isBanned: 0 };
+            await db.set('servers', server);
+        }
 
-		console.log(guild);
+        if (server.isBanned && interaction.commandName !== "help") {
 
-		if(!guild) {
-			db = new Database();
-			guild = { id: interaction.guildId, name: interaction.guild.name, hasAccepted: 0, isBanned: 0 }
-			//await db.set('guilds', guild);
-		}
+            interaction.reply('Your Community has been banned for violating the bot\'s Terms of Use');
+            return;
+        }
 
-		if (guild.isBanned && interaction.commandName !== "help") {
-			interaction.reply('Your Community has been banned for violating the bot\'s Terms of Use');
-			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
-			webhookClient.send(`Command Aborted: **Banned** | **server**: ${interaction.guild.name}`);
+        if (shouldExecute(interaction, command, server)) await command.execute(interaction);
+    } catch (error) {
+        console.error(`Error executing ${interaction.commandName}`);
+        console.error(error);
+        interaction.reply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:");
+        logger.error(`New Brain Fart occurred!\nCommand: ${interaction.commandName}\nError: ${error.message}`);
+    }
+}
+/**
+ * 
+ * @param {Interaction} interaction 
+ * @param {*} command 
+ * @param {Server} server 
+ * @returns 
+ */
+function shouldExecute(interaction, command, server) {
 
-			return;
-		}
+    if (command.premium) {
+        if (!server.is_entitled) {
+            interaction.sendPremiumRequired();
+            return false;
+        }
+    }
 
-		if(shouldExecute(interaction, guild)) await command.execute(interaction);
-	} catch (error) {
-		console.error(`Error executing ${interaction.commandName}`);
-		console.error(error);
-		interaction.reply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:")
-		const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
+    // Ensure server setup for commands that do not ignore setup requirements
+    if (!command.ignoreSetup) {
+        if (!server || !server.hasAccepted || !server.announcement_channel) {
+            interaction.reply("A community Administrator must first run the /setup command to completion before you can use me.");
+            return false;
+        }
+    }
 
-		webhookClient.send(`New Brain Fart occurred!\nCommand: ${interaction.commandName}\nError: ${error.message}`);
-	}
+    // Check NSFW requirement for commands that specify it
+    if (command.nsfw && !interaction.channel.nsfw) {
+        interaction.reply("My commands can only be used on channels marked as NSFW (`Age Restricted`).\nFor more information use `/help`.");
+        return false;
+    }
+
+    // Check for Administrator role for commands that require it
+    if (command.administrator && !interaction.member.permissions.has("Administrator")) {
+        interaction.reply("You need the Administrator role to use this command.");
+        return false;
+    }
+
+    // Set server name if not already set and if there's a valid server object
+    if (server && ((server.name === undefined || server.name === null) || server.name !== interaction.guild.name)) {
+        server.name = interaction.guild.name;
+        server.save();
+    }
+
+    return true; // If none of the conditions fail, allow the command to execute
 }
 
+function isMaintenance(){
+    const maintenance_mode = global.config.maintenance_mode;
+    return maintenance_mode;
+}
 
-function shouldExecute(interaction, guild) {
-	if ((!guild || !guild.hasAccepted) && !(interaction.commandName === "setup" || interaction.commandName === "accept-terms" || interaction.commandName === "help")) {
-		interaction.reply("A community Administrator must first run the /setup command before you can use me");
-		return;
-	}
-	if (!(interaction.commandName === "setup" || interaction.commandName === "accept-terms")) { //only run checks for non setup commands
-		if (interaction.commandName !== "help") {
-			if (!interaction.channel.nsfw) {
-				interaction.reply("My commands can only be used on channels marked as NSFW (`Age Restricted`)\nFor more information use `/help`")
-				return;
-			}
-		}
-		if (guild && (guild.name === undefined || guild.name === null)) {
-			guild.name = interaction.guild.name; //set the name if it's null
-		}
-		db = new Database();
-		db.set('guilds', guild); //We always update the guild so that we can see servers that have been inactive
-		console.log("Command should Execute");
-		return true;
-	}else return true; //Without this, we block setup and accept-terms
+async function registerServer(interaction) {
+    const server = new Server(interaction.guildId);
+    await server.load();
+    if(!server._loaded) await server.save(); await server.load();
+    if(!server.message_id) logger.newServer(server);
+}
+
+async function registerServerUser(interaction) {
+    let user = new User(interaction.user.id, interaction.user.username);
+
+    didLoad = await user.load();
+    if (!didLoad) await user.save()
+    await user.loadServerUser(interaction.guildId);
+
+    if (!user.serverUserLoaded) await user.saveServerUser()
+    return user;
+}
+
+function hasPermission(interaction) {
+
+    const botPermissions = interaction.guild.members.me.permissionsIn(interaction.channel);
+
+    if (!botPermissions.has('ViewChannel')) {
+        interaction.reply('I do not have permission to view this channel. I require permission to `view channel` to function correctly');
+        return false;
+    }
+
+    if (!botPermissions.has('SendMessages')) {
+        interaction.reply('I do not have permission to send messages in this channel. I require permission to `send messages` and `embed links` to function correctly');
+        return false;
+    }
+
+    if (!botPermissions.has('EmbedLinks')) {
+        interaction.reply('I do not have permission to embed links in this channel. I require permission to `send messages` and `embed links` to function correctly');
+        return false;
+    }
+
+    return true;
 }

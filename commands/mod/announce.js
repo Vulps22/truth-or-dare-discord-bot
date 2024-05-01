@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, SlashCommandStringOption, PermissionsBitField } = require('discord.js');
-const Database = require('../../database');
+const Database = require('../../objects/database');
 
 module.exports = {
 
@@ -30,11 +30,11 @@ module.exports = {
         const announcement = interaction.options.getString('announcement');
 
         // Get channels from database
-        const guilds = new Database().list("guilds");
+        const servers = new Database().list("servers");
 
-        for (let i = 0; i < guilds.length; i++) {
+        for (let i = 0; i < servers.length; i++) {
 
-            const channel = guilds[i]['announcement_channel'];
+            const channel = servers[i]['announcement_channel'];
 
             try {
 

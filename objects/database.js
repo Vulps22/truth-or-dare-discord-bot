@@ -55,29 +55,36 @@ class Database {
 		}
 	}
 
-	get(table, id) {
-		return this.query(`SELECT * FROM ${table} WHERE id=${id}`)
+	get(table, id, idField = "id") {
+		return this.query(`SELECT * FROM ${table} WHERE ${idField}='${id}'`)
 			.then(rows => rows[0]);
 	}
 
-	async set(table, valueObject) {
+	/**
+	 * 
+	 * @param {string} table 
+	 * @param {Object} valueObject 
+	 * @param {string} idField 
+	 * @returns {number} the ID of the inserted row
+	 */
+	async set(table, valueObject, idField = 'id') {
 
 		const fields = Object.keys(valueObject);
-		const hasId = fields.includes('id');
+		const hasId = fields.includes(idField);
 
 		let sql = `INSERT INTO \`${table}\` (`;
 
 		if (hasId) {
-			sql += '`id`, ';
+			sql += `\`${idField}\`, `;
 		}
 
-		const nonIdFields = fields.filter((field) => field !== 'id');
+		const nonIdFields = fields.filter((field) => field !== idField);
 
 		sql += nonIdFields.join(', ');
 		sql += ') VALUES (';
 
 		if (hasId) {
-			sql += `${this.escape(valueObject.id)}, `;
+			sql += `${this.escape(valueObject[idField])}, `;
 		}
 
 		nonIdFields.forEach((field) => {
@@ -89,19 +96,30 @@ class Database {
 
 		sql += ` ON DUPLICATE KEY UPDATE `;
 		fields.forEach((field) => {
-			if (field !== 'id') {
+			if (field !== idField) {
 				sql += `\`${field}\` = ${this.escape(valueObject[field])}, `;
 			}
 		});
 
-		sql = sql.slice(0, -2); // Remove trailing comma 	  
-		return this.query(sql);
+		sql = sql.slice(0, -2); // Remove trailing comma
+		/**
+		 * @type {import('mysql2').ResultSetHeader}
+		 */
+		const result = await this.query(sql);
+		return result.insertId;
 	}
 
 
 	delete(table, id) {
 		return this.query(`DELETE FROM ${table} WHERE id=${id}`);
 	}
+
+	createdWithin(table, interval, creatorId) {
+		const query = `SELECT * FROM ${table} WHERE created >= NOW() - INTERVAL ${interval} MINUTE AND creator = ${this.escape(creatorId)}`;
+
+		return this.query(query);
+	}
+
 
 	list(table, limit = 0, order = 'ASC', page) {
 
@@ -124,7 +142,9 @@ class Database {
 			return value;
 		} else if (value instanceof Date) {
 			return `'${value.toISOString().slice(0, 19).replace('T', ' ')}'`; // Format the date as 'YYYY-MM-DD HH:MM:SS'
-		} else if (value === null) {
+		} else if (typeof value === 'boolean') {
+			return value ? 1 : 0;
+		} else if (value === null || value === undefined) {
 			return 'NULL';
 		} else {
 			throw new Error(`Unsupported type ${typeof value}`);

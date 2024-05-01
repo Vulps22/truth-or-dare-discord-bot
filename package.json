@@ -9,15 +9,24 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "overrides": {
+    "@discordjs/builders": "dev",
+    "@discordjs/collection": "dev",
+    "@discordjs/formatters": "dev",
+    "@discordjs/rest": "dev",
+    "@discordjs/util": "dev",
+    "@discordjs/ws": "dev"
+  },
   "dependencies": {
-    "@discordjs/rest": "^1.5.0",
+    "@discordjs/rest": "dev",
     "@types/node": "^18.0.6",
+    "canvas": "^2.11.2",
     "discord-api-types": "^0.37.35",
-    "discord.js": "^14.7.1",
+    "discord.js": "dev",
     "dotenv": "^16.3.1",
     "ejs": "^3.1.8",
     "handler.js": "^0.3.2",
-    "mysql2": "^3.6.3",
+    "mysql2": "^3.9.7",
     "node-fetch": "^3.2.6"
   }
 }
