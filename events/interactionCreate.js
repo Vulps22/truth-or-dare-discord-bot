@@ -4,6 +4,7 @@ const Database = require("../objects/database");
 const Server = require("../objects/server");
 const User = require("../objects/user");
 const ButtonEventHandler = require("../handlers/buttonEventHandler");
+const logger = require("../objects/logger");
 
 module.exports = {
     name: Events.InteractionCreate,
@@ -14,6 +15,7 @@ module.exports = {
      */
     async execute(interaction) {
 
+        await registerServer(interaction);
         await registerServerUser(interaction);
 
         if (interaction.isAutocomplete()) {
@@ -136,8 +138,8 @@ function shouldExecute(interaction, command, server) {
 
     // Ensure server setup for commands that do not ignore setup requirements
     if (!command.ignoreSetup) {
-        if (!server || !server.hasAccepted) {
-            interaction.reply("A community Administrator must first run the /setup command before you can use me.");
+        if (!server || !server.hasAccepted || !server.announcement_channel) {
+            interaction.reply("A community Administrator must first run the /setup command to completion before you can use me.");
             return false;
         }
     }
@@ -162,6 +164,14 @@ function shouldExecute(interaction, command, server) {
 
     return true; // If none of the conditions fail, allow the command to execute
 }
+
+async function registerServer(interaction) {
+    const server = new Server(interaction.guildId);
+    await server.load();
+    if(!server._loaded) await server.save(); await server.load();
+    if(!server.message_id) logger.newServer(server);
+}
+
 
 async function registerServerUser(interaction) {
     let user = new User(interaction.user.id, interaction.user.username);
