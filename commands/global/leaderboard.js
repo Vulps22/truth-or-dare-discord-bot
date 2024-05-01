@@ -24,10 +24,15 @@ module.exports = {
 	async execute(interaction) {
 		let command = interaction.options.getSubcommand();
 
-		if(command == 'server') {
+		if (command == 'server') {
 			let server = new Server(interaction.guild);
 			await server.load();
-			if(!server.isPremium()) return interaction.sendPremiumRequired();
+			const premium = await server.hasPremium();
+			console.log("premium:", premium)
+			if (!server.premium) {
+				interaction.sendPremiumRequired();
+				return;
+			}
 		}
 		let leaderboard = new Leaderboard(interaction, interaction.client);
 		let card = await leaderboard.generateLeaderboard(command == 'global');

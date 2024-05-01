@@ -51,9 +51,9 @@ global.config = {
 
 db.get('config', 1).then((data) => {
 	global.config = data;
+	console.log(global.config)
 })
 
-setTimeout(() => {}, 500);
 
 //load the event files
 

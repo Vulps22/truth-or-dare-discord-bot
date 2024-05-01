@@ -22,6 +22,10 @@ class Server {
     truth_success_xp = 40;
     truth_fail_xp = 40;
 
+    is_entitled = false;
+    entitlement_end_date;
+
+
     _loaded = false;
 
     constructor(id, name) {

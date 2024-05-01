@@ -16,17 +16,19 @@ module.exports = {
      */
     async newDare(dare) {
         let serverName = 'pre-v5';
-        if(dare.server && dare.server.name) serverName = dare.server.name;
+        if (dare.server && dare.server.name) serverName = dare.server.name;
+
         let channel = getChannel(global.config.dares_log);
+
         let embed = new EmbedBuilder()
             .setTitle("New Dare")
             .addFields(
                 { name: "Dare", value: dare.question ?? '' },
-                { name: "Author", value: dare.creator ?? ''},
+                { name: "Author", value: dare.creator ?? '' },
                 { name: "Server:", value: serverName }
             )
         let actionRow = createActionRow("dare")
-        const message = await channel.send({ embeds: [embed], components: [actionRow], fetchReply: true});
+        const message = await channel.send({ embeds: [embed], components: [actionRow], fetchReply: true });
         console.log("Logged:", message.id)
         dare.messageId = message.id;
         await dare.save();
@@ -41,12 +43,12 @@ module.exports = {
         let embed = new EmbedBuilder()
             .setTitle("New Truth")
             .addFields(
-                { name: "Truth", value: truth.question ?? 'undefined'},
+                { name: "Truth", value: truth.question ?? 'undefined' },
                 { name: "Author", value: truth.creator ?? 'undefined' },
                 { name: "Server:", value: truth.server.name ?? 'undefined' }
             )
         let actionRow = createActionRow("truth");
-        const message = await channel.send({ embeds: [embed], components: [actionRow], fetchReply: true});
+        const message = await channel.send({ embeds: [embed], components: [actionRow], fetchReply: true });
         console.log("logged", message.id)
         truth.messageId = message.id;
         truth.save();
@@ -61,7 +63,7 @@ module.exports = {
         let channel = getChannel(global.config.servers_log);
         let embed = serverEmbed(server);
         let actionRow = createServerActionRow();
-        const message = await channel.send({ embeds: [embed], components: [actionRow], fetchReply: true});
+        const message = await channel.send({ embeds: [embed], components: [actionRow], fetchReply: true });
         console.log("Server Message:", message.id);
         server.message_id = message.id;
         await server.save();

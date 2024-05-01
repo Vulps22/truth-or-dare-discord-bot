@@ -33,10 +33,9 @@ module.exports = {
 
         if (subCommand === "truths") {
             global.config.truths_log = channelId;
+            await db.set('config', global.config);
             const truths = await db.list('truths');
-
-
-
+            
             for (let i = 0; i < truths.length; i++) {
                 const element = truths[i];
                 const truth = new Truth(element.id);
@@ -48,6 +47,7 @@ module.exports = {
             }
         } else if (subCommand === "dares") {
             global.config.dares_log = channelId; // Assuming you want to set a log channel for dares
+            await db.set('config', global.config);
             const dares = await db.list('dares'); // Assuming you have a 'dares' collection in your database
 
             for (let i = 0; i < dares.length; i++) {
@@ -60,8 +60,6 @@ module.exports = {
                 await delay(1000);
             }
         }
-
-        await db.set('config', global.config);
         
     },
 }

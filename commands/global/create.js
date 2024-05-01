@@ -2,6 +2,7 @@ const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandStringOp
 const DareHandler = require("../../handlers/dareHandler");
 const TruthHandler = require("../../handlers/truthHandler");
 const Database = require("../../objects/database");
+const logger = require("../../objects/logger");
 
 module.exports = {
 	data: new SlashCommandBuilder()
