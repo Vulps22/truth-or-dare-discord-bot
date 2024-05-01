@@ -1,10 +1,12 @@
-const { Interaction, EmbedBuilder, WebhookClient, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { Interaction, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 const Handler = require('./handler.js')
-const Question = require('../objects/question.js');
 const UserDare = require('../objects/userDare.js');
 const User = require('../objects/user.js');
 const Server = require('../objects/server.js');
+const Dare = require('../objects/dare.js');
+const Logger = require('../objects/logger.js');
+const logger = require('../objects/logger.js');
 client = null
 class DareHandler extends Handler {
 
@@ -12,35 +14,35 @@ class DareHandler extends Handler {
 	failXp = 25; //this is subtracted from the user's xp when they fail a dare
 
 	constructor(client) {
-		super()
+		super("dare")
 		this.client = client
 	}
 
 	async createDare(interaction) {
-		const question = new Question(interaction.options.getString('text'), interaction.user.id);
-		if (!question.question) {
+		const dare = new Dare();
+
+		dare.question = interaction.options.getString('text');
+		if (!dare.question) {
 			interaction.reply("You need to give me a dare!");
-			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
-			webhookClient.send(`Aborted Dare creation: Nothing Given`);
+			logger.error(`Aborted Dare creation: Nothing Given`);
 			return;
 		}
 		let dares = await this.db.list("dares");
-		if (dares.some(q => q.question === question.question)) {
+		if (dares.some(q => q.question === dare.question)) {
 			interaction.reply("This dare already exists!");
-			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
-			webhookClient.send(`Aborted Dare creation: Already exists`);
+			logger.error(`Aborted Dare creation: Already exists`);
 			return;
 		} else {
-			let createdDare = this.db.set("dares", question);
+			let createdDare = await dare.create(interaction.options.getString('text'), interaction.user.id, interaction.guildId);
+
 			const embed = new EmbedBuilder()
 				.setTitle('New Dare Created!')
-				.setDescription(question.question)
+				.setDescription(dare.question)
 				.setColor('#00ff00')
 				.setFooter({ text: ' Created by ' + interaction.user.username, iconURL: interaction.user.displayAvatarURL() });
-			interaction.reply({content: "Thank you for your submission. A member of the moderation team will review your dare shortly", embeds: [embed] });
+			interaction.reply({ content: "Thank you for your submission. A member of the moderation team will review your dare shortly", embeds: [embed] });
 
-			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_CREATIONS_URL });
-			webhookClient.send(`**Dare Created** | **server**: ${interaction.guild.name} \n- **Dare**: ${question.question} \n- **ID**: ${createdDare.insertId}`);
+			Logger.newDare(createdDare);
 		}
 	}
 
@@ -57,7 +59,8 @@ class DareHandler extends Handler {
 				return interaction.reply("Hmm, I can't find any dares. This might be a bug, try again later");
 			}
 
-			const unBannedQuestions = dares.filter(q => !q.isBanned);
+			const unBannedQuestions = dares.filter(q => !q.isBanned && q.isApproved);
+			if (unBannedQuestions.length === 0) { interaction.reply("There are no approved truths to give"); return;}
 			const dare = this.selectRandomDare(unBannedQuestions);
 			const creator = this.getCreator(dare, this.client).username;
 
@@ -69,8 +72,7 @@ class DareHandler extends Handler {
 		} catch (error) {
 			console.error('Error in dare function:', error);
 			interaction.reply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:");
-			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
-			await webhookClient.send(`Brain Fart: Error in dare function: ${error}`);
+			logger.error(`Brain Fart: Error in dare function: ${error}`);
 		}
 	}
 
@@ -198,8 +200,7 @@ class DareHandler extends Handler {
 	async saveDareMessageId(messageId, userId, dareId, serverId, username, image) {
 		if (!messageId) {
 			await interaction.channel.send("I'm sorry, I couldn't save the dare to track votes. This is a brain fart. Please reach out for support on the official server.");
-			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
-			await webhookClient.send(`Brain Fart: Couldn't save dare to track votes. Message ID missing`);
+			logger.error(`Brain Fart: Couldn't save dare to track votes. Message ID missing`);
 		} else {
 			const userDare = new UserDare(messageId, userId, dareId, serverId, username, image);
 			// Assuming userDare.save() is an asynchronous operation to save the data
@@ -220,7 +221,7 @@ class DareHandler extends Handler {
 
 		const dareUser = userDare.getUserId();
 		if (dareUser == interaction.user.id && !this.ALPHA) {
-			interaction.reply({content: "You can't vote on your own dare!", ephemeral: true});
+			interaction.reply({ content: "You can't vote on your own dare!", ephemeral: true });
 			return;
 		}
 
@@ -228,14 +229,13 @@ class DareHandler extends Handler {
 
 		if (!userDare) {
 			await interaction.reply("I'm sorry, I couldn't find the dare to track votes. This is a brain fart. Please reach out for support on the official server.");
-			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
-			await webhookClient.send(`Brain Fart: Couldn't find dare to track votes. Message ID missing`);
+			logger.error(`Brain Fart: Couldn't find dare to track votes. Message ID missing`);
 			return;
 		}
 
 		const couldVote = await userDare.vote(interaction.user.id, vote);
 		if (!couldVote && !this.ALPHA) {
-			await interaction.reply({content: "You've already voted on this dare!", ephemeral: true});
+			await interaction.reply({ content: "You've already voted on this dare!", ephemeral: true });
 			return;
 		}
 
@@ -245,7 +245,7 @@ class DareHandler extends Handler {
 
 		if (userDare.doneCount >= this.vote_count) {
 			row = this.createPassedActionRow();
-						
+
 			user.addXP(this.successXp);
 			user.addServerXP(server.dare_success_xp);
 
@@ -261,7 +261,24 @@ class DareHandler extends Handler {
 		await interaction.message.edit({ embeds: [embed], components: [row] });
 		await interaction.reply({ content: "Your vote has been recorded!", ephemeral: true });
 	}
+	/**
+	 * mark the dare as approved or banned
+	 * @param {Interaction} interaction 
+	 * @param {string<"ban"|"approve"} decision 
+	 */
+	async setDare(interaction, decision) {
+		let dare = await new Dare().find(interaction.message.id);
+		switch (decision) {
+			case "ban":
 
+				this.getBanReason(interaction, dare.id);
+				break;
+			case "approve":
+				this.approve(interaction, dare);
+				break;
+		}
+
+	}
 
 }
 

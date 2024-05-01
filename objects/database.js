@@ -60,6 +60,13 @@ class Database {
 			.then(rows => rows[0]);
 	}
 
+	/**
+	 * 
+	 * @param {string} table 
+	 * @param {Object} valueObject 
+	 * @param {string} idField 
+	 * @returns {number} the ID of the inserted row
+	 */
 	async set(table, valueObject, idField = 'id') {
 
 		const fields = Object.keys(valueObject);
@@ -95,7 +102,11 @@ class Database {
 		});
 
 		sql = sql.slice(0, -2); // Remove trailing comma
-		return this.query(sql);
+		/**
+		 * @type {import('mysql2').ResultSetHeader}
+		 */
+		const result = await this.query(sql);
+		return result.insertId;
 	}
 
 

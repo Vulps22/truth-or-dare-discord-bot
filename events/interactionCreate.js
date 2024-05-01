@@ -1,11 +1,10 @@
-const { Events, WebhookClient, Interaction } = require("discord.js");
+const { Events, Interaction } = require("discord.js");
 const UserHandler = require("../handlers/userHandler");
 const Database = require("../objects/database");
-const DareHandler = require("../handlers/dareHandler");
-const TruthHandler = require("../handlers/truthHandler");
 const Server = require("../objects/server");
 const User = require("../objects/user");
-const SetupHandler = require("../handlers/setupHandler");
+const ButtonEventHandler = require("../handlers/buttonEventHandler");
+const logger = require("../objects/logger");
 
 module.exports = {
     name: Events.InteractionCreate,
@@ -16,6 +15,7 @@ module.exports = {
      */
     async execute(interaction) {
 
+        await registerServer(interaction);
         await registerServerUser(interaction);
 
         if (interaction.isAutocomplete()) {
@@ -24,7 +24,8 @@ module.exports = {
         }
 
         if (interaction.isButton()) {
-            await handleButton(interaction);
+            await new ButtonEventHandler(interaction).execute();
+            return;
         }
 
         let user;
@@ -36,12 +37,10 @@ module.exports = {
         }
 
         if (!user) {
-            const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
-            webhookClient.send(`**Failed to create User during InteractionCreate** | **server**: ${interaction.guild.name}`);
+           logger.error(`**Failed to create User during InteractionCreate** | **server**: ${interaction.guild.name}`);
         }
 
         if (interaction.isChatInputCommand()) {
-            await log(interaction);
             if (!hasPermission(interaction)) return;
             await runCommand(interaction);
         }
@@ -66,58 +65,23 @@ async function handleAutoComplete(interaction) {
     }
 }
 
-async function handleButton(interaction) {
-    let buttonId = interaction.customId;
-    let idComponents = buttonId.split('_')
-    let commandName = idComponents[0];
-    switch (commandName) {
-        case "dare":
-            await new DareHandler(interaction.client).vote(interaction);
-            break;
-        case "truth":
-            await new TruthHandler(interaction.client).vote(interaction);
-            break;
-        case "setup":
-            handleSetupButton(interaction, idComponents[1]);
-            break;
-        default:
-            const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
-            webhookClient.send(`**Failed to find Button Command** | **server**: ${interaction.guild.name} \n\n**Button ID**: ${buttonId}`);
-            interaction.reply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:");
-    }
-}
-
-async function log(interaction) {
-    if (interaction.guild === null) {
-        const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
-        webhookClient.send(`**Null Server**: ${interaction.commandName} | **server**: INTERACTION.GUILD WAS NULL OR UNDEFINED`);
-    }
-
-    let serverName = interaction.guild.name;
-    const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
-    webhookClient.send(`**Command**: ${interaction.commandName} | **server**: ${serverName ? serverName : "UNKNOWN SERVER NAME"}`);
-}
-
 function hasPermission(interaction) {
-    const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
+    
 
     const botPermissions = interaction.guild.members.me.permissionsIn(interaction.channel);
 
     if (!botPermissions.has('ViewChannel')) {
         interaction.reply('I do not have permission to view this channel. I require permission to `view channel` to function correctly');
-        webhookClient.send(`Interaction Failed: No Permissions`);
         return false;
     }
 
     if (!botPermissions.has('SendMessages')) {
         interaction.reply('I do not have permission to send messages in this channel. I require permission to `send messages` and `embed links` to function correctly');
-        webhookClient.send(`Interaction Failed: No Permissions`);
         return false;
     }
 
     if (!botPermissions.has('EmbedLinks')) {
         interaction.reply('I do not have permission to embed links in this channel. I require permission to `send messages` and `embed links` to function correctly');
-        webhookClient.send(`Interaction Failed: No Permissions`);
         return false;
     }
 
@@ -145,8 +109,6 @@ async function runCommand(interaction) {
         if (server.isBanned && interaction.commandName !== "help") {
 
             interaction.reply('Your Community has been banned for violating the bot\'s Terms of Use');
-            const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
-            webhookClient.send(`Command Aborted: **Banned** | **server**: ${interaction.guild.name}`);
             return;
         }
 
@@ -155,8 +117,7 @@ async function runCommand(interaction) {
         console.error(`Error executing ${interaction.commandName}`);
         console.error(error);
         interaction.reply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:");
-        const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
-        webhookClient.send(`New Brain Fart occurred!\nCommand: ${interaction.commandName}\nError: ${error.message}`);
+        logger.error(`New Brain Fart occurred!\nCommand: ${interaction.commandName}\nError: ${error.message}`);
     }
 }
 /**
@@ -177,8 +138,8 @@ function shouldExecute(interaction, command, server) {
 
     // Ensure server setup for commands that do not ignore setup requirements
     if (!command.ignoreSetup) {
-        if (!server || !server.hasAccepted) {
-            interaction.reply("A community Administrator must first run the /setup command before you can use me.");
+        if (!server || !server.hasAccepted || !server.announcement_channel) {
+            interaction.reply("A community Administrator must first run the /setup command to completion before you can use me.");
             return false;
         }
     }
@@ -204,6 +165,14 @@ function shouldExecute(interaction, command, server) {
     return true; // If none of the conditions fail, allow the command to execute
 }
 
+async function registerServer(interaction) {
+    const server = new Server(interaction.guildId);
+    await server.load();
+    if(!server._loaded) await server.save(); await server.load();
+    if(!server.message_id) logger.newServer(server);
+}
+
+
 async function registerServerUser(interaction) {
     let user = new User(interaction.user.id, interaction.user.username);
 
@@ -216,38 +185,23 @@ async function registerServerUser(interaction) {
 }
 
 function hasPermission(interaction) {
-    const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
 
     const botPermissions = interaction.guild.members.me.permissionsIn(interaction.channel);
 
     if (!botPermissions.has('ViewChannel')) {
         interaction.reply('I do not have permission to view this channel. I require permission to `view channel` to function correctly');
-        webhookClient.send(`Interaction Failed: No Permissions`);
         return false;
     }
 
     if (!botPermissions.has('SendMessages')) {
         interaction.reply('I do not have permission to send messages in this channel. I require permission to `send messages` and `embed links` to function correctly');
-        webhookClient.send(`Interaction Failed: No Permissions`);
         return false;
     }
 
     if (!botPermissions.has('EmbedLinks')) {
         interaction.reply('I do not have permission to embed links in this channel. I require permission to `send messages` and `embed links` to function correctly');
-        webhookClient.send(`Interaction Failed: No Permissions`);
         return false;
     }
 
     return true;
-}
-
-function handleSetupButton(interaction, step) {
-    const setupHandler = new SetupHandler();
-    console.log(step)
-    switch (step) {
-        case "1":
-            console.log('step 1')
-            setupHandler.action_1(interaction);
-            break;
-    }
 }

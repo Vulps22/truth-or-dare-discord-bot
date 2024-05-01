@@ -1,23 +1,26 @@
-const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandNumberOption, SlashCommandStringOption, EmbedBuilder } = require("discord.js");
-const Database = require("../../objects/question")
+const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandNumberOption, SlashCommandStringOption, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, Message } = require("discord.js");
+const Database = require("../../objects/database")
 const { env } = require("process");
+const Dare = require("../../objects/dare");
+const BanHandler = require("../../handlers/banHandler");
 
 banReasonList = [
-	{name: "1 - Breaches Discord T&C or Community Guidelines", value: "Breaches Discord T&C or Community Guidelines"},
-	{name: "2 - Childish Content", value: "Childish Content"},
-	{name: "3 - Dangerous Or Illegal Content", value: "Dangerous Or Illegal Content"},
-	{name: "4 - Giver Dare", value: "Giver Dare"},
-	{name: "5 - Mentions A Specific Person", value: "Mentions A Specific Person"},
-	{name: "6 - Nonsense Content", value: "Nonsense Content"},
-	{name: "7 - Not In English", value: "Not In English"},
-	{name: "8 - Poor Spelling Or Grammar", value: "Poor Spelling Or Grammar - Feel Free to Resubmit with proper Spelling and Grammer"},
-	{name: "9 - Requires More Than One Person", value: "Requires More Than One Person"},
-	{name: "10 - Shoutout Content", value: "Shoutout Content"},
-	{name: "11 - Suspected U-18 Server", value: "Suspected U-18 Server"}
-  ]
+	{ name: "1 - Breaches Discord T&C or Community Guidelines", value: "Breaches Discord T&C or Community Guidelines" },
+	{ name: "2 - Childish Content", value: "Childish Content" },
+	{ name: "3 - Dangerous Or Illegal Content", value: "Dangerous Or Illegal Content" },
+	{ name: "4 - Giver Dare", value: "Giver Dare" },
+	{ name: "5 - Mentions A Specific Person", value: "Mentions A Specific Person" },
+	{ name: "6 - Nonsense Content", value: "Nonsense Content" },
+	{ name: "7 - Not In English", value: "Not In English" },
+	{ name: "8 - Poor Spelling Or Grammar", value: "Poor Spelling Or Grammar - Feel Free to Resubmit with proper Spelling and Grammer" },
+	{ name: "9 - Requires More Than One Person", value: "Requires More Than One Person" },
+	{ name: "10 - Shoutout Content", value: "Shoutout Content" },
+	{ name: "11 - Suspected U-18 Server", value: "Suspected U-18 Server" }
+]
 
 
 module.exports = {
+	banReasons: banReasonList,
 	data: new SlashCommandBuilder()
 		.setName('ban')
 		.setDescription('Ban a Dare|Truth|Server')
@@ -33,7 +36,7 @@ module.exports = {
 			.addStringOption(new SlashCommandStringOption()
 				.setName('reason')
 				.setDescription('Why are you banning this?')
-							)
+			)
 		)
 		.addSubcommand(new SlashCommandSubcommandBuilder()
 			.setName('truth')
@@ -46,7 +49,7 @@ module.exports = {
 			.addStringOption(new SlashCommandStringOption()
 				.setName('reason')
 				.setDescription('Why are you banning this?')
-							)
+			)
 		)
 		.addSubcommand(new SlashCommandSubcommandBuilder()
 			.setName('server')
@@ -59,21 +62,21 @@ module.exports = {
 			.addStringOption(new SlashCommandStringOption()
 				.setName('reason')
 				.setDescription('Why are you banning this?')
-							)
+			)
 		),
 	async execute(interaction) {
-		
-		const subcommand = interaction.options.getSubcommand();
 
+		const subcommand = interaction.options.getSubcommand();
+		let didBan = false;
 		switch (subcommand) {
 			case 'dare':
-				banDare(interaction.options.getNumber('id'), interaction.options.getString('reason'), interaction);
+				didBan = await new BanHandler().banDare(interaction.options.getNumber('id'), interaction.options.getString('reason'), interaction);
 				break;
 			case 'truth':
-				banTruth(interaction.options.getNumber('id'), interaction.options.getString('reason'), interaction);
+				didBan = await new BanHandler().banTruth(interaction.options.getNumber('id'), interaction.options.getString('reason'), interaction);
 				break;
 			case 'server':
-				banServer(interaction.options.getString('id'), interaction.options.getString('reason'), interaction);
+				didBan = await new BanHandler().banServer(interaction.options.getString('id'), interaction.options.getString('reason'), interaction);
 				break;
 			default:
 				interaction.reply('Not an Option');
@@ -81,195 +84,56 @@ module.exports = {
 		}
 	},
 	async autocomplete(interaction) {
+
 		const focusedOption = interaction.options.getFocused(true);
 		let choices;
-
+	
 		if (focusedOption.name === 'id') {
 			const subcommand = interaction.options.getSubcommand();
 			const db = new Database();
 			const id = focusedOption.value.toLowerCase();
-
-			if (subcommand === 'dare') {
-				const dares = await db.like('dares', 'id', `%${id}%`, 20, "DESC");
-				choices = dares.map(dare => {
-					const name = `${dare.id} - ${dare.question}`;
-					const value = dare.id.toString();
-					if (name.length > 0 && value.length > 0) {
-						return { name: truncateString(name, 96), value: Number(value) };
-					}
-					return null;
-				}).filter(choice => choice !== null);
-			} else if (subcommand === 'truth') {
-				const truths = await db.like('truths', 'id', `%${id}%`, 20, "DESC");
-				choices = truths.map(truth => {
-					const name = `${truth.id} - ${truth.question}`;
-					const value = truth.id.toString();
-					if (name.length > 0 && value.length > 0) {
-						return { name: truncateString(name, 96), value: Number(value) };
-					}
-					return null;
-				}).filter(choice => choice !== null);
-			} else if (subcommand === 'server') {
-				const servers = await db.like('servers', 'id', `%${id}%`, 20, "DESC");
-				choices = servers.map(server => {
-					const name = `${server.id} - ${server.name}`;
-					const value = server.id
-					if (name.length > 0 && value.length > 0) {
-						return { name: truncateString(name, 96), value: value };
-					}
-					return null;
-				}).filter(choice => choice !== null);
+	
+			try {
+				switch (subcommand) {
+					case 'dare':
+						choices = await this.getAutocompleteChoices(db, 'dares', id, 'question');
+						break;
+					case 'truth':
+						choices = await this.getAutocompleteChoices(db, 'truths', id, 'question');
+						break;
+					case 'guild':
+						choices = await this.getAutocompleteChoices(db, 'servers', id, 'name');
+						break;
+					default:
+						choices = [];
+						break;
+				}
+			} catch (error) {
+				console.error('Error fetching autocomplete choices:', error);
+				choices = [];
 			}
 		}
-		if(focusedOption.name === 'reason') {
+	
+		if (focusedOption.name === 'reason') {
 			choices = banReasonList;
 		}
-		await interaction.respond(choices);
-	}
+		console.log(choices);
+		interaction.respond(choices);
+	},
+	
+	async getAutocompleteChoices(db, collectionName, id, fieldName) {
+    console.log(`Fetching autocomplete choices for collection: ${collectionName}, id: ${id}, fieldName: ${fieldName}`);
+    const items = await db.like(collectionName, 'id', `%${id}%`, 20, "DESC");
+    console.log(`Retrieved items:`, items);
+    return items.map(item => {
+        const name = `${item.id} - ${item[fieldName]}`;
+        const value = item.id;
+        return { name: truncateString(name, 96), value: value };
+    }).filter(choice => choice !== null);
 }
 
-function banDare(id, reason, interaction) {
-	const db = new Database();
-	db.get('dares', id).then(dare => {
-		if (!dare) {
-			console.log("Attempted to ban unknown dare with ID: ", id)
-			interaction.reply('Dare not found!');
-			return;
-		}
-		sendBanNotification(dare, reason, 'dare', interaction);
-		dare.isBanned = 1;
-		dare.banReason = reason;
-		db.set('dares', dare);
-		interaction.reply(`Dare has been banned!\n- **ID**: ${dare.id}\n- **Question**: ${dare.question}\n- **Reason**: ${reason}`)
-	});
 }
 
-function banTruth(id, reason, interaction) {
-	const db = new Database();
-	db.get('truths', id).then(truth => {
-		if (!truth) {
-			interaction.reply("Attempted to ban unknown truth with ID: ", id);
-			return;
-		}
-		sendBanNotification(truth, reason, 'truth', interaction);
-		truth.isBanned = 1;
-		truth.banReason = reason;
-		db.set('truths', truth);
-		interaction.reply(`Truth has been banned!\n- **ID**: ${truth.id}\n- **Question**: ${truth.question}\n- **Reason**: ${reason}`)
-	});
-}
-
-async function banServer(id, reason, interaction) {
-    const db = new Database();
-    
-    try {
-        // Get server data from the database
-        let server = await db.get('servers', id);
-        
-        // Check if server data exists
-        if (!server) {
-            interaction.reply('Server not found!');
-            return;
-        }
-        
-        // Send ban notification
-        sendServerBanNotification(server, reason, interaction);
-        
-        // Update server data
-        server.isBanned = 1;
-        server.banReason = reason;
-        
-        // Save updated server data to the database
-        await db.set('server', server);
-        
-        // Reply to interaction with ban details
-        interaction.reply(`Server has been banned!\n- **ID**: ${server.id}\n- **Name**: ${server.name}\n- **Reason**: ${reason}`);
-    } catch (error) {
-        console.error('Error banning server:', error);
-        interaction.reply('An error occurred while banning the server.');
-    }
-}
-
-
-/**
- * 
- * @param {Question} question 
- * @param {*} interaction 
- */
-
-async function sendBanNotification(question, reason, type, interaction) {
-	const userId = question.creator;
-	client = interaction.client;
-	try {
-
-		let embed = guidanceEmbed();
-
-		client.users.send(userId, {
-			content: `Your ${type} has been banned: \n- **ID**: ${question.id}\n- **Question**: ${question.question}\n- **Reason**: ${reason}\n\nIf you feel this was in error you may appeal the ban by opening a ticket on our [Official Server](https://discord.gg/${env.DISCORD_INVITE_CODE})\n\n`,
-			embeds: [embed]
-		}).catch(async (error) => {
-			if (error.code === 50007) {
-			  
-			  await interaction.channel.send(`User's Discord Account was not available to DM`);
-			} else {
-			  console.error('Error:', error);
-			}
-		});
-	} catch (error) {
-		interaction.channel.send('Failed to notify User of ban. Check Logs for more information');
-		console.log('User Notification Failed: ')
-		console.log(error);
-	}
-}
-
-async function sendServerBanNotification(guild, reason, interaction) {
-	client = interaction.client;
-	try {
-
-		const server = client.guilds.cache.get(guild.id);
-		const userId = server.ownerId;
-
-		client.users.send(userId, {
-			content: `Your Server has been banned: \n- **ID**: ${server.id}\n- **Question**: ${server.name}\n- **Reason**: ${reason}\n\nIf you feel this was in error you may appeal the ban by opening a ticket on our [Official Server](https://discord.gg/${env.DISCORD_INVITE_CODE})\n\n`
-		})
-		.catch(async (error) => {
-			if (error.code === 50007) {
-			  
-			  await interaction.channel.send(`User's Discord Account was not available to DM`);
-			} else {
-			  console.error('Error:', error);
-			}
-		});
-	} catch (error) {
-		interaction.channel.send('Failed to notify User of ban. Check Logs for more information');
-		console.log('User Notification Failed: ')
-		console.log(error);
-	}
-}
-
-function guidanceEmbed() {
-
-	const embed = new EmbedBuilder()
-		.setTitle('Avoiding Bans')
-		.setDescription('Here are some tips to avoid your truths/dares being banned:')
-		.addFields(
-			{ name: 'No Dangerous Or Illegal Content', value: '- Keep it safe and legal' },
-			{ name: 'No Targeting Specific People', value: '- Truths/dares are global and should work for everyone' },
-			{ name: 'No Mentions Of "The Giver"', value: '- Use /give for those types of dares' },
-			{ name: 'Follow Discord Guidelines', value: '- No Racism, Underage references etc.' },
-			{ name: 'Use English', value: '- For bot language support' },
-			{ name: 'No Nonsense Content', value: '- Avoid keyboard smashing, single letters etc' },
-			{ name: 'No Childish Content', value: '- Could be written by a child/teen, or likely to be ignored'},
-			{ name: 'No Shoutouts', value: '- Using names, "I am awesome!"' },
-			{ name: 'No Dares That Require More Than One Person', value: '- This is an **online** bot!' },
-			{ name: 'Check Spelling And Grammar', value: '- Low-Effort content will not be accepted' },
-			{ name: '\n', value: '\n' },
-			{ name: 'Important Note', value: '**You could be banned from using the bot** if we have to repeatedly ban your dares!' }
-		);
-
-	return embed;
-
-}
 
 function truncateString(str, num) {
 	if (str.length < num) {

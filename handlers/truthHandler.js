@@ -1,11 +1,11 @@
-const { Interaction, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, WebhookClient } = require('discord.js');
+const { Interaction, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 const Handler = require('./handler.js')
-const Question = require('../objects/question.js');
-const { exit } = require('process');
 const UserTruth = require('../objects/userTruth.js');
 const User = require('../objects/user.js');
 const Server = require('../objects/server.js');
+const Truth = require('../objects/truth.js');
+const Logger = require('../objects/logger.js');
 client = null;
 
 class TruthHandler extends Handler {
@@ -14,40 +14,36 @@ class TruthHandler extends Handler {
 	failXp = 40;
 
 	constructor(client) {
-		super()
+		super("truth")
 		this.client = client
 	}
 
-	createTruth(interaction) {
-		const question = new Question(interaction.options.getString('text'), interaction.user.id);
-		if (!question.question) {
-			interaction.reply("You need to give me a truth!");
-			webhookClient.send(`Aborted Truth creation: Nothing Given`);
+	async createTruth(interaction) {
+		const truth = new Truth();
 
+		truth.question = interaction.options.getString('text');
+		if (!truth.question) {
+			interaction.reply("You need to give me a truth!");
+			logger.error(`Aborted Truth creation: Nothing Given`);
 			return;
 		}
-		this.db.list("truths").then((truths) => {
-			if (truths.some(q => q.question === question.question)) {
-				interaction.reply("This truth already exists!");
-				const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
-				webhookClient.send(`Aborted Truth creation: Already exists`);
-				return;
-			} else {
-				this.db.set("truths", question).then((data) => {
-					const embed = new EmbedBuilder()
-						.setTitle('New Truth Created!')
-						.setDescription(question.question)
-						.setColor('#00ff00')
-						.setFooter({ text: ' Created by ' + interaction.user.username, iconURL: interaction.user.displayAvatarURL() });
-					interaction.reply("Thank you for your submission. A member of the moderation team will review your truth shortly")
-					interaction.channel.send({ embeds: [embed] });
-					const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_CREATIONS_URL });
+		let truths = await this.db.list("truths");
+		if (truths.some(q => q.question === truth.question)) {
+			interaction.reply("This Truth already exists!");
+			logger.error(`Aborted Truth creation: Already exists`);
+			return;
+		} else {
+			let createdTruth = await truth.create(interaction.options.getString('text'), interaction.user.id, interaction.guildId);
 
-					webhookClient.send(`**Truth Created** | **server**: ${interaction.guild.name} \n- **Truth**: ${question.question} \n- **ID**: ${data.insertId}`);
-					
-				});
-			}
-		});
+			const embed = new EmbedBuilder()
+				.setTitle('New Truth Created!')
+				.setDescription(truth.question)
+				.setColor('#00ff00')
+				.setFooter({ text: ' Created by ' + interaction.user.username, iconURL: interaction.user.displayAvatarURL() });
+			interaction.reply({ content: "Thank you for your submission. A member of the moderation team will review your dare shortly", embeds: [embed] });
+
+			Logger.newTruth(createdTruth);
+		}
 	}
 
 	/**
@@ -56,10 +52,11 @@ class TruthHandler extends Handler {
 	 * @returns 
 	 */
 	async truth(interaction) {
-		try{
-		const truths = await this.db.list("truths")
-			if(!truths || truths.length === 0) { interaction.reply("Hmm, I can't find any truths. This might be a bug, try again later"); return; }
-			const unBannedQuestions = truths.filter(q => !q.isBanned);
+		try {
+			const truths = await this.db.list("truths")
+			if (!truths || truths.length === 0) { interaction.reply("Hmm, I can't find any truths. This might be a bug, try again later"); return; }
+			const unBannedQuestions = truths.filter(q => !q.isBanned && q.isApproved);
+			if(unBannedQuestions.length === 0) { interaction.reply("There are no approved truths to give."); return; }
 			const truth = this.selectRandomTruth(unBannedQuestions);
 			const creator = this.getCreator(truth, this.client);
 
@@ -71,8 +68,7 @@ class TruthHandler extends Handler {
 		} catch (error) {
 			console.error('Error in truth function:', error);
 			interaction.reply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:");
-			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
-			await webhookClient.send(`Brain Fart: Error in truth function: ${error}`);
+			logger.error(`Brain Fart: Error in truth function: ${error}`);
 		}
 	}
 
@@ -210,8 +206,7 @@ class TruthHandler extends Handler {
 	async saveTruthMessageId(messageId, userId, truthId, serverId, username, image) {
 		if (!messageId) {
 			await interaction.channel.send("I'm sorry, I couldn't save the truth to track votes. This is a brain fart. Please reach out for support on the official server.");
-			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
-			await webhookClient.send(`Brain Fart: Couldn't save truth to track votes. Message ID missing`);
+			logger.error(`Brain Fart: Couldn't save truth to track votes. Message ID missing`);
 		} else {
 			const userTruth = new UserTruth(messageId, userId, truthId, serverId, username, image);
 			// Assuming userTruth.save() is an asynchronous operation to save the data
@@ -231,7 +226,7 @@ class TruthHandler extends Handler {
 
 		const truthUser = userTruth.getUserId();
 		if (truthUser == interaction.user.id && !this.ALPHA) {
-			await interaction.reply({content: "You can't vote on your own truth!", ephemeral: true});
+			await interaction.reply({ content: "You can't vote on your own truth!", ephemeral: true });
 			return;
 		}
 
@@ -239,14 +234,13 @@ class TruthHandler extends Handler {
 
 		if (!userTruth) {
 			await interaction.reply("I'm sorry, I couldn't find the truth to track votes. This is a brain fart. Please reach out for support on the official server.");
-			const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_FARTS_URL });
-			await webhookClient.send(`Brain Fart: Couldn't find truth to track votes. Message ID missing`);
+			logger.error(`Brain Fart: Couldn't find truth to track votes. Message ID missing`);
 			return;
 		}
 
 		const couldVote = await userTruth.vote(interaction.user.id, vote);
-		if(!couldVote && !this.ALPHA) {
-			await interaction.reply({content: "You've already voted on this truth!", ephemeral: true});
+		if (!couldVote && !this.ALPHA) {
+			await interaction.reply({ content: "You've already voted on this truth!", ephemeral: true });
 			return;
 		}
 
@@ -254,19 +248,37 @@ class TruthHandler extends Handler {
 
 		let row = this.createActionRow();
 
-		if(userTruth.doneCount >= this.vote_count) {
+		if (userTruth.doneCount >= this.vote_count) {
 			row = this.createPassedActionRow();
 			user.addXP(this.successXp);
 			user.addServerXP(server.truth_success_xp);
-		} else if(userTruth.failedCount >= this.vote_count) {
+		} else if (userTruth.failedCount >= this.vote_count) {
 			row = this.createFailedActionRow();
 			user.subtractXP(this.failXp);
 			user.subtractServerXP(server.truth_fail_xp);
 		}
 
 		//use the userTruth.messageId to edit the embed in the message
-		await interaction.message.edit({ embeds: [embed], components: [row]});
+		await interaction.message.edit({ embeds: [embed], components: [row] });
 		await interaction.reply({ content: "Your vote has been recorded!", ephemeral: true });
+	}
+
+	/**
+ * mark the truth as approved or banned
+ * @param {Interaction} interaction 
+ * @param {string<"ban"|"approve">} decision 
+ */
+	async setTruth(interaction, decision) {
+		let truth = await new Truth().find(interaction.message.id);
+		switch (decision) {
+			case "ban":
+				this.getBanReason(interaction, truth.id);
+				break;
+			case "approve":
+				this.approve(interaction, truth);
+				break;
+		}
+
 	}
 }
 
