@@ -21,7 +21,7 @@ console.log("Starting in ", ALPHA ? "ALPHA Mode" : "PRODUCTION Mode");
 const TOKEN = ALPHA ? process.env['aTOKEN'] : process.env['TOKEN']
 const CLIENT_ID = ALPHA ? process.env['aCLIENT_ID'] : process.env['CLIENT_ID']
 const GUILD_ID = process.env['GUILD_ID']
-/*
+
 process.on('uncaughtException', (err, origin) => {
 
 	const message = `${process.env.ALPHA ? '[ALPHA]' : ''} UNHANDLED EXCEPTION CAUGHT AT SURFACE LEVEL\n- ${err}\n- ${origin}`;
@@ -32,7 +32,7 @@ process.on('uncaughtException', (err, origin) => {
 	logger.error(message);
 });
 
-*/
+
 global.client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 const db = new Database()
