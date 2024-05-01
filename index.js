@@ -42,6 +42,18 @@ db.list("dares").then((dares) => {
 	})
 })
 
+global.config = {
+	maintenance_mode: false,
+	dares_log: '1160740531094159492',
+	truths_log: '1160740531094159492',
+	servers_log: '1160740531094159492',
+}
+
+db.get('config', 1).then((data) => {
+	global.config = data;
+})
+
+setTimeout(() => {}, 500);
 
 //load the event files
 

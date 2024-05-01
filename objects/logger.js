@@ -15,19 +15,21 @@ module.exports = {
      * @param {Dare} dare 
      */
     async newDare(dare) {
-        let channel = getChannel(process.env.LOG_DARE_CHANNEL_ID);
+        let serverName = 'pre-v5';
+        if(dare.server && dare.server.name) serverName = dare.server.name;
+        let channel = getChannel(global.config.dares_log);
         let embed = new EmbedBuilder()
             .setTitle("New Dare")
             .addFields(
-                { name: "Dare", value: dare.question },
-                { name: "Author", value: dare.creator },
-                { name: "Server:", value: dare.server.name }
+                { name: "Dare", value: dare.question ?? '' },
+                { name: "Author", value: dare.creator ?? ''},
+                { name: "Server:", value: serverName }
             )
         let actionRow = createActionRow("dare")
         const message = await channel.send({ embeds: [embed], components: [actionRow], fetchReply: true});
-        console.log(message.id)
+        console.log("Logged:", message.id)
         dare.messageId = message.id;
-        dare.save();
+        await dare.save();
     },
 
     /**
@@ -35,17 +37,17 @@ module.exports = {
      * @param {Truth} truth 
      */
     async newTruth(truth) {
-        let channel = getChannel(process.env.LOG_TRUTH_CHANNEL_ID);
+        let channel = getChannel(global.config.truths_log);
         let embed = new EmbedBuilder()
             .setTitle("New Truth")
             .addFields(
-                { name: "Truth", value: truth.question },
-                { name: "Author", value: truth.creator },
-                { name: "Server:", value: truth.server.name }
+                { name: "Truth", value: truth.question ?? 'undefined'},
+                { name: "Author", value: truth.creator ?? 'undefined' },
+                { name: "Server:", value: truth.server.name ?? 'undefined' }
             )
         let actionRow = createActionRow("truth");
         const message = await channel.send({ embeds: [embed], components: [actionRow], fetchReply: true});
-        console.log(message.id)
+        console.log("logged", message.id)
         truth.messageId = message.id;
         truth.save();
     },
@@ -56,7 +58,7 @@ module.exports = {
      */
     async newServer(server) {
         console.log("New Server")
-        let channel = getChannel(process.env.LOG_SERVER_CHANNEL_ID);
+        let channel = getChannel(global.config.servers_log);
         let embed = serverEmbed(server);
         let actionRow = createServerActionRow();
         const message = await channel.send({ embeds: [embed], components: [actionRow], fetchReply: true});
@@ -66,7 +68,7 @@ module.exports = {
     },
 
     async updateServer(server) {
-        let channel = getChannel(process.env.LOG_SERVER_CHANNEL_ID);
+        let channel = getChannel(global.config.servers_log);
         /** @type {Message} */
         let message = await channel.messages.fetch(server.message_id);
         let embed = serverEmbed(server);

@@ -14,7 +14,10 @@ module.exports = {
      * @returns 
      */
     async execute(interaction) {
-
+        if(isMaintenance() && interaction.commandName !== 'lockdown') {
+            interaction.reply('Truth Or Dare Online 18+ has been disabled globally for essential maintenance: ' + global.config.maintenance_reason);
+            return;
+        }
         await registerServer(interaction);
         await registerServerUser(interaction);
 
@@ -165,13 +168,17 @@ function shouldExecute(interaction, command, server) {
     return true; // If none of the conditions fail, allow the command to execute
 }
 
+function isMaintenance(){
+    const maintenance_mode = global.config.maintenance_mode;
+    return maintenance_mode;
+}
+
 async function registerServer(interaction) {
     const server = new Server(interaction.guildId);
     await server.load();
     if(!server._loaded) await server.save(); await server.load();
     if(!server.message_id) logger.newServer(server);
 }
-
 
 async function registerServerUser(interaction) {
     let user = new User(interaction.user.id, interaction.user.username);

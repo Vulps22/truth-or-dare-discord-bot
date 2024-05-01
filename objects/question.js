@@ -41,7 +41,6 @@ class Question {
         this.isBanned = dare.isBanned;
         this.banReason = dare.banReason;
 		this.messageId = dare.messageId;
-		console.log(this.isApproved)
         if (dare.serverId) {
             this.server = new Server(dare.serverId);
             await this.server.load();
@@ -80,6 +79,7 @@ class Question {
 	async save() {
 		const table = this.type + "s";
 		this.exists = true;
+		if(!this.messageId) throw new Error("Missing Message ID: " + this.id + this.type);
 		let savable = {
 			id: this.id,
 			question: this.question,
@@ -87,7 +87,7 @@ class Question {
 			isApproved: this.isApproved,
 			isBanned: this.isBanned,
 			banReason: this.banReason,
-			serverId: this.server.id,
+			serverId: this.server.id ?? 'pre-v5',
 			messageId: this.messageId,
 		}
 
@@ -95,8 +95,10 @@ class Question {
 	}
 
 async find(messageId) {
+	console.log(messageId)
 		const table = this.type + "s";
 		const question = await this.db.query(`select id FROM ${table} WHERE messageId = ${messageId}`);
+		if(!question) return null;
 		const questionId = question[0].id;
 		this.id = questionId;
 		console.log(this.id);

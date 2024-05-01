@@ -144,7 +144,7 @@ class Database {
 			return `'${value.toISOString().slice(0, 19).replace('T', ' ')}'`; // Format the date as 'YYYY-MM-DD HH:MM:SS'
 		} else if (typeof value === 'boolean') {
 			return value ? 1 : 0;
-		} else if (value === null) {
+		} else if (value === null || value === undefined) {
 			return 'NULL';
 		} else {
 			throw new Error(`Unsupported type ${typeof value}`);

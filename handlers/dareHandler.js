@@ -270,7 +270,6 @@ class DareHandler extends Handler {
 		let dare = await new Dare().find(interaction.message.id);
 		switch (decision) {
 			case "ban":
-
 				this.getBanReason(interaction, dare.id);
 				break;
 			case "approve":
