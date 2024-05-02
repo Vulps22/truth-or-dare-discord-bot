@@ -8,7 +8,10 @@ RUN apk add --no-cache \
     cairo-dev \
     pango-dev \
     jpeg-dev \
-    giflib-dev
+    giflib-dev \
+    ttf-freefont
+
+RUN fc-cache -f
 
 USER node
 

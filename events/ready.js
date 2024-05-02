@@ -8,7 +8,7 @@ module.exports = {
 	execute(client) {
 		console.log(`Ready! Logged in as ${client.user.tag}`);
 
-		new ChannelManager(client).update();
+		//new ChannelManager(client).update();
 
 	}
 }

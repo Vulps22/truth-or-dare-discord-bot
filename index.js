@@ -29,9 +29,8 @@ process.on('uncaughtException', (err, origin) => {
 	console.log(message);
 	console.log('Stack: ', err.stack);
 
-	logger.error(message);
+	//logger.error(message);
 });
-
 
 global.client = new Client({ intents: [GatewayIntentBits.Guilds] });
 

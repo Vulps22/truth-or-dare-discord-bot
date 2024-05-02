@@ -14,13 +14,14 @@ module.exports = {
      * @returns 
      */
     async execute(interaction) {
-        if(isMaintenance() && interaction.guildId !== process.env.GUILD_ID) {
-            interaction.reply('Truth Or Dare Online 18+ has been disabled globally for essential maintenance: ' + global.config.maintenance_reason);
-            return;
-        }
+
         await registerServer(interaction);
         await registerServerUser(interaction);
 
+        if (isMaintenance() && interaction.guildId !== process.env.GUILD_ID) {
+            interaction.reply('Truth Or Dare Online 18+ has been disabled globally for essential maintenance: ' + global.config.maintenance_reason);
+            return;
+        }
         if (interaction.isAutocomplete()) {
             await handleAutoComplete(interaction);
             return;
@@ -40,7 +41,7 @@ module.exports = {
         }
 
         if (!user) {
-           logger.error(`**Failed to create User during InteractionCreate** | **server**: ${interaction.guild.name}`);
+            logger.error(`**Failed to create User during InteractionCreate** | **server**: ${interaction.guild.name}`);
         }
 
         if (interaction.isChatInputCommand()) {
@@ -69,7 +70,7 @@ async function handleAutoComplete(interaction) {
 }
 
 function hasPermission(interaction) {
-    
+
 
     const botPermissions = interaction.guild.members.me.permissionsIn(interaction.channel);
 
@@ -134,7 +135,8 @@ function shouldExecute(interaction, command, server) {
 
     if (command.premium) {
         if (!server.is_entitled) {
-            interaction.sendPremiumRequired();
+            interaction.reply("This is a premium command. Premium is not quite ready yet, But I'm working hard to make these commands available for everyone :)")
+            //interaction.sendPremiumRequired();
             return false;
         }
     }
@@ -168,16 +170,25 @@ function shouldExecute(interaction, command, server) {
     return true; // If none of the conditions fail, allow the command to execute
 }
 
-function isMaintenance(){
+function isMaintenance() {
     const maintenance_mode = global.config.maintenance_mode;
     return maintenance_mode;
 }
-
+/**
+ * 
+ * @param {Interaction} interaction 
+ */
 async function registerServer(interaction) {
     const server = new Server(interaction.guildId);
     await server.load();
-    if(!server._loaded) await server.save(); await server.load();
-    if(!server.message_id) logger.newServer(server);
+    if (!server._loaded) {
+        let name = "UNKNOWN SERVER NAME - THIS IS A BUG"
+        if(interaction.guild) name = interaction.guild.name;
+        server.name =  name ;
+        await server.save();
+    await server.load();
+}
+    if (!server.message_id) logger.newServer(server);
 }
 
 async function registerServerUser(interaction) {

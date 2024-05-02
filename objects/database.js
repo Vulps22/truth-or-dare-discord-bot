@@ -13,6 +13,14 @@ class Database {
 				user: process.env['DATABASE_USER'],
 				password: process.env['DATABASE_PASSWORD'],
 				database: process.env['DATABASE']
+/**
+				host: 'localhost',
+				//host: process.env['DATABASE_HOST'],
+				port:process.env['DATABASE_LOCAL_PORT'],
+				user: process.env['DATABASE_USER'],
+				password: process.env['DATABASE_PASSWORD'],
+				database: process.env['DATABASE']
+				**/
 			});
 
 			await new Promise((resolve, reject) => {
