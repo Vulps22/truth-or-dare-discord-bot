@@ -1,5 +1,6 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, TextChannel, Message } = require('discord.js');
 const Dare = require('./dare.js');
+const Truth = require('./truth.js');
 const Server = require('./server.js');
 module.exports = {
 
@@ -25,8 +26,11 @@ module.exports = {
             .addFields(
                 { name: "Dare", value: dare.question ?? '' },
                 { name: "Author", value: dare.creator ?? '' },
-                { name: "Server:", value: serverName }
+                { name: "Server:", value: serverName },
+                { name: "Ban Reason:", value: dare.banReason ?? '' },
+
             )
+            .setFooter({ text: `ID: #${dare.id}` })
         let actionRow = createActionRow("dare")
         const message = await channel.send({ embeds: [embed], components: [actionRow], fetchReply: true });
         console.log("Logged:", message.id)
@@ -39,14 +43,19 @@ module.exports = {
      * @param {Truth} truth 
      */
     async newTruth(truth) {
+        let serverName = 'pre-v5';
+        if (truth.server && truth.server.name) serverName = truth.server.name;
+
         let channel = getChannel(global.config.truths_log);
         let embed = new EmbedBuilder()
             .setTitle("New Truth")
             .addFields(
-                { name: "Truth", value: truth.question ?? 'undefined' },
-                { name: "Author", value: truth.creator ?? 'undefined' },
-                { name: "Server:", value: truth.server.name ?? 'undefined' }
+                { name: "Truth", value: truth.question ?? '' },
+                { name: "Author", value: truth.creator ?? '' },
+                { name: "Server:", value: serverName },
+                { name: "Ban Reason:", value: truth.banReason ?? '' },
             )
+            .setFooter({ text: `ID: #${truth.id}` });
         let actionRow = createActionRow("truth");
         const message = await channel.send({ embeds: [embed], components: [actionRow], fetchReply: true });
         console.log("logged", message.id)

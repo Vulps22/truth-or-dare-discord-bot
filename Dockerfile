@@ -1,10 +1,23 @@
-FROM node:16-alpine 
+FROM node:22-alpine
 
-USER node 
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    libc-dev \
+    cairo-dev \
+    pango-dev \
+    jpeg-dev \
+    giflib-dev \
+    ttf-freefont
+
+RUN fc-cache -f
+
+USER node
 
 WORKDIR /usr/src/bot
 
-COPY package.json .
+COPY package.json ./
 RUN npm install
 
 COPY . .

@@ -154,7 +154,9 @@ async function setLevelUpChannel(channel, interaction) {
     await server.load();
     
     if(!server.hasPremium()) {
-        interaction.sendPremiumRequired();
+        interaction.reply("This is a premium command. Premium is not quite ready yet, But I'm working hard to make these commands available for everyone :)")
+
+        //interaction.sendPremiumRequired();
         return;
     }
 
@@ -168,7 +170,9 @@ async function setLevelUpChannel(channel, interaction) {
 async function setLevelForRole(interaction) {
     
     if(!server.hasPremium()) {
-        interaction.sendPremiumRequired();
+        interaction.reply("This is a premium command. Premium is not quite ready yet, But I'm working hard to make these commands available for everyone :)")
+
+        //interaction.sendPremiumRequired();
         return;
     }
 
