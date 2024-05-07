@@ -1,4 +1,4 @@
-const { Interaction, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { Interaction, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, Guild } = require('discord.js');
 
 const Handler = require('./handler.js')
 const UserDare = require('../objects/userDare.js');
@@ -62,7 +62,8 @@ class DareHandler extends Handler {
 			const unBannedQuestions = dares.filter(q => !q.isBanned && q.isApproved);
 			if (unBannedQuestions.length === 0) { interaction.reply("There are no approved truths to give"); return;}
 			const dare = this.selectRandomDare(unBannedQuestions);
-			const creator = this.getCreator(dare, this.client).username;
+
+			const creator = this.getCreator(dare, interaction).username;
 
 			const embed = this.createDareEmbed(dare, interaction, creator);
 			const row = this.createActionRow();
@@ -130,9 +131,16 @@ class DareHandler extends Handler {
 		const random = Math.floor(Math.random() * dares.length);
 		return dares[random];
 	}
-
-	getCreator(dare, client) {
-		let creator = client.users.cache.get(dare.creator);
+/**
+ * 
+ * @param {Dare} dare 
+ * @param {Interaction} interaction 
+ * @returns 
+ */
+	getCreator(dare, interaction) {
+		/** @type {Guild} */
+		const guild = interaction.guild
+		const creator = guild.users.fetch(dare.creator)
 		return creator || { username: "Somebody" };
 	}
 

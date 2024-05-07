@@ -36,10 +36,13 @@ module.exports = {
 				return;
 			}
 		}
+
+		interaction.deferReply();
+
 		let leaderboard = new Leaderboard(interaction, interaction.client);
 		let card = await leaderboard.generateLeaderboard(command == 'global');
 
-		interaction.reply({ files: [card] });
+		interaction.editReply({ files: [card] });
 
 	}
 }
