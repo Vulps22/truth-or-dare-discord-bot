@@ -21,12 +21,12 @@ class Question {
 	constructor(id, type) {
 		this.id = id;
 		this.type = type;
-		this.question = null;
-		this.creator = null;
+		this.question = ' ';
+		this.creator = ' ';
 		this.isApproved = 0;
 		this.isBanned = 0
-		this.banReason = null;
-		this.messageId = null;
+		this.banReason = ' ';
+		this.messageId = ' ';
 		this.db = new Database();
 	}
 

@@ -79,11 +79,11 @@ class Handler {
       .setMinValues(1)
       .setOptions(reasons);
     const row = new ActionRowBuilder().addComponents(menu);
-    const reply = await interaction.reply({ content: 'Select a reason to ban this question', components: [row], ephemeral: true, fetchReply: true });
+    const reply = await interaction.reply({ content: 'Select a reason to ban this question', components: [row], fetchReply: true });
 
     const collector = reply.createMessageComponentCollector({
       ComponentType: ComponentType.StringSelect,
-      filter: (i) => i.user.id === interaction.user.id && i.customId === 'ban_reason',
+      filter: (i) => i.customId === 'ban_reason',
       time: 60_000
     })
 
@@ -124,9 +124,14 @@ class Handler {
       .addComponents(
         new ButtonBuilder()
           .setCustomId(`new_${this.type}_approve`)
-          .setLabel('Approve')
+          .setLabel('Approved')
           .setStyle(ButtonStyle.Success)
           .setDisabled(true),
+          new ButtonBuilder()
+          .setCustomId(`new_${this.type}_ban`)
+          .setLabel("Ban")
+          .setStyle(ButtonStyle.Danger)
+          .setDisabled(false),
       );
   }
 /**
@@ -139,8 +144,23 @@ class Handler {
     await question.approve();
     const message = interaction.message;
     const actionRow = this.createApprovedActionRow();
+    //const newEmbed = getEmbed(question);
     await message.edit({ components: [actionRow] });
     interaction.reply({ content: 'Question has been approved', ephemeral: true });
+  }
+
+  getEmbed(question) {
+
+    return new EmbedBuilder()
+    .setTitle("New " + this.type === 'truth' ? 'Truth' : "Dare")
+    .addFields(
+        { name: "Content", value: question.question ?? '' },
+        { name: "Author", value: question.creator ?? '' },
+        { name: "Server:", value: question.server.name },
+        { name: "Ban Reason:", value: dare.banReason ?? '' },
+
+    )
+    .setFooter(`#${dare.id}`)
   }
 }
 
