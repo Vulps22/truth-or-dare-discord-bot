@@ -160,7 +160,14 @@ class User {
 
     async getImage() {
         let discordUser = await global.client.users.fetch(this.id);
-        return await discordUser.displayAvatarURL();
+        let avatarURL = await discordUser.displayAvatarURL();
+        
+        // Fetching the avatar URL and ensuring it's a PNG
+        const urlParts = avatarURL.split('.');
+        urlParts[urlParts.length - 1] = 'png'; // Ensure the extension is 'png'
+        avatarURL = urlParts.join('.');
+
+        return avatarURL;
     }
 
 

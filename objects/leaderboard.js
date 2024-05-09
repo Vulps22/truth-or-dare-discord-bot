@@ -102,15 +102,7 @@ class Leaderboard {
         ctx.fillText(positionText, 150, avatarY + (avatarSize / 2)); // Adjust as necessary
         ctx.textBaseline = 'top'; // Reset the text baseline for the rest of the text
 
-        const playerData = this.client.users.cache.get(player.id);
-        let avatarURL;
-        if (!playerData) avatarURL = 'https://cdn.discordapp.com/embed/avatars/0.png';
-        else avatarURL = playerData.avatarURL()
-
-        // Fetching the avatar URL and ensuring it's a PNG
-        const urlParts = avatarURL.split('.');
-        urlParts[urlParts.length - 1] = 'png'; // Ensure the extension is 'png'
-        avatarURL = urlParts.join('.');
+        let avatarURL = await player.getImage();
 
         // Save the canvas state before drawing the avatar
         ctx.save();
