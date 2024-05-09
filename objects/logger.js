@@ -10,6 +10,7 @@ module.exports = {
             .setTitle("Error")
             .setDescription(message)
         channel.send({ embeds: [embed] });
+        console.error(message);
     },
 
     /**

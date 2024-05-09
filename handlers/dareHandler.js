@@ -63,9 +63,10 @@ class DareHandler extends Handler {
 			if (unBannedQuestions.length === 0) { interaction.reply("There are no approved truths to give"); return;}
 			const dare = this.selectRandomDare(unBannedQuestions);
 
-			const creator = this.getCreator(dare, interaction).username;
+			const creator = await this.getCreator(dare, interaction);
+			const username = creator.username ?? "Somebody";
 
-			const embed = this.createDareEmbed(dare, interaction, creator);
+			const embed = this.createDareEmbed(dare, interaction, username);
 			const row = this.createActionRow();
 
 			const message = await interaction.reply({ content: "Here's your Dare!", embeds: [embed], components: [row], fetchReply: true });
@@ -132,19 +133,36 @@ class DareHandler extends Handler {
 		return dares[random];
 	}
 /**
+ * Asynchronously gets the creator of a dare from an interaction within a guild.
  * 
- * @param {Dare} dare 
- * @param {Interaction} interaction 
- * @returns 
+ * @param {Dare} dare - The dare object with a 'creator' property holding the user ID.
+ * @param {Interaction} interaction - The interaction from which the guild and users are accessed.
+ * @returns {Promise<User>} The user object of the creator or a default user object if not found.
  */
-	getCreator(dare, interaction) {
-		/** @type {Guild} */
-		const guild = interaction.guild
-		const creator = guild.users.fetch(dare.creator)
-		return creator || { username: "Somebody" };
-	}
+async getCreator(dare, interaction) {
+    // Check if the interaction has a guild and the guild is properly fetched
+    if (!interaction.guild) {
+        console.error("Guild is undefined. Ensure this function is used within a guild context.");
+        return { username: "Somebody" };
+    }
 
-	createDareEmbed(dare, interaction, creator) {
+    try {
+        // Fetch the user from the guild
+        const creator = await interaction.guild.members.fetch(dare.creator);
+        return creator.user;
+    } catch (error) {
+        // Handle cases where the user cannot be fetched (e.g., not in guild, API error)
+        if (error.code !== 10007) {
+            // Log other errors
+            logger.error('Unexpectedly failed to fetch username in dareHandler: ', error)
+        }
+
+		return { username: "Somebody" };
+    }
+}
+
+
+	createDareEmbed(dare, interaction, username) {
 
 		let dareText = `${dare.question}\n\n **Votes:** 0 Done | 0 Failed`;
 
@@ -152,13 +170,14 @@ class DareHandler extends Handler {
 			.setTitle('Dare!')
 			.setDescription(dareText)
 			.setColor('#6A5ACD')
-			.setFooter({ text: `Requested by ${interaction.user.username} | Created By ${creator} | #${dare.id}`, iconURL: interaction.user.displayAvatarURL() });
+			.setFooter({ text: `Requested by ${interaction.user.username} | Created By ${username} | #${dare.id}`, iconURL: interaction.user.displayAvatarURL() });
 	}
 
 	async createUpdatedDareEmbed(userDare, interaction) {
 		let dare = await userDare.getQuestion();
 		let question = dare.question;
-		let creator = this.getCreator(dare, this.client);
+		let creator = this.getCreator(dare, interaction);
+		const username = (await creator).username;
 
 		let dareText = `${question}\n\n **Votes:** ${userDare.doneCount} Done | ${userDare.failedCount} Failed`;
 
@@ -166,7 +185,7 @@ class DareHandler extends Handler {
 			.setTitle('Dare!')
 			.setDescription(dareText)
 			.setColor('#6A5ACD')
-			.setFooter({ text: `Requested by ${userDare.username} | Created By ${creator.username} | #${dare.id}`, iconURL: userDare.image });
+			.setFooter({ text: `Requested by ${userDare.username} | Created By ${username} | #${dare.id}`, iconURL: userDare.image });
 	}
 
 	createActionRow() {

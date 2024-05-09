@@ -46,6 +46,7 @@ global.config = {
 	dares_log: '1160740531094159492',
 	truths_log: '1160740531094159492',
 	servers_log: '1160740531094159492',
+	required_votes: 3
 }
 
 db.get('config', 1).then((data) => {

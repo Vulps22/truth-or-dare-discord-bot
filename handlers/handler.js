@@ -16,18 +16,15 @@ class Handler {
    */
   type;
 
-  vote_count = 3;
+  vote_count;
   ALPHA = false;
 
   constructor(type) {
     this.db = new Database();
     this.type = type;
-    const ALPHA = process.env['ALPHA'] ?? false;
+    this.ALPHA = process.env['ALPHA'] ?? false;
+    this.vote_count = global.config.required_votes
 
-    if (ALPHA) {
-      this.ALPHA = true;
-      this.vote_count = 1;
-    }
   }
 
   async getQuestions(key) {
@@ -127,18 +124,18 @@ class Handler {
           .setLabel('Approved')
           .setStyle(ButtonStyle.Success)
           .setDisabled(true),
-          new ButtonBuilder()
+        new ButtonBuilder()
           .setCustomId(`new_${this.type}_ban`)
           .setLabel("Ban")
           .setStyle(ButtonStyle.Danger)
           .setDisabled(false),
       );
   }
-/**
- * 
- * @param {Interaction} interaction 
- * @param {Question} question 
- */
+  /**
+   * 
+   * @param {Interaction} interaction 
+   * @param {Question} question 
+   */
   async approve(interaction, question) {
     await question.load();
     await question.approve();
@@ -152,15 +149,15 @@ class Handler {
   getEmbed(question) {
 
     return new EmbedBuilder()
-    .setTitle("New " + this.type === 'truth' ? 'Truth' : "Dare")
-    .addFields(
+      .setTitle("New " + this.type === 'truth' ? 'Truth' : "Dare")
+      .addFields(
         { name: "Content", value: question.question ?? '' },
         { name: "Author", value: question.creator ?? '' },
         { name: "Server:", value: question.server.name },
         { name: "Ban Reason:", value: dare.banReason ?? '' },
 
-    )
-    .setFooter(`#${dare.id}`)
+      )
+      .setFooter(`#${dare.id}`)
   }
 }
 
