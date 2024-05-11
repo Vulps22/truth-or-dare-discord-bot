@@ -6,7 +6,7 @@ const User = require('../objects/user.js');
 const Server = require('../objects/server.js');
 const Truth = require('../objects/truth.js');
 const Logger = require('../objects/logger.js');
-client = null;
+let client = null;
 
 class TruthHandler extends Handler {
 

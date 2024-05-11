@@ -18,8 +18,8 @@ module.exports = {
         await registerServer(interaction);
         await registerServerUser(interaction);
 
-        if (isMaintenance() && interaction.guildId !== process.env.GUILD_ID) {
-            interaction.reply('Truth Or Dare Online 18+ has been disabled globally for essential maintenance: ' + global.config.maintenance_reason);
+        if (isMaintenance() && interaction.guildId !== my.guildId) {
+            interaction.reply('Truth Or Dare Online 18+ has been disabled globally for essential maintenance: ' + my.maintenance_reason);
             return;
         }
         if (interaction.isAutocomplete()) {
@@ -171,7 +171,7 @@ function shouldExecute(interaction, command, server) {
 }
 
 function isMaintenance() {
-    const maintenance_mode = global.config.maintenance_mode;
+    const maintenance_mode = my.maintenance_mode;
     return maintenance_mode;
 }
 /**

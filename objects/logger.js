@@ -5,7 +5,7 @@ const Server = require('./server.js');
 module.exports = {
 
     async error(message) {
-        let channel = getChannel(process.env['LOG_ERROR_CHANNEL_ID']);
+        let channel = getChannel(my.errors_log);
         let embed = new EmbedBuilder()
             .setTitle("Error")
             .setDescription(message)
@@ -20,7 +20,7 @@ module.exports = {
         let serverName = 'pre-v5';
         if (dare.server && dare.server.name) serverName = dare.server.name;
 
-        let channel = getChannel(global.config.dares_log);
+        let channel = getChannel(my.dares_log);
 
         let embed = new EmbedBuilder()
             .setTitle("New Dare")
@@ -47,7 +47,7 @@ module.exports = {
         let serverName = 'pre-v5';
         if (truth.server && truth.server.name) serverName = truth.server.name;
 
-        let channel = getChannel(global.config.truths_log);
+        let channel = getChannel(my.truths_log);
         let embed = new EmbedBuilder()
             .setTitle("New Truth")
             .addFields(
@@ -70,7 +70,7 @@ module.exports = {
      */
     async newServer(server) {
         console.log("New Server")
-        let channel = getChannel(global.config.servers_log);
+        let channel = getChannel(my.servers_log);
         let embed = serverEmbed(server);
         let actionRow = createServerActionRow();
         const message = await channel.send({ embeds: [embed], components: [actionRow], fetchReply: true });
@@ -80,7 +80,7 @@ module.exports = {
     },
 
     async updateServer(server) {
-        let channel = getChannel(global.config.servers_log);
+        let channel = getChannel(my.servers_log);
         /** @type {Message} */
         let message = await channel.messages.fetch(server.message_id);
         let embed = serverEmbed(server);

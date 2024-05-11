@@ -34,7 +34,7 @@ module.exports = {
 		const db = new Database();
 		lastDare = await db.createdWithin('dares', 2, interaction.user.id);
 		lastTruth = await db.createdWithin('truths', 2, interaction.user.id);
-		if ((lastDare.length > 0 || lastTruth.length > 0) && !process.env.ALPHA) {
+		if ((lastDare.length > 0 || lastTruth.length > 0) && !my.environment === 'dev') {
 			interaction.reply({ content: `Aborted creation: User attempted to create a Truth or Dare within 2 minutes`, ephemeral: true });
 			logger.error(`Aborted creation: User attempted to create a Truth or Dare within 2 minutes`);
 

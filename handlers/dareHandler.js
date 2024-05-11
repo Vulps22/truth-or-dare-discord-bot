@@ -7,7 +7,7 @@ const Server = require('../objects/server.js');
 const Dare = require('../objects/dare.js');
 const Logger = require('../objects/logger.js');
 const logger = require('../objects/logger.js');
-client = null
+let client = null
 class DareHandler extends Handler {
 
 	successXp = 50;

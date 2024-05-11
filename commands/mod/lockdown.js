@@ -30,15 +30,15 @@ module.exports = {
 
         if (subCommand === "enable") {
             const message = interaction.options.getString('message');
-            global.config.maintenance_mode = true;
-            global.config.maintenance_reason = message;
+            my.maintenance_mode = true;
+            my.maintenance_reason = message;
             await interaction.reply(`Lockdown mode enabled with message: ${message}`);
         } else if (subCommand === "disable") {
-            global.config.maintenance_mode = false;
-            global.config.maintenance_reason = "";
+            my.maintenance_mode = false;
+            my.maintenance_reason = "";
             await interaction.reply("Lockdown mode disabled.");
         }
         
-        await db.set('config', global.config);
+        await db.set('config', my);
     },
 }
