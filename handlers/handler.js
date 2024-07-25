@@ -56,7 +56,19 @@ class Handler {
    */
   async getBanReason(interaction, id) {
     const banHandler = new BanHandler();
-    const banReasons = this.type == 'server' ? banHandler.getServerBanReasons() : banHandler.getBanReasons();
+    let banReasons;
+
+    switch(this.type) {
+      case 'server':
+        banReasons = banHandler.getServerBanReasons();
+        break;
+      case 'user':
+        banReasons = banHandler.getUserBanReasons();
+        break;
+      default:
+        banReasons = banHandler.getBanReasons();
+    }
+
     let reasons = [];
 
     reasons[0] = new StringSelectMenuOptionBuilder()
@@ -76,7 +88,7 @@ class Handler {
       .setMinValues(1)
       .setOptions(reasons);
     const row = new ActionRowBuilder().addComponents(menu);
-    const reply = await interaction.reply({ content: 'Select a reason to ban this question', components: [row], fetchReply: true });
+    const reply = await interaction.reply({ content: 'Select a reason for this ban', components: [row], fetchReply: true });
 
     const collector = reply.createMessageComponentCollector({
       ComponentType: ComponentType.StringSelect,
@@ -95,27 +107,35 @@ class Handler {
 
   }
 
+  /**
+   * 
+   * @param {Interac} interaction 
+   * @param {*} id 
+   * @param {*} reason 
+   */
   async doBan(interaction, id, reason) {
     console.log("ban", id, reason);
     let didBan = false;
 
     switch (this.type) {
       case 'dare':
-        didBan = await new BanHandler().banDare(id, reason);
+        didBan = await new BanHandler().banDare(id, reason, interaction);
         break;
       case 'truth':
-        didBan = await new BanHandler().banTruth(id, reason);
+        didBan = await new BanHandler().banTruth(id, reason, interaction);
         break;
       case 'server':
         didBan = await new BanHandler().banServer(id, reason, interaction);
         break;
+      case 'user':
+        didBan = await new BanHandler().banUser(id, reason, interaction);
     }
 
     if (didBan) {
       console.log("DID BAN");
 
       // Respond with an ephemeral message
-      await interaction.reply({ content: (this.type == 'server' ? 'Server' : 'Question') + ' has been banned', ephemeral: true });
+      await interaction.followUp({ content: 'Ban Complete', ephemeral: true });
 
       // Delete the original message
       if (interaction.message) {
@@ -125,7 +145,7 @@ class Handler {
       console.log("Apparently did not ban");
 
       // You can also respond with an ephemeral message indicating failure if needed
-      await interaction.reply({ content: 'Failed to ban the ' + (this.type == 'server' ? 'server' : 'question'), ephemeral: true });
+      await interaction.followUp({ content: 'Ban Failed', ephemeral: true });
     }
 }
 

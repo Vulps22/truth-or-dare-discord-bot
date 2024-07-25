@@ -63,6 +63,19 @@ module.exports = {
 				.setName('reason')
 				.setDescription('Why are you banning this?')
 			)
+		)
+		.addSubcommand(new SlashCommandSubcommandBuilder()
+			.setName('user')
+			.setDescription('Ban the specified User')
+			.addStringOption(new SlashCommandStringOption()
+				.setName('id')
+				.setDescription('The ID of the User to ban')
+				.setAutocomplete(true)
+			)
+			.addStringOption(new SlashCommandStringOption()
+				.setName('reason')
+				.setDescription('Why are you banning this?')
+			)
 		),
 	async execute(interaction) {
 
@@ -78,6 +91,9 @@ module.exports = {
 			case 'server':
 				didBan = await new BanHandler().banServer(interaction.options.getString('id'), interaction.options.getString('reason'), interaction);
 				break;
+			case 'user':
+				didBan = await new BanHandler().banUser(interaction.options.getString('id'), interaction.options.getString('reason'), interaction);
+				break;
 			default:
 				interaction.reply('Not an Option');
 				break;
@@ -87,12 +103,12 @@ module.exports = {
 
 		const focusedOption = interaction.options.getFocused(true);
 		let choices;
-	
+
 		if (focusedOption.name === 'id') {
 			const subcommand = interaction.options.getSubcommand();
 			const db = new Database();
 			const id = focusedOption.value.toLowerCase();
-	
+
 			try {
 				switch (subcommand) {
 					case 'dare':
@@ -104,6 +120,9 @@ module.exports = {
 					case 'guild':
 						choices = await this.getAutocompleteChoices(db, 'servers', id, 'name');
 						break;
+					case 'user':
+						choices = await this.getAutocompleteChoices(db, 'users', id, 'username');
+						break;
 					default:
 						choices = [];
 						break;
@@ -113,27 +132,26 @@ module.exports = {
 				choices = [];
 			}
 		}
-	
+
 		if (focusedOption.name === 'reason') {
 			choices = banReasonList;
 		}
 		console.log(choices);
 		interaction.respond(choices);
 	},
-	
+
 	async getAutocompleteChoices(db, collectionName, id, fieldName) {
-    console.log(`Fetching autocomplete choices for collection: ${collectionName}, id: ${id}, fieldName: ${fieldName}`);
-    const items = await db.like(collectionName, 'id', `%${id}%`, 20, "DESC");
-    console.log(`Retrieved items:`, items);
-    return items.map(item => {
-        const name = `${item.id} - ${item[fieldName]}`;
-        const value = item.id;
-        return { name: truncateString(name, 96), value: value };
-    }).filter(choice => choice !== null);
-}
+		console.log(`Fetching autocomplete choices for collection: ${collectionName}, id: ${id}, fieldName: ${fieldName}`);
+		const items = await db.like(collectionName, 'id', `%${id}%`, 20, "DESC");
+		console.log(`Retrieved items:`, items);
+		return items.map(item => {
+			const name = `${item.id} - ${item[fieldName]}`;
+			const value = item.id;
+			return { name: truncateString(name, 96), value: value };
+		}).filter(choice => choice !== null);
+	}
 
 }
-
 
 function truncateString(str, num) {
 	if (str.length < num) {

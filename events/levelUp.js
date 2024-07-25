@@ -2,6 +2,7 @@ const { Client, TextChannel, GuildMember } = require("discord.js");
 const Events = require("./Events");
 const User = require("../objects/user");
 const Server = require("../objects/server");
+const logger = require("../objects/logger");
 
 module.exports = {
         name: Events.LevelUp,
@@ -12,6 +13,7 @@ module.exports = {
          * @param {"global" | "server"} type
          */
         async execute(user, type) {
+                logger.log(`Handling level up for user: ${user.username} with ID: ${user.id}`);
                 const client = global.client;
                 if (!user.serverUserLoaded) await user.loadServerUser();
 
@@ -48,7 +50,7 @@ module.exports = {
 
                 // Check if the member already has the role
                 if (member.roles.cache.has(role)) {
-                        console.log(`User ${user.username} already has the role for level ${user.serverLevel}. No need to add.`);
+                        logger.log(`User ${user.username} already has the role for level ${user.serverLevel}. No need to add.`);
                         return;
                 }
 

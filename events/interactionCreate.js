@@ -5,6 +5,7 @@ const Server = require("../objects/server");
 const User = require("../objects/user");
 const ButtonEventHandler = require("../handlers/buttonEventHandler");
 const logger = require("../objects/logger");
+const BanHandler = require("../handlers/banHandler");
 
 let logInteraction = '';
 
@@ -17,23 +18,12 @@ module.exports = {
      */
     async execute(interaction) {
 
-        await registerServer(interaction);
+        const didBan = await registerServer(interaction);
+        if (didBan) {
+            interaction.reply({ content: "You have been banned from using this bot", ephemeral: true });
+            return;
+        }
         await registerServerUser(interaction);
-
-        if (isMaintenance() && interaction.guildId !== my.guildId) {
-            logger.log("An interaction was cancelled dure to maintenance mode.");
-            interaction.reply('Truth Or Dare Online 18+ has been disabled globally for essential maintenance: ' + my.maintenance_reason);
-            return;
-        }
-        if (interaction.isAutocomplete()) {
-            await handleAutoComplete(interaction);
-            return;
-        }
-
-        if (interaction.isButton()) {
-            await new ButtonEventHandler(interaction).execute();
-            return;
-        }
 
         let user;
         try {
@@ -45,6 +35,28 @@ module.exports = {
 
         if (!user) {
             logger.error(`**Failed to create User during InteractionCreate** | **server**: ${interaction.guild.name}`);
+        }
+
+        if (user.isBanned) {
+            logger.log("Interaction Aborted: A banned user attempted to interact with the bot");
+            interaction.reply({ content: "You have been banned from using Truth Or Dare Online 18+", ephemeral: true });
+            return;
+        }
+
+        if (isMaintenance() && interaction.guildId !== my.guildId) {
+            logger.log("Interaction Aborted: Maintenance Mode.");
+            interaction.reply('Truth Or Dare Online 18+ has been disabled globally for essential maintenance: ' + my.maintenance_reason);
+            return;
+        }
+
+        if (interaction.isAutocomplete()) {
+            await handleAutoComplete(interaction);
+            return;
+        }
+
+        if (interaction.isButton()) {
+            await new ButtonEventHandler(interaction).execute();
+            return;
         }
 
         if (interaction.isChatInputCommand()) {
@@ -191,32 +203,54 @@ function isMaintenance() {
 }
 /**
  * 
- * @param {Interaction} interaction 
+ * @param {Interaction} interaction
+ * @returns bool - True if the server was automatically banned 
  */
 async function registerServer(interaction) {
     const server = new Server(interaction.guildId);
+    const user = new User(interaction.guild.ownerId); //server owner
+    await user.get();
     await server.load();
+
     if (!server._loaded) {
-        logger.log("Registering server during Interaction!");
         logger.error("Registering server during interaction!");
         let name = "UNKNOWN SERVER NAME - THIS IS A BUG"
-        if(interaction.guild) name = interaction.guild.name;
-        server.name =  name ;
+        if (interaction.guild) {
+            name = interaction.guild.name;
+            server.name = name;
+            server.owner = interaction.guild.ownerId;
+        }
+
         await server.save();
-    await server.load();
-}
+    } else {
+        //ensure the server details are up to date
+        if (server.name !== interaction.guild.name) server.name = interaction.guild.name;
+        if (server.owner !== interaction.guild.ownerId) server.owner = interaction.guild.ownerId;
+        await server.save();
+    }
+
+    if (!server.isBanned) {
+        if (user.isBanned) {
+            new BanHandler().banServer(interaction.guild.id, "Server owner has been banned", interaction, true, true);
+            return true;
+        }
+    }
+
     if (!server.message_id) logger.newServer(server);
+
+    return false;
 }
 
 async function registerServerUser(interaction) {
-    
+
     let user = new User(interaction.user.id, interaction.user.username);
 
     didLoad = await user.load();
     if (!didLoad) await user.save()
     await user.loadServerUser(interaction.guildId);
 
-    if (!user.serverUserLoaded) await user.saveServerUser()
+    if (!user.serverUserLoaded) await user.saveServerUser();
+
     return user;
 }
 

@@ -2,6 +2,7 @@ const { Client, TextChannel, GuildMember } = require("discord.js");
 const Events = require("./Events");
 const User = require("../objects/user");
 const Server = require("../objects/server");
+const logger = require("../objects/logger");
 
 module.exports = {
     name: Events.LevelDown, // Assuming you have an event for leveling down
@@ -13,7 +14,7 @@ module.exports = {
      * @param {"global" | "server"} type - Type of leveling (global or server)
      */
     async execute(user, type) {
-        console.log(`Handling level down for user: ${user.username}`);
+        logger.log(`Handling level down for user: ${user.username}`);
         if(type === "global") return; // No need to handle global level down
         /** @type {Client} */
         const client = global.client;
@@ -44,9 +45,9 @@ module.exports = {
 
             // Remove the old level role
             member.roles.remove(oldLevelRole).then(() => {
-                console.log(`Removed role for previous level from user ${user.username}.`);
+                logger.log(`Removed role for previous level from user ${user.username}.`);
             }).catch(error => {
-                console.error(`Failed to remove role: ${error.message}`);
+                logger.error(`Failed to remove role: ${error.message}`);
             });
         }
     }

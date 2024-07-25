@@ -6,6 +6,7 @@ class Server {
 
     id;
     name = null;
+    owner = null;
     hasAccepted = 0;
     isBanned = 0;
     banReason = null;
@@ -54,6 +55,7 @@ class Server {
         if (!serverData) return;
 
         this.name = serverData.name;
+        this.owner = serverData.owner;
         this.hasAccepted = serverData.hasAccepted;
         this.isBanned = serverData.isBanned;
         this.banReason = serverData.banReason;

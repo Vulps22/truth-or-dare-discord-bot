@@ -9,11 +9,12 @@ module.exports = {
 	 * @param {Guild} server 
 	 */
 	async execute(server) {
-		
+		logger.log("Registering a new Server: " + server.name + "With ID: " + server.id);
 		const newServer = new Server(server.id);
 		await newServer.load();
 		if(!newServer._loaded){
 			newServer.name = server.name;
+			newServer.owner = server.ownerId;
 			await newServer.save();
 			await newServer.load();
 		}
