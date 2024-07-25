@@ -72,6 +72,7 @@ module.exports = {
         const message = await channel.messages.edit(dare.messageId, { embeds: [embed], components: [actionRow] })
 
         console.log("Updated:", message.id)
+        return true;
     },
 
     /**
@@ -122,6 +123,7 @@ module.exports = {
         const message = await channel.messages.edit(truth.messageId, { embeds: [embed], components: [actionRow] })
 
         console.log("Updated:", message.id)
+        return true;
     },
 
     /**

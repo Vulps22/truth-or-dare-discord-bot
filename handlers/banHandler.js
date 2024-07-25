@@ -5,6 +5,7 @@ const Dare = require("../objects/dare");
 const Handler = require("./handler");
 const Server = require("../objects/server");
 const logger = require("../objects/logger");
+const Truth = require("../objects/truth");
 
 class BanHandler {
     constructor() {
@@ -157,7 +158,7 @@ class BanHandler {
             dare.banReason = reason;
             await dare.save();
 
-            let didUpdate = await this.updateActionRow(dare.messageId, my.dares_log, "dare");
+            let didUpdate = await logger.updateDare(dare);
             if (!didUpdate) {
                 interaction.reply(`Banned: Failed to update Action Row: Pre-V5 Dare\n\nId: ${dare.id} \n\n Question: ${dare.question}\n\nReason: ${reason}`);
             }
@@ -169,11 +170,11 @@ class BanHandler {
     }
 
     async banTruth(id, reason, interaction) {
-        const db = new Database();
         try {
-            const truth = await db.get('truths', id);
+            const truth = new Truth(id);
+            await truth.load();
 
-            if (!truth) {
+            if (!truth.exists) {
                 await interaction.reply(`Attempted to ban unknown truth with ID: ${id}`);
                 return false;
             }
@@ -181,11 +182,12 @@ class BanHandler {
             this.sendBanNotification(truth, reason, 'truth', interaction);
             truth.isBanned = 1;
             truth.banReason = reason;
-            await db.set('truths', truth);
+            await truth.save();
 
-            let didUpdate = await this.updateActionRow(truth.messageId, my.truths_log, "truth");
+            let didUpdate = await logger.updateTruth(truth);
             if (!didUpdate) {
                 interaction.reply(`Banned: Failed to update Action Row for Pre-V5 Truth\n\nID: ${truth.id} \n\nQuestion: ${truth.question}\n\nReason: ${reason}`);
+                return false;
             }
 
             return true;

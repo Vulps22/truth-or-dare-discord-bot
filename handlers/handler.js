@@ -101,10 +101,10 @@ class Handler {
 
     switch (this.type) {
       case 'dare':
-        didBan = await new BanHandler().banDare(id, reason);
+        didBan = await new BanHandler().banDare(id, reason, interaction);
         break;
       case 'truth':
-        didBan = await new BanHandler().banTruth(id, reason);
+        didBan = await new BanHandler().banTruth(id, reason, interaction);
         break;
       case 'server':
         didBan = await new BanHandler().banServer(id, reason, interaction);
