@@ -156,7 +156,7 @@ class BanHandler {
             dare.banReason = reason;
             await dare.save();
 
-            let didUpdate = await this.updateActionRow(dare.messageId, global.config.dares_log);
+            let didUpdate = await this.updateActionRow(dare.messageId, my.dares_log);
             if (!didUpdate) {
                 interaction.reply(`Banned: Failed to update Action Row: Pre-V5 Dare\n\nId: ${dare.id} \n\n Question: ${dare.question}\n\nReason: ${reason}`);
             }
@@ -182,7 +182,7 @@ class BanHandler {
             truth.banReason = reason;
             await db.set('truths', truth);
 
-            let didUpdate = await this.updateActionRow(truth.messageId, global.config.truths_log);
+            let didUpdate = await this.updateActionRow(truth.messageId, my.truths_log);
             if (!didUpdate) {
                 interaction.reply(`Banned: Failed to update Action Row for Pre-V5 Truth\n\nID: ${truth.id} \n\nQuestion: ${truth.question}\n\nReason: ${reason}`);
             }

@@ -22,7 +22,7 @@ module.exports = {
         }
 
         // Check guild ID
-        if (interaction.guildId !== process.env.GUILD_ID) {
+        if (interaction.guildId !== my.guildId) {
             return interaction.reply('This command can only be used in the admin guild');
         }
 

@@ -22,8 +22,8 @@ class Handler {
   constructor(type) {
     this.db = new Database();
     this.type = type;
-    this.ALPHA = process.env['ALPHA'] ?? false;
-    this.vote_count = global.config.required_votes
+    this.ALPHA = my.environment === 'dev'
+    this.vote_count = my.required_votes
 
   }
 

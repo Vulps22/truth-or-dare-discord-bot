@@ -35,7 +35,7 @@ class User {
         this.serverLevelXP = 0;
         this.isBanned = false;
         this.banReason = '';
-        this.required_votes = global.config.required_votes;
+        this.required_votes = my.required_votes;
     }
 
     async get() {
