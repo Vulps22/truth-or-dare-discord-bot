@@ -27,6 +27,7 @@ class BanHandler {
         this.serverBanReasonList = [
             { name: "1 - Breaches Discord T&C or Community Guidelines", value: "Breaches Discord T&C or Community Guidelines" },
             { name: "2 - Server Name suggests members could be under 18", value: "Server Name suggests members could be under 18" },
+            { name: "3 - Server Activity suggests members could be under 18", value: "Server Activity suggests members could be under 18"},
             { name: "3 - Server Name contains Hate Speech", value: "Server Name contains Hate Speech" },
             { name: "4 - Confirmed server members are under 18", value: "Confirmed members are under 18" },
             { name: "5 - Server-wide creation spam", value: "Server-wide creation spam" },
@@ -42,7 +43,6 @@ class BanHandler {
     }
 
     async sendBanNotification(question, reason, type, interaction) {
-        return;
         const userId = question.creator;
         client = global.client;
         try {
