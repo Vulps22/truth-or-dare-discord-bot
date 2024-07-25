@@ -4,6 +4,15 @@ const Truth = require('./truth.js');
 const Server = require('./server.js');
 module.exports = {
 
+    async log(message) {
+        let channel = getChannel(my.logs);
+        let embed = new EmbedBuilder()
+            .setTitle("Error")
+            .setDescription(message)
+        channel.send(message);
+        console.log(message);
+    },
+
     async error(message) {
         let channel = getChannel(my.errors_log);
         let embed = new EmbedBuilder()
@@ -11,6 +20,7 @@ module.exports = {
             .setDescription(message)
         channel.send({ embeds: [embed] });
         console.error(message);
+        this.log(message);
     },
 
     /**

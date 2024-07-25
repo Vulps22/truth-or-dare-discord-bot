@@ -6,6 +6,8 @@ const User = require("../objects/user");
 const ButtonEventHandler = require("../handlers/buttonEventHandler");
 const logger = require("../objects/logger");
 
+let logInteraction = '';
+
 module.exports = {
     name: Events.InteractionCreate,
     /**
@@ -19,6 +21,7 @@ module.exports = {
         await registerServerUser(interaction);
 
         if (isMaintenance() && interaction.guildId !== my.guildId) {
+            logger.log("An interaction was cancelled dure to maintenance mode.");
             interaction.reply('Truth Or Dare Online 18+ has been disabled globally for essential maintenance: ' + my.maintenance_reason);
             return;
         }
@@ -76,15 +79,18 @@ function hasPermission(interaction) {
 
     if (!botPermissions.has('ViewChannel')) {
         interaction.reply('I do not have permission to view this channel. I require permission to `view channel` to function correctly');
+        logger.log("Interaction cancelled: Could not access channel");
         return false;
     }
 
     if (!botPermissions.has('SendMessages')) {
+        logger.log("Interaction cancelled: Unable to send messages");
         interaction.reply('I do not have permission to send messages in this channel. I require permission to `send messages` and `embed links` to function correctly');
         return false;
     }
 
     if (!botPermissions.has('EmbedLinks')) {
+        logger.log("Interaction cancelled: Unable to embed messages");
         interaction.reply('I do not have permission to embed links in this channel. I require permission to `send messages` and `embed links` to function correctly');
         return false;
     }
@@ -109,14 +115,19 @@ async function runCommand(interaction) {
             server = { id: interaction.guildId, name: interaction.guild.name, hasAccepted: 0, isBanned: 0 };
             await db.set('servers', server);
         }
+        logInteraction = `**Command**: ${interaction.commandName} | **Server**: ${server.name} - ${server.id} | **User**: ${interaction.user.username} - ${interaction.user.id}`
 
         if (server.isBanned && interaction.commandName !== "help") {
-
+            logger.log(`${logInteraction} || Interaction aborted: Server is Banned`);
             interaction.reply('Your Community has been banned for violating the bot\'s Terms of Use');
+            logger.log
             return;
         }
 
-        if (shouldExecute(interaction, command, server)) await command.execute(interaction);
+        if (shouldExecute(interaction, command, server)) {
+            logger.log(`${logInteraction} || Executing Command`);
+            await command.execute(interaction);
+        }
     } catch (error) {
         console.error(`Error executing ${interaction.commandName}`);
         console.error(error);
@@ -135,6 +146,7 @@ function shouldExecute(interaction, command, server) {
 
     if (command.premium) {
         if (!server.is_entitled) {
+            logger.log(`${logInteraction} || Interaction Aborted: Not Entitled to Premium Commands`);
             interaction.reply("This is a premium command. Premium is not quite ready yet, But I'm working hard to make these commands available for everyone :)")
             //interaction.sendPremiumRequired();
             return false;
@@ -144,6 +156,7 @@ function shouldExecute(interaction, command, server) {
     // Ensure server setup for commands that do not ignore setup requirements
     if (!command.ignoreSetup) {
         if (!server || !server.hasAccepted || !server.announcement_channel) {
+            logger.log(`${logInteraction} || Interaction Aborted: Not Set Up`);
             interaction.reply("A community Administrator must first run the /setup command to completion before you can use me.");
             return false;
         }
@@ -151,12 +164,14 @@ function shouldExecute(interaction, command, server) {
 
     // Check NSFW requirement for commands that specify it
     if (command.nsfw && !interaction.channel.nsfw) {
+        logger.log(`${logInteraction} || Interaction Aborted: Channel was not Gated`);
         interaction.reply("My commands can only be used on channels marked as NSFW (`Age Restricted`).\nFor more information use `/help`.");
         return false;
     }
 
     // Check for Administrator role for commands that require it
     if (command.administrator && !interaction.member.permissions.has("Administrator")) {
+        logger.log(`${logInteraction} || Interaction Aborted: User was not Administrator`);
         interaction.reply("You need the Administrator role to use this command.");
         return false;
     }
@@ -182,6 +197,8 @@ async function registerServer(interaction) {
     const server = new Server(interaction.guildId);
     await server.load();
     if (!server._loaded) {
+        logger.log("Registering server during Interaction!");
+        logger.error("Registering server during interaction!");
         let name = "UNKNOWN SERVER NAME - THIS IS A BUG"
         if(interaction.guild) name = interaction.guild.name;
         server.name =  name ;
@@ -192,6 +209,7 @@ async function registerServer(interaction) {
 }
 
 async function registerServerUser(interaction) {
+    
     let user = new User(interaction.user.id, interaction.user.username);
 
     didLoad = await user.load();
@@ -202,6 +220,11 @@ async function registerServerUser(interaction) {
     return user;
 }
 
+/**
+ * @deprecated This should be breaking shit
+ * @param {Interaction} interaction 
+ * @returns 
+ */
 function hasPermission(interaction) {
 
     const botPermissions = interaction.guild.members.me.permissionsIn(interaction.channel);

@@ -110,6 +110,7 @@ class User {
     }
 
     async saveServerUser() {
+        console.log("Registering new server User");
         if (!this.serverUserLoaded) return;
         const db = new Database();
         await db.query(`UPDATE server_users SET server_level = ${this.serverLevel}, server_level_xp = ${this.serverLevelXP} WHERE user_id = ${this.id} AND server_id = ${this.serverId}`);
