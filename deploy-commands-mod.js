@@ -11,7 +11,7 @@ async function deployGuildCommands() {
     // Fetch configuration from the database
     try {
         config = await db.get('config', 1); // Assuming 'config' table has an id column
-        console.log("Configuration loaded:", config);
+        console.log("Configuration loaded:", config.environment);
     } catch (error) {
         console.error('Error loading config from database:', error);
         return;  // Exit if configuration loading fails

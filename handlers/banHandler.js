@@ -35,6 +35,15 @@ class BanHandler {
             { name: "4 - Confirmed server members are under 18", value: "Confirmed members are under 18" },
             { name: "5 - Server-wide creation spam", value: "Server-wide creation spam" },
         ];
+
+        this.UserBanReasonList = [
+            { name: "1 - Breached Discord T&C or Community Guidelines", value: "Breaches Discord T&C or Community Guidelines" },
+            { name: "2 - Suspected Under 18 User", value: "Suspected Under 18 User" },
+            { name: "3 - Activity suggests user could be under 18", value: "Activity suggests user could be under 18" },
+            { name: "3 - Name contains Hate Speech", value: "Name contains Hate Speech" },
+            { name: "4 - Confirmed user is under 18", value: "Confirmed user is under 18" },
+            { name: "5 - creation spam", value: "creation spam" },
+        ]
     }
 
     getBanReasons() {
@@ -43,6 +52,10 @@ class BanHandler {
 
     getServerBanReasons() {
         return this.serverBanReasonList;
+    }
+
+    getUserBanReasons() {
+        return this.UserBanReasonList;
     }
 
     async sendBanNotification(question, reason, type, interaction) {
@@ -170,7 +183,7 @@ class BanHandler {
         return str.slice(0, num - 3) + '...'
     }
 
-    async banDare(id, reason, interaction, notify = true) {
+    async banDare(id, reason, interaction, notify = true, userBan = false) {
         const db = new Database();
         try {
             const dare = new Dare(id);
@@ -186,7 +199,7 @@ class BanHandler {
             dare.banReason = reason;
             await dare.save();
 
-            let didUpdate = await logger.updateDare(dare);
+            let didUpdate = await logger.updateDare(dare, userBan);
             if (!didUpdate) {
                 if(notify) interaction.reply(`Banned: Failed to update Action Row: Pre-V5 Dare\n\nId: ${dare.id} \n\n Question: ${dare.question}\n\nReason: ${reason}`);
             }
@@ -197,7 +210,7 @@ class BanHandler {
         }
     }
 
-    async banTruth(id, reason, interaction, notify = true) {
+    async banTruth(id, reason, interaction, notify = true, userBan = false) {
         try {
             const truth = new Truth(id);
             await truth.load();
@@ -212,7 +225,7 @@ class BanHandler {
             truth.banReason = reason;
             await truth.save();
 
-            let didUpdate = await logger.updateTruth(truth);
+            let didUpdate = await logger.updateTruth(truth, userBan);
             if (!didUpdate) {
                 if(notify) interaction.reply(`Banned: Failed to update Action Row for Pre-V5 Truth\n\nID: ${truth.id} \n\nQuestion: ${truth.question}\n\nReason: ${reason}`);
                 return false;
@@ -231,7 +244,7 @@ class BanHandler {
      * @param {Interaction} interaction 
      * @returns 
      */
-    async banServer(id, reason, interaction, notify = true, silent = false) {
+    async banServer(id, reason, interaction, notify = true, silent = false, userBan = false) {
         try {
             let server = new Server(id);
             await server.load();
@@ -248,7 +261,7 @@ class BanHandler {
             server.save();
 
             //let didUpdate = await this.updateActionRow(server.message_id, my.servers_log, "server");
-            const didUpdate = await logger.updateServer(server);
+            const didUpdate = await logger.updateServer(server, userBan);
             if (!didUpdate) {
                 if(!silent) interaction.reply({ content: `Server has been banned, but failed to update Action Row for Pre-V5 Server\n\nID: ${server.id} \n\nName: ${server.name}\n\nReason: ${reason}`, ephemeral: false });
             }
@@ -294,21 +307,21 @@ class BanHandler {
             // Collect all the promises
             const darePromises = db.query(`SELECT id FROM dares WHERE creator=${user.id} AND isBanned=0`).then((_dares) => {
                 return Promise.all(_dares.map(async (_dare) => {
-                    await this.banDare(_dare.id, "Creator was Banned", interaction, false);
+                    await this.banDare(_dare.id, "Creator was Banned", interaction, false, true);
                     dares++;
                 }));
             });
     
             const truthPromises = db.query(`SELECT * FROM truths WHERE creator=${user.id} AND isBanned=0`).then((_truths) => {
                 return Promise.all(_truths.map(async (_truth) => {
-                    await this.banTruth(_truth.id, "Creator was Banned", interaction, false);
+                    await this.banTruth(_truth.id, "Creator was Banned", interaction, false, true);
                     truths++;
                 }));
             });
     
             const serverPromises = db.query(`SELECT * FROM servers WHERE owner=${user.id} AND isBanned=0`).then((_servers) => {
                 return Promise.all(_servers.map(async (_server) => {
-                    await this.banServer(_server.id, "Owner was Banned", interaction, false, true);
+                    await this.banServer(_server.id, "Owner was Banned", interaction, false, true, true);
                     servers++;
                 }));
             });

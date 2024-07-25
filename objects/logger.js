@@ -52,7 +52,7 @@ module.exports = {
     /**
      * @param {Dare} dare 
      */
-    async updateDare(dare) {
+    async updateDare(dare, userBan = false) {
         let serverName = 'pre-v5';
         if (dare.server && dare.server.name) serverName = dare.server.name;
 
@@ -67,7 +67,7 @@ module.exports = {
                 { name: "Ban Reason:", value: dare.banReason ?? '' },
             )
             .setFooter({ text: `ID: #${dare.id}` })
-        let actionRow = createActionRow("dare", dare.isBanned);
+        let actionRow = createActionRow("dare", dare.isBanned, userBan);
         let message;
         if (dare.messageId !== 'pre-v5') {
             message = await channel.messages.edit(dare.messageId, { embeds: [embed], components: [actionRow] });
@@ -105,7 +105,7 @@ module.exports = {
     /**
      * @param {Truth} truth 
      */
-    async updateTruth(truth) {
+    async updateTruth(truth, userBan = false) {
         let serverName = 'pre-v5';
         if (truth.server && truth.server.name) serverName = truth.server.name;
 
@@ -120,7 +120,7 @@ module.exports = {
                 { name: "Ban Reason:", value: truth.banReason ?? '' },
             )
             .setFooter({ text: `ID: #${truth.id}` })
-        let actionRow = createActionRow("truth", truth.isBanned)
+        let actionRow = createActionRow("truth", truth.isBanned, userBan)
 
         let message;
         if (truth.messageId !== 'pre-v5') {
@@ -150,14 +150,14 @@ module.exports = {
      * 
      * @param {Server} server 
      */
-    async updateServer(server) {
+    async updateServer(server, userBan = false) {
         try {
             if (!server._loaded) throw Error("Attempted to update an unloaded server");
             let channel = getChannel(my.servers_log);
             /** @type {Message} */
             let message = await channel.messages.fetch(server.message_id);
             let embed = serverEmbed(server);
-            let actionRow = createActionRow("server", server.isBanned);
+            let actionRow = createActionRow("server", server.isBanned, userBan);
             message.edit({ embeds: [embed], components: [actionRow] });
             return true;
         } catch {
@@ -216,7 +216,7 @@ function getChannel(channelId) {
  * @param {string<truth|dare>} type 
  * @returns 
  */
-function createActionRow(type, isBanned = false) {
+function createActionRow(type, isBanned = false, userBanned = false) {
     if (!isBanned) {
         if (type !== 'server') {
             return new ActionRowBuilder()
@@ -229,6 +229,11 @@ function createActionRow(type, isBanned = false) {
                         .setCustomId(`new_${type}_ban`)
                         .setLabel('Ban')
                         .setStyle(ButtonStyle.Danger),
+                    new ButtonBuilder()
+                        .setCustomId(`user_${type}_ban`)
+                        .setLabel(userBanned ? 'Creator is Banned' : 'Ban Creator')
+                        .setStyle(ButtonStyle.Secondary)
+                        .setDisabled(userBanned),
                 );
         } else {
             return new ActionRowBuilder()
@@ -237,6 +242,11 @@ function createActionRow(type, isBanned = false) {
                         .setCustomId(`new_${type}_ban`)
                         .setLabel('Ban')
                         .setStyle(ButtonStyle.Danger),
+                    new ButtonBuilder()
+                        .setCustomId(`user_server_ban`)
+                        .setLabel(userBanned ? 'Creator is Owner' : 'Ban Owner')
+                        .setStyle(ButtonStyle.Secondary)
+                        .setDisabled(userBanned),
                 );
         }
     } else {
@@ -251,6 +261,12 @@ function createActionRow(type, isBanned = false) {
                     .setCustomId(`new_${type}_unban`)
                     .setLabel('Unban')
                     .setStyle(ButtonStyle.Primary),
+                new ButtonBuilder()
+                    .setCustomId(`user_${type}_ban`)
+                    .setLabel(userBanned ? 'Creator is Banned' : 'Ban Creator')
+                    .setStyle(ButtonStyle.Secondary)
+                    .setDisabled(userBanned),
+
             );
     }
 }

@@ -13,6 +13,7 @@ class UserHandler extends Handler {
     constructor() {
         super();
         this.db = new Database();
+        this.type = 'user';
     }
 
     async startSetup(interaction) {
@@ -56,6 +57,10 @@ class UserHandler extends Handler {
         const server = new Server(guildId);
         await server.load();
         return server;
+    }
+
+    async banUser(interaction, user) {
+        this.getBanReason(interaction, user.id);
     }
 }
 
