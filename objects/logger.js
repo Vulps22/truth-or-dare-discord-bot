@@ -36,7 +36,7 @@ module.exports = {
             .setTitle("New Dare")
             .addFields(
                 { name: "Dare", value: dare.question ?? '' },
-                { name: "Author", value: dare.creator ?? '' },
+                { name: "Author", value: `${await dare.getCreatorUsername()} | ${dare.creator}` ?? '' },
                 { name: "Server:", value: serverName },
                 { name: "Ban Reason:", value: dare.banReason ?? '' },
 
@@ -62,16 +62,18 @@ module.exports = {
             .setTitle("New Dare")
             .addFields(
                 { name: "Dare", value: dare.question ?? '' },
-                { name: "Author", value: dare.creator ?? '' },
+                { name: "Author Name", value: `${await dare.getCreatorUsername()} | ${dare.creator}` ?? '' },
                 { name: "Server:", value: serverName },
                 { name: "Ban Reason:", value: dare.banReason ?? '' },
             )
             .setFooter({ text: `ID: #${dare.id}` })
-        let actionRow = createActionRow("dare", dare.isBanned)
+        let actionRow = createActionRow("dare", dare.isBanned);
+        let message;
+        if (dare.messageId !== 'pre-v5') {
+            message = await channel.messages.edit(dare.messageId, { embeds: [embed], components: [actionRow] });
+            console.log("Updated:", message.id);
+        }
 
-        const message = await channel.messages.edit(dare.messageId, { embeds: [embed], components: [actionRow] })
-
-        console.log("Updated:", message.id)
         return true;
     },
 
@@ -88,7 +90,7 @@ module.exports = {
             .setTitle("New Truth")
             .addFields(
                 { name: "Truth", value: truth.question ?? '' },
-                { name: "Author", value: truth.creator ?? '' },
+                { name: "Author Name", value: `${await truth.getCreatorUsername()} | ${truth.creator}` ?? '' },
                 { name: "Server:", value: serverName },
                 { name: "Ban Reason:", value: truth.banReason ?? '' },
             )
@@ -113,16 +115,19 @@ module.exports = {
             .setTitle("New Truth")
             .addFields(
                 { name: "Truth", value: truth.question ?? '' },
-                { name: "Author", value: truth.creator ?? '' },
+                { name: "Author Name", value: `${await truth.getCreatorUsername()} | ${truth.creator}` ?? '' },
                 { name: "Server:", value: serverName },
                 { name: "Ban Reason:", value: truth.banReason ?? '' },
             )
             .setFooter({ text: `ID: #${truth.id}` })
         let actionRow = createActionRow("truth", truth.isBanned)
 
-        const message = await channel.messages.edit(truth.messageId, { embeds: [embed], components: [actionRow] })
+        let message;
+        if (truth.messageId !== 'pre-v5') {
+            message = await channel.messages.edit(truth.messageId, { embeds: [embed], components: [actionRow] });
+            console.log("Updated:", message.id)
+        }
 
-        console.log("Updated:", message.id)
         return true;
     },
 
@@ -146,14 +151,18 @@ module.exports = {
      * @param {Server} server 
      */
     async updateServer(server) {
-        if(!server._loaded) throw Error("Attempted to update an unloaded server");
-        let channel = getChannel(my.servers_log);
-        /** @type {Message} */
-        let message = await channel.messages.fetch(server.message_id);
-        let embed = serverEmbed(server);
-        let actionRow = createActionRow("server", server.isBanned);
-        message.edit({ embeds: [embed], components: [actionRow] });
-        return true;
+        try {
+            if (!server._loaded) throw Error("Attempted to update an unloaded server");
+            let channel = getChannel(my.servers_log);
+            /** @type {Message} */
+            let message = await channel.messages.fetch(server.message_id);
+            let embed = serverEmbed(server);
+            let actionRow = createActionRow("server", server.isBanned);
+            message.edit({ embeds: [embed], components: [actionRow] });
+            return true;
+        } catch {
+            return false;
+        }
     },
 
     async deleteServer(messageId) {
@@ -173,6 +182,7 @@ function serverEmbed(server) {
 
 
     const embedObject = [
+        { name: "ID", value: server.id },
         { name: "Name", value: server.name ?? ' ' },
         { name: "AcceptedTerms", value: server.acceptedString() },
         { name: "Banned", value: server.bannedString() },
@@ -182,6 +192,7 @@ function serverEmbed(server) {
     return new EmbedBuilder()
         .setTitle("New Server")
         .addFields(
+            { name: "ID", value: server.id },
             { name: "Name", value: server.name ?? ' ' },
             { name: "AcceptedTerms", value: server.acceptedString() },
             { name: "Banned", value: server.bannedString() },
@@ -219,15 +230,15 @@ function createActionRow(type, isBanned = false) {
                         .setLabel('Ban')
                         .setStyle(ButtonStyle.Danger),
                 );
-            } else {
-                return new ActionRowBuilder()
+        } else {
+            return new ActionRowBuilder()
                 .addComponents(
                     new ButtonBuilder()
                         .setCustomId(`new_${type}_ban`)
                         .setLabel('Ban')
                         .setStyle(ButtonStyle.Danger),
                 );
-            }
+        }
     } else {
         return new ActionRowBuilder()
             .addComponents(

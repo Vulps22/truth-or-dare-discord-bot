@@ -14,6 +14,7 @@ module.exports = {
 		await newServer.load();
 		if(!newServer._loaded){
 			newServer.name = server.name;
+			newServer.owner = server.ownerId;
 			await newServer.save();
 			await newServer.load();
 		}

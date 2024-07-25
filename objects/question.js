@@ -1,5 +1,6 @@
 const Database = require("./database");
 const Server = require("./server");
+const User = require("./user");
 
 class Question {
 	/**
@@ -117,6 +118,12 @@ async find(messageId) {
 		await this.save();
 	}
 
+	async getCreatorUsername(){
+		const user = new User(this.creator);
+		await user.get();
+
+		return user.username;
+	}
 
 	toJson() {
 		let string = {}

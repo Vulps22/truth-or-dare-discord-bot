@@ -21,6 +21,8 @@ class User {
 
     required_votes;
 
+    _loaded = false;
+
     /** @type {Server} */
     server;
 
@@ -53,7 +55,7 @@ class User {
      */
     async save() {
         const db = new Database();
-        await db.set('users', { id: this.id, username: this.username, global_Level: this.globalLevel, global_level_xp: this.globalLevelXP, is_banned: this.isBanned, ban_reason: this.banReason });
+        await db.set('users', { id: this.id, username: this.username, global_Level: this.globalLevel, global_level_xp: this.globalLevelXP, isBanned: this.isBanned, ban_reason: this.banReason });
         if(this.serverUserLoaded) await this.saveServerUser();
     }
 
@@ -72,8 +74,9 @@ class User {
         this.username = user.username;
         this.globalLevel = user.global_level;
         this.globalLevelXP = user.global_level_xp;
-        this.isBanned = user.is_banned;
+        this.isBanned = user.isBanned;
         this.banReason = user.ban_reason;
+        this._loaded = true;
         return true;
     }
 
