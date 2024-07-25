@@ -16,18 +16,15 @@ class Handler {
    */
   type;
 
-  vote_count = 3;
+  vote_count;
   ALPHA = false;
 
   constructor(type) {
     this.db = new Database();
     this.type = type;
-    const ALPHA = process.env['ALPHA'] ?? false;
+    this.ALPHA = my.environment === 'dev'
+    this.vote_count = my.required_votes
 
-    if (ALPHA) {
-      this.ALPHA = true;
-      this.vote_count = 1;
-    }
   }
 
   async getQuestions(key) {
@@ -101,6 +98,7 @@ class Handler {
   async doBan(interaction, id, reason) {
     console.log("ban", id, reason);
     let didBan = false;
+
     switch (this.type) {
       case 'dare':
         didBan = await new BanHandler().banDare(id, reason);
@@ -113,11 +111,24 @@ class Handler {
         break;
     }
 
-
     if (didBan) {
-      await interaction.update({ content: (this.type == 'server' ? 'Server' : 'Question') + ' has been banned', components: [], ephemeral: true });
+      console.log("DID BAN");
+
+      // Respond with an ephemeral message
+      await interaction.reply({ content: (this.type == 'server' ? 'Server' : 'Question') + ' has been banned', ephemeral: true });
+
+      // Delete the original message
+      if (interaction.message) {
+        await interaction.message.delete();
+      }
+    } else {
+      console.log("Apparently did not ban");
+
+      // You can also respond with an ephemeral message indicating failure if needed
+      await interaction.reply({ content: 'Failed to ban the ' + (this.type == 'server' ? 'server' : 'question'), ephemeral: true });
     }
-  }
+}
+
 
   createApprovedActionRow() {
     return new ActionRowBuilder()
@@ -127,18 +138,18 @@ class Handler {
           .setLabel('Approved')
           .setStyle(ButtonStyle.Success)
           .setDisabled(true),
-          new ButtonBuilder()
+        new ButtonBuilder()
           .setCustomId(`new_${this.type}_ban`)
           .setLabel("Ban")
           .setStyle(ButtonStyle.Danger)
           .setDisabled(false),
       );
   }
-/**
- * 
- * @param {Interaction} interaction 
- * @param {Question} question 
- */
+  /**
+   * 
+   * @param {Interaction} interaction 
+   * @param {Question} question 
+   */
   async approve(interaction, question) {
     await question.load();
     await question.approve();
@@ -152,15 +163,15 @@ class Handler {
   getEmbed(question) {
 
     return new EmbedBuilder()
-    .setTitle("New " + this.type === 'truth' ? 'Truth' : "Dare")
-    .addFields(
+      .setTitle("New " + this.type === 'truth' ? 'Truth' : "Dare")
+      .addFields(
         { name: "Content", value: question.question ?? '' },
         { name: "Author", value: question.creator ?? '' },
         { name: "Server:", value: question.server.name },
         { name: "Ban Reason:", value: dare.banReason ?? '' },
 
-    )
-    .setFooter(`#${dare.id}`)
+      )
+      .setFooter(`#${dare.id}`)
   }
 }
 

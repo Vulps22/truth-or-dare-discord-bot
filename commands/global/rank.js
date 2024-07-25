@@ -14,7 +14,13 @@ module.exports = {
         ),
     nsfw: false,
     administrator: false,
+    /**
+     * 
+     * @param {import("discord.js").Interaction} interaction 
+     * @returns 
+     */
     async execute(interaction) {
+        await interaction.deferReply();
         let discordUser = interaction.options.getUser('user');
         let user_id;
         if (discordUser) user_id = interaction.options.getUser('user').id;
@@ -26,14 +32,14 @@ module.exports = {
         const user = await handler.getUser(user_id);
 
         if (!user) {
-            interaction.reply("Hmm, I can't find your user data. This might be a bug, try again later");
+            interaction.editReply("Hmm, I can't find your user data. This might be a bug, try again later");
             return;
         }
         await user.loadServerUser(interaction.guildId);
         let image = await user.getImage();
         let rankCard = new RankCard(user, image);
         let card = await rankCard.generateCard();
-        interaction.reply({ files: [card] });
+        interaction.editReply({ files: [card] });
 
     }
 }

@@ -19,6 +19,8 @@ class User {
     levelRandomiser = 1.254;
     levelMultiplier = 100;
 
+    required_votes;
+
     /** @type {Server} */
     server;
 
@@ -33,6 +35,7 @@ class User {
         this.serverLevelXP = 0;
         this.isBanned = false;
         this.banReason = '';
+        this.required_votes = my.required_votes;
     }
 
     async get() {
@@ -107,6 +110,7 @@ class User {
     }
 
     async saveServerUser() {
+        console.log("Registering new server User");
         if (!this.serverUserLoaded) return;
         const db = new Database();
         await db.query(`UPDATE server_users SET server_level = ${this.serverLevel}, server_level_xp = ${this.serverLevelXP} WHERE user_id = ${this.id} AND server_id = ${this.serverId}`);
@@ -268,10 +272,9 @@ class User {
      * Counts the number of dares the user has done successfully
      */
     async daresDone(serverId) {
-
         const db = new Database();
         //use db.query(sql) to get the number of dares from user_dares where done_count >= 5
-        let dares = await db.query(`SELECT COUNT(*) as count FROM user_dares WHERE user_id = ${this.id} AND done_count >= 5 ${serverId ? `AND server_id = ${serverId}` : ''}`);
+        let dares = await db.query(`SELECT COUNT(*) as count FROM user_dares WHERE user_id = ${this.id} AND done_count >= ${this.required_votes} ${serverId ? `AND server_id = ${serverId}` : ''}`);
         return dares[0].count;
     }
 
@@ -281,7 +284,7 @@ class User {
     async daresFailed(serverId = false) {
         const db = new Database();
         //use db.query(sql) to get the number of dares from user_dares where failed_count >= 5
-        let dares = await db.query(`SELECT COUNT(*) as count FROM user_dares WHERE user_id = ${this.id} AND failed_count >= 5 ${serverId ? `AND server_id = ${serverId}` : ''}`);
+        let dares = await db.query(`SELECT COUNT(*) as count FROM user_dares WHERE user_id = ${this.id} AND failed_count >= ${this.required_votes} ${serverId ? `AND server_id = ${serverId}` : ''}`);
         return dares[0].count;
     }
 
@@ -291,7 +294,7 @@ class User {
     async truthsDone(serverId = false) {
         const db = new Database();
         //use db.query(sql) to get the number of truths from user_truths where done_count >= 5
-        let truths = await db.query(`SELECT COUNT(*) as count FROM user_truths WHERE user_id = ${this.id} AND done_count >= 5 ${serverId ? `AND server_id = ${serverId}` : ''}`);
+        let truths = await db.query(`SELECT COUNT(*) as count FROM user_truths WHERE user_id = ${this.id} AND done_count >= ${this.required_votes} ${serverId ? `AND server_id = ${serverId}` : ''}`);
         return truths[0].count;
     }
 
@@ -301,7 +304,7 @@ class User {
     async truthsFailed(serverId = false) {
         const db = new Database();
         //use db.query(sql) to get the number of truths from user_truths where failed_count >= 5
-        let truths = await db.query(`SELECT COUNT(*) AS count FROM user_truths WHERE user_id = ${this.id} AND failed_count >= 5 ${serverId ? `AND server_id = ${serverId}` : ''}`);
+        let truths = await db.query(`SELECT COUNT(*) AS count FROM user_truths WHERE user_id = ${this.id} AND failed_count >= ${this.required_votes} ${serverId ? `AND server_id = ${serverId}` : ''}`);
         return truths[0].count;
     }
 }

@@ -1,6 +1,6 @@
-require('dotenv').config();
 const Database = require("./objects/database");
 const { updateServerCount } = require("./handlers/userHandler");
+const { config } = require('dotenv');
 
 module.exports = class ChannelManager {
 
@@ -10,7 +10,7 @@ module.exports = class ChannelManager {
 	}
 
 	update(type = null) {
-		if (process.env.ALPHA) {
+		if (my.environment === 'dev' || my.environment === 'stage') {
 			console.log("ALPHA MODE: Skipping Channel Update")
 			return;
 		}
