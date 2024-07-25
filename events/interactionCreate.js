@@ -19,8 +19,8 @@ module.exports = {
     async execute(interaction) {
 
         const didBan = await registerServer(interaction);
-        if(didBan) {
-            interaction.reply({ content: "You have been banned from using this bot", ephemeral: true});
+        if (didBan) {
+            interaction.reply({ content: "You have been banned from using this bot", ephemeral: true });
             return;
         }
         await registerServerUser(interaction);
@@ -37,7 +37,7 @@ module.exports = {
             logger.error(`**Failed to create User during InteractionCreate** | **server**: ${interaction.guild.name}`);
         }
 
-        if(user.isBanned) {
+        if (user.isBanned) {
             logger.log("Interaction Aborted: A banned user attempted to interact with the bot");
             interaction.reply({ content: "You have been banned from using Truth Or Dare Online 18+", ephemeral: true });
             return;
@@ -229,9 +229,11 @@ async function registerServer(interaction) {
         await server.save();
     }
 
-    if(!server.isBanned) {
-        if(user.isBanned) new BanHandler().banServer(interaction.guild.id, "Server owner has been banned", interaction, true, true);
-        return true;
+    if (!server.isBanned) {
+        if (user.isBanned) {
+            new BanHandler().banServer(interaction.guild.id, "Server owner has been banned", interaction, true, true);
+            return true;
+        }
     }
 
     if (!server.message_id) logger.newServer(server);
