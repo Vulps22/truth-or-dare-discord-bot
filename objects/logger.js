@@ -40,6 +40,31 @@ module.exports = {
     },
 
     /**
+     * @param {Dare} dare 
+     */
+    async updateDare(dare) {
+        let serverName = 'pre-v5';
+        if (dare.server && dare.server.name) serverName = dare.server.name;
+
+        let channel = getChannel(my.dares_log);
+
+        let embed = new EmbedBuilder()
+            .setTitle("New Dare")
+            .addFields(
+                { name: "Dare", value: dare.question ?? '' },
+                { name: "Author", value: dare.creator ?? '' },
+                { name: "Server:", value: serverName },
+                { name: "Ban Reason:", value: dare.banReason ?? '' },
+            )
+            .setFooter({ text: `ID: #${dare.id}` })
+        let actionRow = createActionRow("dare", dare.isBanned)
+
+        const message = await channel.messages.edit(dare.messageId, { embeds: [embed], components: [actionRow] })
+
+        console.log("Updated:", message.id)
+    },
+
+    /**
      * 
      * @param {Truth} truth 
      */
@@ -128,18 +153,33 @@ function getChannel(channelId) {
  * @param {string<truth|dare>} type 
  * @returns 
  */
-function createActionRow(type) {
-    return new ActionRowBuilder()
-        .addComponents(
-            new ButtonBuilder()
-                .setCustomId(`new_${type}_approve`)
-                .setLabel('Approve')
-                .setStyle(ButtonStyle.Success),
-            new ButtonBuilder()
-                .setCustomId(`new_${type}_ban`)
-                .setLabel('Ban')
-                .setStyle(ButtonStyle.Danger),
-        );
+function createActionRow(type, isBanned = false) {
+    if (!isBanned) {
+        return new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId(`new_${type}_approve`)
+                    .setLabel('Approve')
+                    .setStyle(ButtonStyle.Success),
+                new ButtonBuilder()
+                    .setCustomId(`new_${type}_ban`)
+                    .setLabel('Ban')
+                    .setStyle(ButtonStyle.Danger),
+            );
+    } else {
+        return new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId(`new_${type}_ban`)
+                    .setLabel('Banned')
+                    .setStyle(ButtonStyle.Danger)
+                    .setDisabled(true),
+                new ButtonBuilder()
+                    .setCustomId(`new_${type}_unban`)
+                    .setLabel('Unban')
+                    .setStyle(ButtonStyle.Primary),
+            );
+    }
 }
 
 /**

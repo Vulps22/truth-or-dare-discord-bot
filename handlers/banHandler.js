@@ -87,7 +87,8 @@ class BanHandler {
         }
     }
 
-    async updateActionRow(messageId, logChannel) {
+    async updateActionRow(messageId, logChannel, type) {
+        if(!type) throw Error("Type Undefined when updating action row");
 
         console.log('Updating Action Row', messageId);
         if (messageId === 'pre-v5') return false;
@@ -97,12 +98,12 @@ class BanHandler {
         const actionRow = new ActionRowBuilder()
             .addComponents(
                 new ButtonBuilder()
-                    .setCustomId('ban_server')
+                    .setCustomId(`ban_${type}`)
                     .setLabel('Banned')
                     .setStyle(ButtonStyle.Danger)
                     .setDisabled(true),
                     new ButtonBuilder()
-                    .setCustomId('unban_server')
+                    .setCustomId(`unban_${type}`)
                     .setLabel('Unban')
                     .setStyle(ButtonStyle.Primary)
                     .setDisabled(false)
@@ -150,13 +151,12 @@ class BanHandler {
                 await interaction.reply('Dare not found!');
                 return false;
             }
-
             this.sendBanNotification(dare, reason, 'dare', interaction);
             dare.isBanned = 1;
             dare.banReason = reason;
             await dare.save();
 
-            let didUpdate = await this.updateActionRow(dare.messageId, my.dares_log);
+            let didUpdate = await this.updateActionRow(dare.messageId, my.dares_log, "dare");
             if (!didUpdate) {
                 interaction.reply(`Banned: Failed to update Action Row: Pre-V5 Dare\n\nId: ${dare.id} \n\n Question: ${dare.question}\n\nReason: ${reason}`);
             }
@@ -182,7 +182,7 @@ class BanHandler {
             truth.banReason = reason;
             await db.set('truths', truth);
 
-            let didUpdate = await this.updateActionRow(truth.messageId, my.truths_log);
+            let didUpdate = await this.updateActionRow(truth.messageId, my.truths_log, "truth");
             if (!didUpdate) {
                 interaction.reply(`Banned: Failed to update Action Row for Pre-V5 Truth\n\nID: ${truth.id} \n\nQuestion: ${truth.question}\n\nReason: ${reason}`);
             }
@@ -210,7 +210,7 @@ class BanHandler {
             server.banReason = reason;
             server.save();
 
-            let didUpdate = await this.updateActionRow(server.message_id);
+            let didUpdate = await this.updateActionRow(server.message_id, my.servers_log, "server");
             if (!didUpdate) {
                 interaction.reply(`Server has been banned, but failed to update Action Row for Pre-V5 Server\n\nID: ${server.id} \n\nName: ${server.name}\n\nReason: ${reason}`);
             }
