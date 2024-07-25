@@ -1,9 +1,10 @@
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require("discord.js");
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, Interaction } = require("discord.js");
 const Database = require("../objects/database");
 const { env } = require("process");
 const Dare = require("../objects/dare");
 const Handler = require("./handler");
 const Server = require("../objects/server");
+const logger = require("../objects/logger");
 
 class BanHandler {
     constructor() {
@@ -22,12 +23,12 @@ class BanHandler {
             { name: "12 - Low effort", value: "Low effort" },
             { name: "13 - Poor Spelling or Grammar", value: "Poor Spelling Or Grammar - Feel Free to Resubmit with proper Spelling and Grammer" }
         ];
-        
+
 
         this.serverBanReasonList = [
             { name: "1 - Breaches Discord T&C or Community Guidelines", value: "Breaches Discord T&C or Community Guidelines" },
             { name: "2 - Server Name suggests members could be under 18", value: "Server Name suggests members could be under 18" },
-            { name: "3 - Server Activity suggests members could be under 18", value: "Server Activity suggests members could be under 18"},
+            { name: "3 - Server Activity suggests members could be under 18", value: "Server Activity suggests members could be under 18" },
             { name: "3 - Server Name contains Hate Speech", value: "Server Name contains Hate Speech" },
             { name: "4 - Confirmed server members are under 18", value: "Confirmed members are under 18" },
             { name: "5 - Server-wide creation spam", value: "Server-wide creation spam" },
@@ -88,7 +89,7 @@ class BanHandler {
     }
 
     async updateActionRow(messageId, logChannel, type) {
-        if(!type) throw Error("Type Undefined when updating action row");
+        if (!type) throw Error("Type Undefined when updating action row");
 
         console.log('Updating Action Row', messageId);
         if (messageId === 'pre-v5') return false;
@@ -102,7 +103,7 @@ class BanHandler {
                     .setLabel('Banned')
                     .setStyle(ButtonStyle.Danger)
                     .setDisabled(true),
-                    new ButtonBuilder()
+                new ButtonBuilder()
                     .setCustomId(`unban_${type}`)
                     .setLabel('Unban')
                     .setStyle(ButtonStyle.Primary)
@@ -193,7 +194,13 @@ class BanHandler {
             return false;
         }
     }
-
+/**
+ * 
+ * @param {string} id 
+ * @param {string} reason 
+ * @param {Interaction} interaction 
+ * @returns 
+ */
     async banServer(id, reason, interaction) {
         try {
             let server = new Server(id);
@@ -210,9 +217,10 @@ class BanHandler {
             server.banReason = reason;
             server.save();
 
-            let didUpdate = await this.updateActionRow(server.message_id, my.servers_log, "server");
+            //let didUpdate = await this.updateActionRow(server.message_id, my.servers_log, "server");
+            const didUpdate = await logger.updateServer(server);
             if (!didUpdate) {
-                interaction.reply(`Server has been banned, but failed to update Action Row for Pre-V5 Server\n\nID: ${server.id} \n\nName: ${server.name}\n\nReason: ${reason}`);
+                interaction.reply({ content: `Server has been banned, but failed to update Action Row for Pre-V5 Server\n\nID: ${server.id} \n\nName: ${server.name}\n\nReason: ${reason}`, ephemeral: false });
             }
 
             return true;

@@ -52,12 +52,16 @@ async function main() {
         console.error('Error loading dares and truths:', error);
     }
 
+    console.log("loading events:");
+
     // Load event files
     const eventsPath = path.join(__dirname, "events");
     const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
     eventFiles.forEach(file => {
+        
         const filePath = path.join(eventsPath, file);
         const event = require(filePath);
+        console.log(event.name);
         if (event.once) {
             client.once(event.name, (...args) => event.execute(...args));
         } else {

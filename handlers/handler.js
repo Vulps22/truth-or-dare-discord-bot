@@ -98,6 +98,7 @@ class Handler {
   async doBan(interaction, id, reason) {
     console.log("ban", id, reason);
     let didBan = false;
+
     switch (this.type) {
       case 'dare':
         didBan = await new BanHandler().banDare(id, reason);
@@ -110,11 +111,24 @@ class Handler {
         break;
     }
 
-
     if (didBan) {
-      await interaction.update({ content: (this.type == 'server' ? 'Server' : 'Question') + ' has been banned', components: [], ephemeral: true });
+      console.log("DID BAN");
+
+      // Respond with an ephemeral message
+      await interaction.reply({ content: (this.type == 'server' ? 'Server' : 'Question') + ' has been banned', ephemeral: true });
+
+      // Delete the original message
+      if (interaction.message) {
+        await interaction.message.delete();
+      }
+    } else {
+      console.log("Apparently did not ban");
+
+      // You can also respond with an ephemeral message indicating failure if needed
+      await interaction.reply({ content: 'Failed to ban the ' + (this.type == 'server' ? 'server' : 'question'), ephemeral: true });
     }
-  }
+}
+
 
   createApprovedActionRow() {
     return new ActionRowBuilder()

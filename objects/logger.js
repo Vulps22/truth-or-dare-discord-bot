@@ -90,6 +90,31 @@ module.exports = {
     },
 
     /**
+     * @param {Truth} truth 
+     */
+    async updateTruth(truth) {
+        let serverName = 'pre-v5';
+        if (truth.server && truth.server.name) serverName = truth.server.name;
+
+        let channel = getChannel(my.truths_log);
+
+        let embed = new EmbedBuilder()
+            .setTitle("New Truth")
+            .addFields(
+                { name: "Truth", value: truth.question ?? '' },
+                { name: "Author", value: truth.creator ?? '' },
+                { name: "Server:", value: serverName },
+                { name: "Ban Reason:", value: truth.banReason ?? '' },
+            )
+            .setFooter({ text: `ID: #${truth.id}` })
+        let actionRow = createActionRow("truth", truth.isBanned)
+
+        const message = await channel.messages.edit(truth.messageId, { embeds: [embed], components: [actionRow] })
+
+        console.log("Updated:", message.id)
+    },
+
+    /**
      * 
      * @param {Server} server
      */
@@ -97,20 +122,35 @@ module.exports = {
         console.log("New Server")
         let channel = getChannel(my.servers_log);
         let embed = serverEmbed(server);
-        let actionRow = createServerActionRow();
+        let actionRow = createActionRow("server");
         const message = await channel.send({ embeds: [embed], components: [actionRow], fetchReply: true });
         console.log("Server Message:", message.id);
         server.message_id = message.id;
         await server.save();
     },
 
+    /**
+     * 
+     * @param {Server} server 
+     */
     async updateServer(server) {
+        if(!server._loaded) throw Error("Attempted to update an unloaded server");
         let channel = getChannel(my.servers_log);
         /** @type {Message} */
         let message = await channel.messages.fetch(server.message_id);
         let embed = serverEmbed(server);
-        let actionRow = createServerActionRow();
+        let actionRow = createActionRow("server", server.isBanned);
         message.edit({ embeds: [embed], components: [actionRow] });
+        return true;
+    },
+
+    async deleteServer(messageId) {
+        let channel = getChannel(my.servers_log);
+
+        /** @type {Message} */
+        let message = await channel.messages.fetch(messageId);
+        const didDelete = await message.delete();
+        console.log("Server deleted from log?:", didDelete);
     }
 }
 /**
@@ -155,17 +195,27 @@ function getChannel(channelId) {
  */
 function createActionRow(type, isBanned = false) {
     if (!isBanned) {
-        return new ActionRowBuilder()
-            .addComponents(
-                new ButtonBuilder()
-                    .setCustomId(`new_${type}_approve`)
-                    .setLabel('Approve')
-                    .setStyle(ButtonStyle.Success),
-                new ButtonBuilder()
-                    .setCustomId(`new_${type}_ban`)
-                    .setLabel('Ban')
-                    .setStyle(ButtonStyle.Danger),
-            );
+        if (type !== 'server') {
+            return new ActionRowBuilder()
+                .addComponents(
+                    new ButtonBuilder()
+                        .setCustomId(`new_${type}_approve`)
+                        .setLabel('Approve')
+                        .setStyle(ButtonStyle.Success),
+                    new ButtonBuilder()
+                        .setCustomId(`new_${type}_ban`)
+                        .setLabel('Ban')
+                        .setStyle(ButtonStyle.Danger),
+                );
+            } else {
+                return new ActionRowBuilder()
+                .addComponents(
+                    new ButtonBuilder()
+                        .setCustomId(`new_${type}_ban`)
+                        .setLabel('Ban')
+                        .setStyle(ButtonStyle.Danger),
+                );
+            }
     } else {
         return new ActionRowBuilder()
             .addComponents(
@@ -180,17 +230,4 @@ function createActionRow(type, isBanned = false) {
                     .setStyle(ButtonStyle.Primary),
             );
     }
-}
-
-/**
- * @returns {ActionRowBuilder}
- */
-function createServerActionRow() {
-    return new ActionRowBuilder()
-        .addComponents(
-            new ButtonBuilder()
-                .setCustomId(`new_server_ban`)
-                .setLabel('Ban')
-                .setStyle(ButtonStyle.Danger),
-        );
 }

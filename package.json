@@ -9,20 +9,12 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "overrides": {
-    "@discordjs/builders": "dev",
-    "@discordjs/collection": "dev",
-    "@discordjs/formatters": "dev",
-    "@discordjs/rest": "dev",
-    "@discordjs/util": "dev",
-    "@discordjs/ws": "dev"
-  },
+  "overrides": {},
   "dependencies": {
-    "@discordjs/rest": "dev",
     "@types/node": "^18.0.6",
     "canvas": "^2.11.2",
     "discord-api-types": "^0.37.35",
-    "discord.js": "dev",
+    "discord.js": "^14.15.3",
     "dotenv": "^16.3.1",
     "ejs": "^3.1.8",
     "handler.js": "^0.3.2",
