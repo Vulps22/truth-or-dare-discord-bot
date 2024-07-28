@@ -1,11 +1,11 @@
 const { EmbedBuilder, Embed } = require('discord.js');
 module.exports = {
-	help(setup = false) {
+	help(isSetup = true) {
 		let embed = new EmbedBuilder()
 			.setTitle('Truth or Dare Bot Help')
 			.setDescription('Here are the commands you can use with the bot:');
 
-		if (setup) embed.addFields(
+		if (!isSetup) embed.addFields(
 			{ name: 'Getting Started', value: "You must first read and accept our Terms of Use before using the bot" },
 			{
 				name: ' ', value:
@@ -52,7 +52,7 @@ module.exports = {
 			}
 		)
 
-		if (!setup) embed.addFields(
+		if (isSetup) embed.addFields(
 			{ name: 'Creating Truths or Dares', value: "Everybody worldwide is welcome to create as many truths or dares as they can imagine. In fact it is encouraged! \nThe more we all create, the more variety when we play 😁" },
 			{ name: ' ', value: '\n\n' },
 		);
