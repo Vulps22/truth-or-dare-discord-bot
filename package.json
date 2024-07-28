@@ -4,13 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "overrides": {},
   "dependencies": {
+    "@discordjs/builders": "^1.8.2",
     "@types/node": "^18.0.6",
     "canvas": "^2.11.2",
     "discord-api-types": "^0.37.35",
@@ -20,5 +21,9 @@
     "handler.js": "^0.3.2",
     "mysql2": "^3.9.7",
     "node-fetch": "^3.2.6"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "sinon": "^18.0.0"
   }
 }
