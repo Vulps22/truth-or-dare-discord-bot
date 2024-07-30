@@ -38,8 +38,8 @@ class Server {
 
 
     async find(messageId) {
-		const table = this.type + "s";
-		const server = await this._db.query(`select id FROM servers WHERE message_id = ${messageId}`);
+
+        const server = await this._db.query(`select id FROM servers WHERE message_id = ${messageId}`);
 		const serverId = server[0].id;
 		this.id = serverId;
 		console.log(this.id);
@@ -49,8 +49,8 @@ class Server {
 
     async load() {
         // load server from database
-        const db = new Database();
-        let serverData = await db.get("servers", this.id);
+    
+        let serverData = await this._db.get("servers", this.id);
 
         if (!serverData) return;
 
@@ -75,8 +75,6 @@ class Server {
     }
 
     save() {
-        // save server to database
-        const db = new Database();
 
         //create an object of every property that doesn't have an underscore
         let serverData = {};
@@ -85,7 +83,7 @@ class Server {
             if (key.startsWith("_")) continue;
             serverData[key] = this[key];
         }
-        db.set("servers", serverData);
+        this._db.set("servers", serverData);
 
         this._loaded = true;
     }
@@ -94,18 +92,14 @@ class Server {
         let role = await this.getLevelRole(level) // check if role already exists
         if (role) {
             // update role
-            const db = new Database();
-            await db.query(`UPDATE server_level_roles SET role_id = '${roleId}' WHERE server_id = '${this.id}' AND level = ${level}`);
+            await this._db.query(`UPDATE server_level_roles SET role_id = '${roleId}' WHERE server_id = '${this.id}' AND level = ${level}`);
         } else {
             // add role
-            const db = new Database();
-            await db.query(`INSERT INTO server_level_roles (server_id, role_id, level) VALUES ('${this.id}', '${roleId}', ${level})`);
+            await this._db.query(`INSERT INTO server_level_roles (server_id, role_id, level) VALUES ('${this.id}', '${roleId}', ${level})`);
         }
     }
 
     async getLevelRole(level) {
-        // Get the role for a specific level
-        const db = new Database();
 
         // Adjusted query to get the highest level less than or equal to the given level
         const query = `
@@ -116,7 +110,7 @@ class Server {
             LIMIT 1
         `;
 
-        const results = await db.query(query);
+        const results = await this._db.query(query);
         if (results.length > 0) {
             return results[0].role_id;  // Assuming the query returns at least one result
         } else {
