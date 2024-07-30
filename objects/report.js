@@ -1,5 +1,4 @@
 const Database = require("./database");
-const { Entity, EntityType } = require("./entity");
 const Question = require("./question");
 
 class Report {
