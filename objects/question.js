@@ -73,7 +73,7 @@ class Question {
 		});
 
 		this.id = newQuestionId;
-
+		this.exists = true;
 		return this;
 	}
 
