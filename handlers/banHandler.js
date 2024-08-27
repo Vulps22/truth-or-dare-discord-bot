@@ -71,13 +71,13 @@ class BanHandler {
                 if (error.code === 50007) {
                     await interaction.channel.send(`User's Discord Account was not available to DM`);
                 } else {
-                    console.error('Error:', error);
+                    logger.error('Error:', JSON.stringify(error));
                 }
             });
         } catch (error) {
             interaction.channel.send('Failed to notify User of ban. Check Logs for more information');
-            console.log('User Notification Failed: ')
-            console.log(error);
+            logger.log('User Notification Failed: ')
+            logger.log(JSON.stringify(error));
         }
     }
 /**
@@ -99,7 +99,7 @@ class BanHandler {
                 if (error.code === 50007) {
                     await interaction.channel.send(`User's Discord Account was not available to DM`);
                 } else {
-                    console.error('Error:', error);
+                    logger.error('Error:', JSON.stringify(error));
                 }
             });
         } catch (error) {
@@ -120,20 +120,20 @@ class BanHandler {
                 if (error.code === 50007) {
                     await interaction.channel.send(`User's Discord Account was not available to DM`);
                 } else {
-                    console.error('Error:', error);
+                    logger.error('Error:', JSON.stringify(error));
                 }
             });
         } catch (error) {
             interaction.channel.send('Failed to notify User of ban. Check Logs for more information');
-            console.log('User Notification Failed: ')
-            console.log(error);
+            logger.log('User Notification Failed: ')
+            logger.log(JSON.stringify(error));
         }
     }
 
     async updateActionRow(messageId, logChannel, type) {
         if (!type) throw Error("Type Undefined when updating action row");
 
-        console.log('Updating Action Row', messageId);
+        logger.log('Updating Action Row', messageId);
         if (messageId === 'pre-v5') return false;
         const client = global.client;
         const channel = client.channels.cache.get(logChannel);
@@ -190,8 +190,8 @@ class BanHandler {
             await dare.load();
 
             if (!dare.exists) {
-                console.log("Attempted to ban a dare that does not exist:", id);
-                if(notify) await interaction.reply('Dare not found!');
+                logger.log("Attempted to ban a dare that does not exist:", id);
+                if(notify) await interaction.followUp('Dare not found!');
                 return false;
             }
             if(notify) this.sendBanNotification(dare, reason, 'dare', interaction);
@@ -201,11 +201,14 @@ class BanHandler {
 
             let didUpdate = await logger.updateDare(dare, userBan);
             if (!didUpdate) {
-                if(notify) interaction.reply(`Banned: Failed to update Action Row: Pre-V5 Dare\n\nId: ${dare.id} \n\n Question: ${dare.question}\n\nReason: ${reason}`);
+                if(notify) interaction.followUp(`Banned: Failed to update Action Row: Pre-V5 Dare\n\nId: ${dare.id} \n\n Question: ${dare.question}\n\nReason: ${reason}`);
             }
+
+            interaction.followUp("Dare has been banned!");
+
             return true;
         } catch (error) {
-            console.error('Error banning dare:', error);
+            logger.error('Error banning dare:', JSON.stringify(error));
             return false;
         }
     }
@@ -216,7 +219,7 @@ class BanHandler {
             await truth.load();
 
             if (!truth.exists) {
-                if(notify) await interaction.reply(`Attempted to ban unknown truth with ID: ${id}`);
+                if(notify) await interaction.followUp(`Attempted to ban unknown truth with ID: ${id}`);
                 return false;
             }
 
@@ -227,13 +230,15 @@ class BanHandler {
 
             let didUpdate = await logger.updateTruth(truth, userBan);
             if (!didUpdate) {
-                if(notify) interaction.reply(`Banned: Failed to update Action Row for Pre-V5 Truth\n\nID: ${truth.id} \n\nQuestion: ${truth.question}\n\nReason: ${reason}`);
+                if(notify) interaction.followUp(`Banned: Failed to update Action Row for Pre-V5 Truth\n\nID: ${truth.id} \n\nQuestion: ${truth.question}\n\nReason: ${reason}`);
                 return false;
             }
 
+            interaction.followUp("Truth has been banned!");
+
             return true;
         } catch (error) {
-            console.error('Error banning truth:', error);
+            logger.error('Error banning truth:', JSON.stringify(error));
             return false;
         }
     }
@@ -250,7 +255,7 @@ class BanHandler {
             await server.load();
 
             if (!server._loaded) {
-                if(!silent) await interaction.reply('Server not found! It probably removed the bot.');
+                if(!silent) await interaction.followUp('Server not found! It probably removed the bot.');
                 return false;
             }
 
@@ -263,12 +268,14 @@ class BanHandler {
             //let didUpdate = await this.updateActionRow(server.message_id, my.servers_log, "server");
             const didUpdate = await logger.updateServer(server, userBan);
             if (!didUpdate) {
-                if(!silent) interaction.reply({ content: `Server has been banned, but failed to update Action Row for Pre-V5 Server\n\nID: ${server.id} \n\nName: ${server.name}\n\nReason: ${reason}`, ephemeral: false });
+                if(!silent) interaction.followUp({ content: `Server has been banned, but failed to update Action Row for Pre-V5 Server\n\nID: ${server.id} \n\nName: ${server.name}\n\nReason: ${reason}`, ephemeral: false });
             }
+
+            interaction.followUp("Server has been banned!");
 
             return true;
         } catch (error) {
-            console.error('Error banning server:', error);
+            logger.error('Error banning server:', JSON.stringify(error));
             return false;
         }
     }
@@ -281,14 +288,14 @@ class BanHandler {
      * @returns 
      */
        async banUser(id, reason, interaction) {
-        interaction.deferReply();
+
         logger.log("Banning User " + id);
         try {
             let user = new User(id);
             await user.get();
     
             if (!user._loaded) {
-                await interaction.update('User not found! It probably removed the bot.');
+                await interaction.editReply('User not found! It probably removed the bot.');
                 return false;
             }
     
@@ -331,13 +338,13 @@ class BanHandler {
     
             logger.log(`User: ${user.username} with ID: ${user.id} has been banned for ${user.banReason} | Auto-Banned: ${dares} Dares | ${truths} Truths | ${servers} Servers`);
 
-            interaction.editReply("User has been banned. Check #logs for details");
+            interaction.followUp("User has been banned. Check #logs for details");
     
             await this.sendUserBanNotification(user, reason, interaction);
     
             return true;
         } catch (error) {
-            console.error('Error banning user:', error);
+            logger.error('Error banning user:', JSON.stringify(error));
             return false;
         }
     }

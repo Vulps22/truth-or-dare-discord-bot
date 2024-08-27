@@ -65,8 +65,6 @@ async function main() {
         if (event.once) {
             client.once(event.name, (...args) => event.execute(...args));
         } else {
-            console.log("client");
-
             global.client.on(event.name, (...args) => event.execute(...args));
         }
     });

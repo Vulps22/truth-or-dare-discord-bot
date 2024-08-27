@@ -114,6 +114,7 @@ class Handler {
    * @param {*} reason 
    */
   async doBan(interaction, id, reason) {
+    await interaction.deferReply({ephemeral: true});
     console.log("ban", id, reason);
     let didBan = false;
 
@@ -132,18 +133,11 @@ class Handler {
     }
 
     if (didBan) {
-      console.log("DID BAN");
-
-      // Respond with an ephemeral message
-      await interaction.followUp({ content: 'Ban Complete', ephemeral: true });
-
       // Delete the original message
       if (interaction.message) {
         await interaction.message.delete();
       }
     } else {
-      console.log("Apparently did not ban");
-
       // You can also respond with an ephemeral message indicating failure if needed
       await interaction.followUp({ content: 'Ban Failed', ephemeral: true });
     }

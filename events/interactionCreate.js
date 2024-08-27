@@ -167,7 +167,8 @@ function shouldExecute(interaction, command, server) {
 
     // Ensure server setup for commands that do not ignore setup requirements
     if (!command.ignoreSetup) {
-        if (!server || !server.hasAccepted || !server.announcement_channel) {
+        console.log("server", server);
+        if (!server || !server.hasAccepted) {
             logger.log(`${logInteraction} || Interaction Aborted: Not Set Up`);
             interaction.reply("A community Administrator must first run the /setup command to completion before you can use me.");
             return false;
@@ -207,6 +208,9 @@ function isMaintenance() {
  * @returns bool - True if the server was automatically banned 
  */
 async function registerServer(interaction) {
+
+    console.log("Registering server");
+
     const server = new Server(interaction.guildId);
     const user = new User(interaction.guild.ownerId); //server owner
     await user.get();
