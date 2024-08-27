@@ -19,13 +19,13 @@ console.log('Initialising Bot....');
 
 /** @type {Config} */
 global.my = {
-	maintenance_mode: false,
-	token: null,
-	dares_log: '1160740531094159492',
-	truths_log: '1160740531094159492',
-	servers_log: '1160740531094159492',
-	required_votes: 3,
-	environment: 'stage'
+    maintenance_mode: false,
+    token: null,
+    dares_log: '1160740531094159492',
+    truths_log: '1160740531094159492',
+    servers_log: '1160740531094159492',
+    required_votes: 3,
+    environment: 'stage'
 };
 
 
@@ -58,7 +58,7 @@ async function main() {
     const eventsPath = path.join(__dirname, "events");
     const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
     eventFiles.forEach(file => {
-        
+
         const filePath = path.join(eventsPath, file);
         const event = require(filePath);
         console.log(event.name);
@@ -75,6 +75,19 @@ async function main() {
 
     // Start the bot
     client.login(my.secret);
+
+    //uptime Kuma Ping
+    const axios = require('axios'); // Ensure axios is required at the top
+
+    setInterval(async () => {
+        try {
+            const response = await axios.get('https://uptime.vulps.co.uk/api/push/EaJ73kd8Km?status=up&msg=OK&ping='); // Replace with your URL
+            console.log('Ping successful:', response.status);
+        } catch (error) {
+            console.error('Ping failed:', error.message);
+        }
+    }, 60000); // 60000 milliseconds = 60 seconds
+
 }
 
 main().catch(error => {
