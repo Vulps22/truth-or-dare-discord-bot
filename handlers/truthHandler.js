@@ -6,6 +6,7 @@ const User = require('../objects/user.js');
 const Server = require('../objects/server.js');
 const Truth = require('../objects/truth.js');
 const Logger = require('../objects/logger.js');
+const logger = require('../objects/logger.js');
 let client = null;
 
 class TruthHandler extends Handler {
@@ -40,7 +41,7 @@ class TruthHandler extends Handler {
 				.setDescription(truth.question)
 				.setColor('#00ff00')
 				.setFooter({ text: ' Created by ' + interaction.user.username, iconURL: interaction.user.displayAvatarURL() });
-			interaction.reply({ content: "Thank you for your submission. A member of the moderation team will review your dare shortly", embeds: [embed] });
+			interaction.reply({ content: "Thank you for your submission. A member of the moderation team will review your truth shortly", embeds: [embed] });
 
 			Logger.newTruth(createdTruth);
 		}
@@ -56,7 +57,7 @@ class TruthHandler extends Handler {
 			const truths = await this.db.list("truths")
 			if (!truths || truths.length === 0) { interaction.reply("Hmm, I can't find any truths. This might be a bug, try again later"); return; }
 			const unBannedQuestions = truths.filter(q => !q.isBanned && q.isApproved);
-			if(unBannedQuestions.length === 0) { interaction.reply("There are no approved truths to give."); return; }
+			if (unBannedQuestions.length === 0) { interaction.reply("There are no approved truths to give."); return; }
 			const truth = this.selectRandomTruth(unBannedQuestions);
 			const creator = this.getCreator(truth, this.client);
 
@@ -178,6 +179,21 @@ class TruthHandler extends Handler {
 					.setCustomId('truth_failed')
 					.setLabel('FAILED')
 					.setStyle(ButtonStyle.Danger), // Red button
+				new ButtonBuilder()
+					.setCustomId('truth_skip')
+					.setLabel('SKIP')
+					.setStyle(ButtonStyle.Secondary), // Red button
+			);
+	}
+
+	createSkippedActionRow() {
+		return new ActionRowBuilder()
+			.addComponents(
+				new ButtonBuilder()
+					.setCustomId('truth_skipped')
+					.setLabel('SKIPPED')
+					.setDisabled(true)
+					.setStyle(ButtonStyle.Secondary), // Red button
 			);
 	}
 
@@ -217,26 +233,70 @@ class TruthHandler extends Handler {
 	async vote(interaction) {
 
 		const userTruth = await new UserTruth().load(interaction.message.id, 'truth');
-		/** @type {User} */
-		const user = await userTruth.getUser();
-		await user.loadServerUser(interaction.guild.id);
-
-		const server = new Server(interaction.guild.id);
-		await server.load();
-
-		const truthUser = userTruth.getUserId();
-		if (truthUser == interaction.user.id && !this.ALPHA) {
-			await interaction.reply({ content: "You can't vote on your own truth!", ephemeral: true });
-			return;
-		}
-
-		const vote = interaction.customId === 'truth_done' ? 'done' : 'failed';
 
 		if (!userTruth) {
 			await interaction.reply("I'm sorry, I couldn't find the truth to track votes. This is a brain fart. Please reach out for support on the official server.");
 			logger.error(`Brain Fart: Couldn't find truth to track votes. Message ID missing`);
 			return;
 		}
+
+		//load the user		
+		/** @type {User} */
+		const user = await userTruth.getUser();
+		await user.loadServerUser(interaction.guildId);
+		//load the server
+		const server = new Server(interaction.guildId);
+		await server.load();
+
+		const truthUser = userTruth.getUserId();
+
+		if (interaction.customId === 'truth_skip') {
+			this.doSkip(interaction, userTruth, truthUser, user);
+		} else {
+			this.doVote(interaction, userTruth, truthUser, user, server)
+		}
+
+	}
+	/**
+	 * 
+	 * @param {Interaction} interaction 
+	 * @param {userTruth} userTruth 
+	 * @param {string} truthUser 
+	 * @param {User} user 
+	 * @returns 
+	 */
+	async doSkip(interaction, userTruth, truthUser, user) {
+
+		if (truthUser != interaction.user.id) {
+			interaction.reply({ content: "You can't skip someone else's truth!", ephemeral: true });
+			return;
+		}
+
+		if (!user.hasValidVote()) {
+			await interaction.reply("Uh oh! You're out of Skips!\nNot to worry, You can earn skips up to 10 by voting for the bot every day on [top.gg](https://top.gg/bot/1079207025315164331/vote)!");
+			return;
+		}
+
+		const embed = await this.createUpdatedTruthEmbed(userTruth, interaction);
+		const row = await this.createSkippedActionRow();
+
+		//use the userTruth.messageId to edit the embed in the message
+		await interaction.message.edit({ embeds: [embed], components: [row] });
+		await interaction.reply({ content: "Your truth has been skipped! You cannot skip again until you vote", ephemeral: true });
+
+		user.burnVote();
+
+	}
+
+
+	async doVote(interaction, userTruth, truthUser, user, server) {
+
+		if (truthUser == interaction.user.id && !this.ALPHA) {
+			interaction.reply({ content: "You can't vote on your own truth!", ephemeral: true });
+			return;
+		}
+
+		const vote = interaction.customId === 'truth_done' ? 'done' : 'failed';
 
 		const couldVote = await userTruth.vote(interaction.user.id, vote);
 		if (!couldVote && !this.ALPHA) {
@@ -250,12 +310,16 @@ class TruthHandler extends Handler {
 
 		if (userTruth.doneCount >= this.vote_count) {
 			row = this.createPassedActionRow();
+
 			user.addXP(this.successXp);
 			user.addServerXP(server.truth_success_xp);
+
 		} else if (userTruth.failedCount >= this.vote_count) {
 			row = this.createFailedActionRow();
+
 			user.subtractXP(this.failXp);
 			user.subtractServerXP(server.truth_fail_xp);
+
 		}
 
 		//use the userTruth.messageId to edit the embed in the message

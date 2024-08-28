@@ -9,6 +9,7 @@ class User {
     username;
     isBanned;
     banReason;
+    voteCount;
 
     globalLevel;
     globalLevelXP;
@@ -38,6 +39,7 @@ class User {
         this.isBanned = false;
         this.banReason = '';
         this.required_votes = my.required_votes;
+        this.voteCount = 0;
     }
 
     async get() {
@@ -55,7 +57,7 @@ class User {
      */
     async save() {
         const db = new Database();
-        await db.set('users', { id: this.id, username: this.username, global_Level: this.globalLevel, global_level_xp: this.globalLevelXP, isBanned: this.isBanned, ban_reason: this.banReason });
+        await db.set('users', { id: this.id, username: this.username, global_Level: this.globalLevel, global_level_xp: this.globalLevelXP, isBanned: this.isBanned, ban_reason: this.banReason, voteCount: this.voteCount });
         if(this.serverUserLoaded) await this.saveServerUser();
     }
 
@@ -76,6 +78,7 @@ class User {
         this.globalLevelXP = user.global_level_xp;
         this.isBanned = user.isBanned;
         this.banReason = user.ban_reason;
+        this.voteCount = user.voteCount;
         this._loaded = true;
         return true;
     }
@@ -309,6 +312,26 @@ class User {
         //use db.query(sql) to get the number of truths from user_truths where failed_count >= 5
         let truths = await db.query(`SELECT COUNT(*) AS count FROM user_truths WHERE user_id = ${this.id} AND failed_count >= ${this.required_votes} ${serverId ? `AND server_id = ${serverId}` : ''}`);
         return truths[0].count;
+    }
+
+    // Function to check if the last vote was within 24 hours
+    hasValidVote() {
+        return this.voteCount > 0;
+    }
+
+    async burnVote() {
+        this.voteCount--;
+        await this.save();
+    }
+
+    async addVote(count = 1) {
+        if(this.voteCount == 10) return;
+
+        this.voteCount += count;
+        
+        if(this.voteCount > 10) this.voteCount = 10;
+        
+        await this.save();
     }
 }
 

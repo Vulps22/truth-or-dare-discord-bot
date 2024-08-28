@@ -1,8 +1,10 @@
 require('dotenv').config();
 const fs = require('node:fs');
 const path = require('node:path');
-const { Client, GatewayIntentBits, Collection } = require('discord.js');
+const { Client, GatewayIntentBits, Collection, SlashCommandRoleOption } = require('discord.js');
 const Database = require('./objects/database.js'); // Import Database class
+const express = require('express');
+const User = require('./objects/user.js');
 
 console.log('Initialising Bot....');
 
@@ -15,6 +17,7 @@ console.log('Initialising Bot....');
  * @property {string} servers_log - The channel ID for servers logging.
  * @property {number} required_votes - Number of votes required.
  * @property {string} environment - Indicates the environment ('stage', 'prod', etc.).
+ * @property {string} top_gg_webhook_secret - The secret used when interacting with top.gg
  */
 
 /** @type {Config} */
@@ -29,6 +32,9 @@ global.my = {
 };
 
 
+
+
+
 global.client = new Client({ intents: [GatewayIntentBits.Guilds] });
 client.commands = new Collection();
 
@@ -37,13 +43,14 @@ async function main() {
     const db = new Database();
     try {
         const data = await db.get('config', 1);
+        console.log(data);
         global.my = data;
         console.log(my);
     } catch (error) {
         console.error('Error loading config from database:', error);
         return;  // Exit if configuration loading fails
     }
-
+    
     try {
         const dares = await db.list("dares");
         const truths = await db.list("truths");
@@ -72,6 +79,8 @@ async function main() {
     // Load commands
     loadCommands(client, "global");
     loadCommands(client, "mod");
+
+    setupVoteServer();
 
     // Start the bot
     client.login(my.secret);
@@ -108,3 +117,46 @@ function loadCommands(client, type) {
         }
     });
 }
+
+async function setupVoteServer() {
+    const app = express();
+    app.use(express.json());
+
+    app.post('/vote', async (req, res) => {  // Make the callback function async
+        const voteData = req.body;
+        console.log("Incoming vote!");
+        console.log(req.body);
+        // Verify the request
+        if (req.headers.authorization !== my.top_gg_webhook_secret) {
+            console.log("UNAUTHORIZED")
+            return res.status(403).send('Unauthorized');
+        }
+
+        // Process the vote
+        const userId = voteData.user;
+        const botId = voteData.bot;
+        const isWeekend = voteData.isWeekend;
+
+
+        /**
+         * @type {User}
+         */
+        let user = await new User(userId).get();
+
+        if(!user) {
+            console.log("User not found");
+            return;
+        }
+
+        user.addVote(isWeekend ? 2 : 1);
+        await user.save();
+
+        console.log(`User ${userId} voted for bot ${botId}. Weekend multiplier: ${isWeekend}`);
+
+        res.status(200).send('Vote received');
+    });
+
+    app.listen(3002, '0.0.0.0', () => console.log('Webhook server running on port 3002'));
+}
+
+

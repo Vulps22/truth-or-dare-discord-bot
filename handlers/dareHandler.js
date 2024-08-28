@@ -60,7 +60,7 @@ class DareHandler extends Handler {
 			}
 
 			const unBannedQuestions = dares.filter(q => !q.isBanned && q.isApproved);
-			if (unBannedQuestions.length === 0) { interaction.reply("There are no approved truths to give"); return;}
+			if (unBannedQuestions.length === 0) { interaction.reply("There are no approved truths to give"); return; }
 			const dare = this.selectRandomDare(unBannedQuestions);
 
 			const creator = await this.getCreator(dare, interaction);
@@ -132,34 +132,34 @@ class DareHandler extends Handler {
 		const random = Math.floor(Math.random() * dares.length);
 		return dares[random];
 	}
-/**
- * Asynchronously gets the creator of a dare from an interaction within a guild.
- * 
- * @param {Dare} dare - The dare object with a 'creator' property holding the user ID.
- * @param {Interaction} interaction - The interaction from which the guild and users are accessed.
- * @returns {Promise<User>} The user object of the creator or a default user object if not found.
- */
-async getCreator(dare, interaction) {
-    // Check if the interaction has a guild and the guild is properly fetched
-    if (!interaction.guild) {
-        console.error("Guild is undefined. Ensure this function is used within a guild context.");
-        return { username: "Somebody" };
-    }
+	/**
+	 * Asynchronously gets the creator of a dare from an interaction within a guild.
+	 * 
+	 * @param {Dare} dare - The dare object with a 'creator' property holding the user ID.
+	 * @param {Interaction} interaction - The interaction from which the guild and users are accessed.
+	 * @returns {Promise<User>} The user object of the creator or a default user object if not found.
+	 */
+	async getCreator(dare, interaction) {
+		// Check if the interaction has a guild and the guild is properly fetched
+		if (!interaction.guild) {
+			console.error("Guild is undefined. Ensure this function is used within a guild context.");
+			return { username: "Somebody" };
+		}
 
-    try {
-        // Fetch the user from the guild
-        const creator = await interaction.guild.members.fetch(dare.creator);
-        return creator.user;
-    } catch (error) {
-        // Handle cases where the user cannot be fetched (e.g., not in guild, API error)
-        if (error.code !== 10007) {
-            // Log other errors
-            logger.error('Unexpectedly failed to fetch username in dareHandler: ', error)
-        }
+		try {
+			// Fetch the user from the guild
+			const creator = await interaction.guild.members.fetch(dare.creator);
+			return creator.user;
+		} catch (error) {
+			// Handle cases where the user cannot be fetched (e.g., not in guild, API error)
+			if (error.code !== 10007) {
+				// Log other errors
+				logger.error('Unexpectedly failed to fetch username in dareHandler: ', error)
+			}
 
-		return { username: "Somebody" };
-    }
-}
+			return { username: "Somebody" };
+		}
+	}
 
 
 	createDareEmbed(dare, interaction, username) {
@@ -199,6 +199,10 @@ async getCreator(dare, interaction) {
 					.setCustomId('dare_failed')
 					.setLabel('FAILED')
 					.setStyle(ButtonStyle.Danger), // Red button
+				new ButtonBuilder()
+					.setCustomId('dare_skip')
+					.setLabel('SKIP')
+					.setStyle(ButtonStyle.Secondary), // Red button
 			);
 	}
 
@@ -224,6 +228,17 @@ async getCreator(dare, interaction) {
 			);
 	}
 
+	createSkippedActionRow() {
+		return new ActionRowBuilder()
+			.addComponents(
+				new ButtonBuilder()
+					.setCustomId('dare_skipped')
+					.setLabel('SKIPPED')
+					.setDisabled(true)
+					.setStyle(ButtonStyle.Secondary), // Red button
+			);
+	}
+
 	async saveDareMessageId(messageId, userId, dareId, serverId, username, image) {
 		if (!messageId) {
 			await interaction.channel.send("I'm sorry, I couldn't save the dare to track votes. This is a brain fart. Please reach out for support on the official server.");
@@ -238,6 +253,13 @@ async getCreator(dare, interaction) {
 	async vote(interaction) {
 
 		const userDare = await new UserDare().load(interaction.message.id, 'dare');
+
+		if (!userDare) {
+			await interaction.reply("I'm sorry, I couldn't find the dare to track votes. This is a brain fart. Please reach out for support on the official server.");
+			logger.error(`Brain Fart: Couldn't find dare to track votes. Message ID missing`);
+			return;
+		}
+
 		//load the user		
 		/** @type {User} */
 		const user = await userDare.getUser();
@@ -247,18 +269,54 @@ async getCreator(dare, interaction) {
 		await server.load();
 
 		const dareUser = userDare.getUserId();
+
+		if (interaction.customId === 'dare_skip') {
+			this.doSkip(interaction, userDare, dareUser, user);
+		} else {
+			this.doVote(interaction, userDare, dareUser, user, server)
+		}
+
+	}
+	/**
+	 * 
+	 * @param {Interaction} interaction 
+	 * @param {UserDare} userDare 
+	 * @param {string} dareUser 
+	 * @param {User} user 
+	 * @returns 
+	 */
+	async doSkip(interaction, userDare, dareUser, user) {
+
+		if (dareUser != interaction.user.id) {
+			interaction.reply({ content: "You can't skip someone else's dare!", ephemeral: true });
+			return;
+		}
+
+		if (!user.hasValidVote()) {
+			await interaction.reply("Uh oh! You're out of Skips!\nNot to worry, You can earn skips up to 10 by voting for the bot every day on [top.gg](https://top.gg/bot/1079207025315164331/vote)!");
+			return;
+		}
+
+		const embed = await this.createUpdatedDareEmbed(userDare, interaction);
+		const row = await this.createSkippedActionRow();
+
+		//use the userDare.messageId to edit the embed in the message
+		await interaction.message.edit({ embeds: [embed], components: [row] });
+		await interaction.reply({ content: "Your dare has been skipped! You cannot skip again until you vote", ephemeral: true });
+
+		user.burnVote();
+
+	}
+
+
+	async doVote(interaction, userDare, dareUser, user, server) {
+
 		if (dareUser == interaction.user.id && !this.ALPHA) {
 			interaction.reply({ content: "You can't vote on your own dare!", ephemeral: true });
 			return;
 		}
 
 		const vote = interaction.customId === 'dare_done' ? 'done' : 'failed';
-
-		if (!userDare) {
-			await interaction.reply("I'm sorry, I couldn't find the dare to track votes. This is a brain fart. Please reach out for support on the official server.");
-			logger.error(`Brain Fart: Couldn't find dare to track votes. Message ID missing`);
-			return;
-		}
 
 		const couldVote = await userDare.vote(interaction.user.id, vote);
 		if (!couldVote && !this.ALPHA) {
@@ -288,6 +346,7 @@ async getCreator(dare, interaction) {
 		await interaction.message.edit({ embeds: [embed], components: [row] });
 		await interaction.reply({ content: "Your vote has been recorded!", ephemeral: true });
 	}
+
 	/**
 	 * mark the dare as approved or banned
 	 * @param {Interaction} interaction 
