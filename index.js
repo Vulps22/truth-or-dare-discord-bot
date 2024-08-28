@@ -149,12 +149,10 @@ async function setupVoteServer() {
         user.addVote(isWeekend ? 2 : 1);
         await user.save();
 
-        console.log(`User ${userId} voted for bot ${botId}. Weekend multiplier: ${isWeekend}`);
+        logger.log(`User ${userId} voted for bot ${botId}. Weekend multiplier: ${isWeekend}`);
 
         res.status(200).send('Vote received');
     });
 
     app.listen(3002, '0.0.0.0', () => console.log('Webhook server running on port 3002'));
 }
-
-
