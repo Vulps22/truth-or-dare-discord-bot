@@ -43,14 +43,13 @@ async function main() {
     const db = new Database();
     try {
         const data = await db.get('config', 1);
-        console.log(data);
         global.my = data;
         console.log(my);
     } catch (error) {
         console.error('Error loading config from database:', error);
         return;  // Exit if configuration loading fails
     }
-    
+
     try {
         const dares = await db.list("dares");
         const truths = await db.list("truths");
@@ -91,7 +90,6 @@ async function main() {
     setInterval(async () => {
         try {
             const response = await axios.get('https://uptime.vulps.co.uk/api/push/EaJ73kd8Km?status=up&msg=OK&ping='); // Replace with your URL
-            console.log('Ping successful:', response.status);
         } catch (error) {
             console.error('Ping failed:', error.message);
         }
@@ -143,7 +141,7 @@ async function setupVoteServer() {
          */
         let user = await new User(userId).get();
 
-        if(!user) {
+        if (!user) {
             console.log("User not found");
             return;
         }

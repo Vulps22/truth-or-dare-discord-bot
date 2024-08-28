@@ -2,6 +2,7 @@ const { SlashCommandBuilder, SlashCommandSubcommandBuilder, Interaction } = requ
 const UserHandler = require("../../handlers/userHandler");
 const Leaderboard = require("../../objects/leaderboard");
 const Server = require("../../objects/server");
+const logger = require("../../objects/logger");
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -22,14 +23,17 @@ module.exports = {
 	 * @param {Interaction} interaction 
 	 */
 	async execute(interaction) {
+		try{
 		let command = interaction.options.getSubcommand();
 
 		if (command == 'server') {
-			let server = new Server(interaction.guild);
-			await server.load();
+			let server = await new Server(interaction.guildId).load();
+			if(!server) {
+				logger.error("Server was undefined while handling premium checks");
+			}
 			const premium = await server.hasPremium();
-			console.log("premium:", premium)
-			if (!server.premium) {
+
+			if (!premium) {
 				interaction.reply("This is a premium command. Premium is not quite ready yet, But I'm working hard to make these commands available for everyone :)")
 
 				//interaction.sendPremiumRequired();
@@ -44,5 +48,8 @@ module.exports = {
 
 		interaction.editReply({ files: [card] });
 
+	} catch(error) {
+
+	}
 	}
 }

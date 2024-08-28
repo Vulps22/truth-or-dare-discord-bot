@@ -72,6 +72,8 @@ class Server {
         this.message_id = serverData.message_id;
 
         this._loaded = true;
+
+        return this;
     }
 
     save() {
@@ -125,9 +127,19 @@ class Server {
     }
 
     async hasPremium() {
-        if(!this.loaded) await this.load();
-        return this.is_entitled && this.entitlement_end_date > Date.now();
+        if(!this._loaded) await this.load();
+        return this.is_entitled > 0 && await this.getEntitlementEndDate() > Date.now();
     }
+
+    /**
+     * 
+     * @returns {Date}
+     */
+    async getEntitlementEndDate() {
+        if(!this._loaded) await this.load();
+        return new Date(this.entitlement_end_date);
+    }
+    
 
     setXpRate(type, amount) {
         switch (type) {
