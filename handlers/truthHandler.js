@@ -98,7 +98,6 @@ class TruthHandler extends Handler {
 			.setDescription(messageText)
 			.setColor('#6A5ACD')
 
-
 		interaction.reply({ embeds: [embed] });
 	}
 

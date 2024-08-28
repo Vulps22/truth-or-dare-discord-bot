@@ -104,7 +104,7 @@ class DareHandler extends Handler {
 			.setColor('#6A5ACD')
 
 
-		messageId = await interaction.reply({ embeds: [embed] });
+		const messageId = await interaction.reply({ embeds: [embed], fetchReply: true });
 	}
 
 	async listAll(interaction) {
