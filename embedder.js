@@ -135,5 +135,21 @@ module.exports = {
 				}
 			)
 			.setFooter({ text: 'Looking forward to hearing your thoughts and seeing how you enjoy the new features! Stay tuned for v5.1.0 with full premium launch!' });
+	},
+	vote() {
+		return new EmbedBuilder()
+			.setTitle("Upvote the bot for special privileges")
+			.setDescription("[You can vote for Truth Or Dare Online 18+ here](https://top.gg/bot/1079207025315164331/vote).\n\nVoting helps the bot raise higher in the search results on top.gg, and encourages more servers to install the bot :)\nmore servers = more dares!")
+			.addFields(
+				{
+					name: "Earn Skips for every vote!",
+					value: "- Skips allow you to ignore a dare without having a negative effect on your ranking or level!\n- You can have 10 skips stored up\n- Every vote gives you another skip you can use\n- Voting on a weekend gives you 2 skips!!"
+				},
+				{
+					name: "More to come!",
+					value: "We're just getting started on Votes!\nOver time we're going to add more and more benefits for every vote to really enhance your time using the bot :D"
+				}
+			)
+			.setFooter({ text: "Thank you for voting :)" });
 	}
 }
