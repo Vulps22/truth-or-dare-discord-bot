@@ -19,6 +19,11 @@ module.exports = {
     async execute(interaction) {
 
         const didBan = await registerServer(interaction);
+        if(didBan === -1) {
+            interaction.reply("Opps! Brain Fart! Please Try again. If this problem continues please reach out for support on our official discord server. Use /help to find the invite to this server")
+            logger.error("Failed to register server! Function returned -1. Check the logs for Guild Details")
+            console.log(interaction.guild);
+        }
         if (didBan) {
             interaction.reply({ content: "You have been banned from using this bot", ephemeral: true });
             return;
@@ -132,7 +137,6 @@ async function runCommand(interaction) {
         if (server.isBanned && interaction.commandName !== "help") {
             logger.log(`${logInteraction} || Interaction aborted: Server is Banned`);
             interaction.reply('Your Community has been banned for violating the bot\'s Terms of Use');
-            logger.log
             return;
         }
 
@@ -210,6 +214,8 @@ function isMaintenance() {
 async function registerServer(interaction) {
 
     console.log("Registering server");
+    
+    if(!interaction.guild) return -1;
 
     const server = new Server(interaction.guildId);
     const user = new User(interaction.guild.ownerId); //server owner
@@ -236,13 +242,13 @@ async function registerServer(interaction) {
     if (!server.isBanned) {
         if (user.isBanned) {
             new BanHandler().banServer(interaction.guild.id, "Server owner has been banned", interaction, true, true);
-            return true;
+            return 1;
         }
     }
 
     if (!server.message_id) logger.newServer(server);
 
-    return false;
+    return 0;
 }
 
 async function registerServerUser(interaction) {

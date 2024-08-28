@@ -5,6 +5,7 @@ const { Client, GatewayIntentBits, Collection, SlashCommandRoleOption } = requir
 const Database = require('./objects/database.js'); // Import Database class
 const express = require('express');
 const User = require('./objects/user.js');
+const logger = require('./objects/logger.js');
 
 console.log('Initialising Bot....');
 
@@ -31,8 +32,10 @@ global.my = {
     environment: 'stage'
 };
 
-
-
+process.on('uncaughtException', (err, origin) => {
+    console.error(err);
+    console.error(origin);
+ });
 
 
 global.client = new Client({ intents: [GatewayIntentBits.Guilds] });

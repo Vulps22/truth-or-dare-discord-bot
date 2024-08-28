@@ -5,12 +5,13 @@ const Server = require('./server.js');
 module.exports = {
 
     async log(message) {
+        try{
         let channel = getChannel(my.logs);
-        let embed = new EmbedBuilder()
-            .setTitle("Error")
-            .setDescription(message)
         channel.send(message);
         console.log(message);
+        } catch(error) {
+            console.log(error);
+        }
     },
 
     async error(message) {

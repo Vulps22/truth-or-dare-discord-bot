@@ -293,7 +293,7 @@ class DareHandler extends Handler {
 		}
 
 		if (!user.hasValidVote()) {
-			await interaction.reply("Uh oh! You're out of Skips!\nNot to worry, You can earn skips up to 10 by voting for the bot every day on [top.gg](https://top.gg/bot/1079207025315164331/vote)!");
+			await interaction.reply({ content: "Uh oh! You're out of Skips!\nNot to worry, You can earn skips up to 10 by voting for the bot every day on [top.gg](https://top.gg/bot/1079207025315164331/vote)!", ephemeral: true });
 			return;
 		}
 
