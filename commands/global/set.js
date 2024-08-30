@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandNumberOption, SlashCommandStringOption, SlashCommandChannelOption, TextChannel, SlashCommandRoleOption } = require("discord.js");
+const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandNumberOption, SlashCommandStringOption, SlashCommandChannelOption, TextChannel, SlashCommandRoleOption, Guild, Interaction, GuildMemberManager, GuildMember } = require("discord.js");
 const Server = require("../../objects/server");
 
 module.exports = {
@@ -167,20 +167,46 @@ async function setLevelUpChannel(channel, interaction) {
     interaction.reply(`Level up notifications will be sent to <#${channel.id}>`);
 }
 
+/**
+ * 
+ * @param {Interaction} interaction 
+ * @returns 
+ */
 async function setLevelForRole(interaction) {
     
+    const server = new Server(interaction.guildId)
+    await server.load();
+
     if(!server.hasPremium()) {
         interaction.reply("This is a premium command. Premium is not quite ready yet, But I'm working hard to make these commands available for everyone :)")
 
         //interaction.sendPremiumRequired();
         return;
     }
+/**
+ * @type {Guild}
+ */
+    const guild = interaction.guild;
+/**
+ * @type {GuildMemberManager}
+ */
+    const member = guild.members
+/**
+ * @type {GuildMember}
+ */
+    const me = member.me
+
+    const hasPermission = interaction.guild.members.me.permissions.has('ManageRoles');
+
+    console.log("Has manage roles permission: ", hasPermission);
+
+    if(!hasPermission) {
+        interaction.reply("Unable to set the role to the level. I require the Manage Roles permission to give and take roles when players level up")
+    }
 
     const role = interaction.options.getRole('role');
     const level = interaction.options.getNumber('level');
 
-    const server = new Server(interaction.guildId);
-    await server.load();
     server.setLevelRole(role.id, level);
     await server.save();
 

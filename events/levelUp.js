@@ -54,8 +54,12 @@ module.exports = {
                         return;
                 }
 
-                // Add the role to the user
-                member.roles.add(role);
+                try {
+                        // Add the role to the user
+                        await member.roles.add(role);
+                } catch (error) {
+                        channel.send("Unable to apply the new role. This is usually because my role is lower than the role i am trying to assign.")
+                }
         }
 
 }

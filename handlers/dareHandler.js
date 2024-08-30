@@ -302,9 +302,8 @@ class DareHandler extends Handler {
 
 		//use the userDare.messageId to edit the embed in the message
 		await interaction.message.edit({ embeds: [embed], components: [row] });
-		await interaction.reply({ content: "Your dare has been skipped! You cannot skip again until you vote", ephemeral: true });
-
-		user.burnVote();
+		await user.burnVote();
+		await interaction.reply({ content: `Your truth has been skipped! You have ${user.voteCount} skips remaining!`, ephemeral: true });
 
 	}
 
