@@ -1,6 +1,7 @@
 const { Events, Message } = require("discord.js");
 const User = require("../objects/user");
 const Database = require("../objects/database");
+const { exit } = require("process");
 
 module.exports = {
 	name: Events.MessageCreate,
@@ -10,6 +11,10 @@ module.exports = {
      * @param {Message} message 
      */
 	async execute(message) {
+
+        if(message.author.bot) return;
+
+
         /**
          * @type {User}
          */
@@ -20,6 +25,6 @@ module.exports = {
             await user.addServerXP(user.server.message_xp);
         }
         
-        console.log(`Message from ${message.author.username} - ${message.content} - ${user.serverLevelXP}`)
+        console.log(`Message from ${message.author.username} - ${user.serverLevelXP}`)
 	}
 }

@@ -35,6 +35,7 @@ module.exports = {
                     { name: "Dare Failed", value: 'dare_fail' },
                     { name: "Truth Complete", value: 'truth_success' },
                     { name: "Truth Failed", value: 'truth_fail' },
+                    { name: "Message Sent", value: 'message_sent'},
                 )
             )
             .addNumberOption(new SlashCommandNumberOption()

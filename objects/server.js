@@ -163,7 +163,7 @@ class Server {
             case 'truth_fail':
                 this.truth_fail_xp = amount;
                 break;
-            case 'message_send':
+            case 'message_sent':
                 this.message_xp = amount;
                 break;
         }
