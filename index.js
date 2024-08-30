@@ -38,7 +38,7 @@ process.on('uncaughtException', (err, origin) => {
  });
 
 
-global.client = new Client({ intents: [GatewayIntentBits.Guilds] });
+global.client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 client.commands = new Collection();
 
 

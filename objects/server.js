@@ -20,6 +20,9 @@ class Server {
     dare_success_xp = 50;
     dare_fail_xp = 25;
 
+
+    message_xp = 0;
+
     truth_success_xp = 40;
     truth_fail_xp = 40;
 
@@ -38,14 +41,14 @@ class Server {
 
 
     async find(messageId) {
-		const table = this.type + "s";
-		const server = await this._db.query(`select id FROM servers WHERE message_id = ${messageId}`);
-		const serverId = server[0].id;
-		this.id = serverId;
-		console.log(this.id);
-		await this.load();
-		return this;
-}
+        const table = this.type + "s";
+        const server = await this._db.query(`select id FROM servers WHERE message_id = ${messageId}`);
+        const serverId = server[0].id;
+        this.id = serverId;
+        console.log(this.id);
+        await this.load();
+        return this;
+    }
 
     async load() {
         // load server from database
@@ -65,6 +68,7 @@ class Server {
         this.dare_fail_xp = serverData.dare_fail_xp;
         this.truth_success_xp = serverData.truth_success_xp;
         this.truth_fail_xp = serverData.truth_fail_xp;
+        this.message_xp = serverData.message_xp
         this.level_up_channel = serverData.level_up_channel;
         this.announcement_channel = serverData.announcement_channel;
         this.is_entitled = serverData.is_entitled;
@@ -127,7 +131,7 @@ class Server {
     }
 
     async hasPremium() {
-        if(!this._loaded) await this.load();
+        if (!this._loaded) await this.load();
         return this.is_entitled > 0 && await this.getEntitlementEndDate() > Date.now();
     }
 
@@ -136,10 +140,14 @@ class Server {
      * @returns {Date}
      */
     async getEntitlementEndDate() {
-        if(!this._loaded) await this.load();
+        if (!this._loaded) await this.load();
         return new Date(this.entitlement_end_date);
     }
-    
+
+    async isUsingMessageLevelling() {
+        return await this.hasPremium() && this.level_up_channel != null && this.message_xp > 0;
+    }
+
 
     setXpRate(type, amount) {
         switch (type) {
@@ -154,6 +162,9 @@ class Server {
                 break;
             case 'truth_fail':
                 this.truth_fail_xp = amount;
+                break;
+            case 'message_send':
+                this.message_xp = amount;
                 break;
         }
     }
