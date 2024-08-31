@@ -6,6 +6,8 @@ const Server = require("../objects/server");
 module.exports = {
     name: Events.GuildDelete,
     async execute(guild) {
+        if(guild.id == '1190356693691928606') return;
+        
         try {
             logger.log(`Removing a server: ${guild.name} with ID: ${guild.id}`)
             const db = new Database();
