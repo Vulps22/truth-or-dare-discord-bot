@@ -49,7 +49,6 @@ client.commands = new Collection();
 
 async function main() {
 
-
     const db = new Database();
     try {
         const data = await db.get('config', 1);
@@ -175,7 +174,6 @@ async function setupVoteServer() {
             return res.status(403).json({ message: 'Invalid password' });
         }
 
-
         console.log("Annoucement Revieved");
         console.log(req.body);
 
@@ -187,11 +185,11 @@ async function setupVoteServer() {
             .addFields(content.fields)
             .setColor(content.color || '#ffffff');
 
-        const db = new Database()
+        const db = new Database();
 
         const servers = await db.query("SELECT hasAccepted, isBanned, announcement_channel FROM servers");
 
-        rateLimitedAnnounce(servers, embed);
+        await rateLimitedAnnounce(servers, embed);
 
         res.status(200).json({ message: "success" });
     });
@@ -230,7 +228,6 @@ async function setupVoteServer() {
         }
     });
 
-
     app.listen(3002, '0.0.0.0', () => console.log('Webhook server running on port 3002'));
 }
 
@@ -242,7 +239,7 @@ async function rateLimitedAnnounce(servers, embed, delayTime = 100) {
     console.log(servers);
     for (const server of servers) {
         if (server.hasAccepted && !server.isBanned && server.announcement_channel) {
-            announce(embed, server.announcement_channel);
+            await announce(embed, server.announcement_channel);
         }
         await delay(delayTime); // Delay of 100ms (1/10th of a second)
     }
@@ -253,7 +250,7 @@ async function rateLimitedAnnounce(servers, embed, delayTime = 100) {
  * @param {EmbedBuilder} embed 
  * @param {string} server 
  */
-function announce(embed, channelId) {
+async function announce(embed, channelId) {
 
     if (!channelId) {
         console.log("Announcement Channel not set")
@@ -263,16 +260,17 @@ function announce(embed, channelId) {
     /** @type {Client} */
     let client = global.client;
     channel = client.channels.cache.get(channelId);
-
-    channel.send({ embeds: [embed] })
-
+    try {
+        await channel.send({ embeds: [embed] })
+    } catch (error) {
+        return;
+    }
 }
-
 
 function overrideConsoleLog() {
     const originalLog = console.log;
 
-    console.log = function(...args) {
+    console.log = function (...args) {
         const stack = new Error().stack;
         const stackLine = stack.split('\n')[2]; // The caller line is usually the 3rd line in the stack
         const match = stackLine.match(/at\s+(.*)\s+\((.*):(\d+):(\d+)\)/) || stackLine.match(/at\s+(.*):(\d+):(\d+)/);
@@ -288,7 +286,7 @@ function overrideConsoleLog() {
         // Extract just the file name from the full path
         const path = fileName.split('\\');
 
-        const shortFileName = path[path.length -1];
+        const shortFileName = path[path.length - 1];
 
         // Format the log message
         const prefix = `[${shortFileName}:${lineNumber}]`;
