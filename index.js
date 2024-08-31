@@ -1,11 +1,16 @@
 require('dotenv').config();
 const fs = require('node:fs');
 const path = require('node:path');
-const { Client, GatewayIntentBits, Collection, SlashCommandRoleOption } = require('discord.js');
+const { Client, GatewayIntentBits, Collection, SlashCommandRoleOption, EmbedBuilder } = require('discord.js');
 const Database = require('./objects/database.js'); // Import Database class
 const express = require('express');
+const cors = require('cors');
 const User = require('./objects/user.js');
 const logger = require('./objects/logger.js');
+const Server = require('./objects/server.js');
+const util = require('util');
+
+overrideConsoleLog();
 
 console.log('Initialising Bot....');
 
@@ -35,7 +40,7 @@ global.my = {
 process.on('uncaughtException', (err, origin) => {
     console.error(err);
     console.error(origin);
- });
+});
 
 
 global.client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });
@@ -43,6 +48,8 @@ client.commands = new Collection();
 
 
 async function main() {
+
+
     const db = new Database();
     try {
         const data = await db.get('config', 1);
@@ -157,5 +164,136 @@ async function setupVoteServer() {
         res.status(200).send('Vote received');
     });
 
+    app.use(cors());
+
+    app.post('/announce', async (req, res) => {
+        console.log(`New Announcement Send Request`)
+        // Compare the hashed passwords
+        const isMatch = req.body.password === my.announce_password;
+
+        if (!isMatch) {
+            return res.status(403).json({ message: 'Invalid password' });
+        }
+
+
+        console.log("Annoucement Revieved");
+        console.log(req.body);
+
+        const content = req.body;
+
+        const embed = new EmbedBuilder()
+            .setTitle(content.title)
+            .setDescription(content.description)
+            .addFields(content.fields)
+            .setColor(content.color || '#ffffff');
+
+        const db = new Database()
+
+        const servers = await db.query("SELECT hasAccepted, isBanned, announcement_channel FROM servers");
+
+        rateLimitedAnnounce(servers, embed);
+
+        res.status(200).json({ message: "success" });
+    });
+
+    app.get('/announce', async (req, res) => {
+
+        console.log("Announcement View Requested");
+
+        if (!my.announce_password) {
+            res.sendFile(path.join(__dirname, 'views', 'password_set.html'));
+        }
+
+        res.sendFile(path.join(__dirname, 'views', 'announce.html'));
+    });
+
+    app.post('/set_password', async (req, res) => {
+        // Check if the password is provided in the request body
+        if (!req.body.password) {
+            return res.status(400).json({ message: 'Password is required' });
+        }
+
+        const db = new Database();
+
+        try {
+            // Escape the password to prevent SQL injection
+            const escaped_pass = db.escape(req.body.password);
+
+            // Update the password in the database
+            await db.query(`UPDATE config SET announce_password = ${escaped_pass} WHERE id = 1`);
+            my.announce_password = escaped_pass;
+            // Send a success response
+            res.status(200).json({ message: 'Password set successfully' });
+        } catch (error) {
+            console.error('Error setting password:', error);
+            res.status(500).json({ message: 'An error occurred while setting the password' });
+        }
+    });
+
+
     app.listen(3002, '0.0.0.0', () => console.log('Webhook server running on port 3002'));
+}
+
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function rateLimitedAnnounce(servers, embed, delayTime = 100) {
+    console.log(servers);
+    for (const server of servers) {
+        if (server.hasAccepted && !server.isBanned && server.announcement_channel) {
+            announce(embed, server.announcement_channel);
+        }
+        await delay(delayTime); // Delay of 100ms (1/10th of a second)
+    }
+}
+
+/**
+ * 
+ * @param {EmbedBuilder} embed 
+ * @param {string} server 
+ */
+function announce(embed, channelId) {
+
+    if (!channelId) {
+        console.log("Announcement Channel not set")
+        return;
+    }
+    console.log("Announcing to:", channelId);
+    /** @type {Client} */
+    let client = global.client;
+    channel = client.channels.cache.get(channelId);
+
+    channel.send({ embeds: [embed] })
+
+}
+
+
+function overrideConsoleLog() {
+    const originalLog = console.log;
+
+    console.log = function(...args) {
+        const stack = new Error().stack;
+        const stackLine = stack.split('\n')[2]; // The caller line is usually the 3rd line in the stack
+        const match = stackLine.match(/at\s+(.*)\s+\((.*):(\d+):(\d+)\)/) || stackLine.match(/at\s+(.*):(\d+):(\d+)/);
+
+        let fileName = 'unknown';
+        let lineNumber = 'unknown';
+
+        if (match) {
+            fileName = match[2] || match[1]; // The file path
+            lineNumber = match[3]; // The line number
+        }
+
+        // Extract just the file name from the full path
+        const path = fileName.split('\\');
+
+        const shortFileName = path[path.length -1];
+
+        // Format the log message
+        const prefix = `[${shortFileName}:${lineNumber}]`;
+
+        // Call the original console.log with the modified message
+        originalLog.call(console, prefix, util.format(...args));
+    };
 }
