@@ -80,18 +80,17 @@ class Server {
         return this;
     }
 
-    save() {
+    async save() {
         // save server to database
         const db = new Database();
 
         //create an object of every property that doesn't have an underscore
         let serverData = {};
         for (let key in this) {
-            console.log(key, this[key])
             if (key.startsWith("_")) continue;
             serverData[key] = this[key];
         }
-        db.set("servers", serverData);
+        await db.set("servers", serverData);
 
         this._loaded = true;
     }
