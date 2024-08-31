@@ -106,7 +106,7 @@ class SetupHandler extends Handler {
         //SEND A MESSAGE TO THE CHANNEL
         const guild = global.client.guilds.cache.get(interaction.guildId);
         const channel = guild.channels.cache.get(channelId);
-        channel.send({ embeds: [embedder.v5()] })
+        //channel.send({ embeds: [embedder.v5()] })
 
         await interaction.reply(`Announcement channel set to ${channel}`);
 
