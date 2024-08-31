@@ -19,6 +19,7 @@ module.exports = {
          * @type {User}
          */
         const user = await new User(message.author.id).get();
+        if(!user) return;
         await user.loadServerUser(message.guildId);
     
         if(await user.server.isUsingMessageLevelling()) {
