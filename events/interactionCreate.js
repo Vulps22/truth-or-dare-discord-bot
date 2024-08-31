@@ -19,7 +19,7 @@ module.exports = {
     async execute(interaction) {
 
         const didBan = await registerServer(interaction);
-        if(didBan === -1) {
+        if (didBan === -1) {
             interaction.reply("Opps! Brain Fart! Please Try again. If this problem continues please reach out for support on our official discord server. Use /help to find the invite to this server")
             logger.error("Failed to register server! Function returned -1. Check the logs for Guild Details")
             console.log(interaction.guild);
@@ -213,9 +213,9 @@ function isMaintenance() {
  */
 async function registerServer(interaction) {
 
-    console.log("Registering server");
-    
-    if(!interaction.guild) return -1;
+    console.log("Checking for server");
+
+    if (!interaction.guild) return -1;
 
     const server = new Server(interaction.guildId);
     const user = new User(interaction.guild.ownerId); //server owner
@@ -234,9 +234,13 @@ async function registerServer(interaction) {
         await server.save();
     } else {
         //ensure the server details are up to date
-        if (server.name !== interaction.guild.name) server.name = interaction.guild.name;
-        if (server.owner !== interaction.guild.ownerId) server.owner = interaction.guild.ownerId;
-        await server.save();
+        if (server.name !== interaction.guild.name || server.owner !== interaction.guild.ownerId) {
+            console.log("Updating Server Details");
+            server.name = interaction.guild.name;
+            server.owner = interaction.guild.ownerId;
+            await server.save();
+        }
+            
     }
 
     if (!server.isBanned) {
