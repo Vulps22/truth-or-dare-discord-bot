@@ -4,28 +4,26 @@ const Database = require("../objects/database");
 const { exit } = require("process");
 
 module.exports = {
-	name: Events.MessageCreate,
+    name: Events.MessageCreate,
 
     /**
      * 
      * @param {Message} message 
      */
-	async execute(message) {
+    async execute(message) {
 
-        if(message.author.bot) return;
+        if (message.author.bot) return;
 
 
         /**
          * @type {User}
          */
         const user = await new User(message.author.id).get();
-        if(!user) return;
+        if (!user) return;
         await user.loadServerUser(message.guildId);
-    
-        if(await user.server.isUsingMessageLevelling()) {
+
+        if (await user.server.isUsingMessageLevelling()) {
             await user.addServerXP(user.server.message_xp);
         }
-        
-        console.log(`Message from ${message.author.username} - ${user.serverLevelXP}`)
-	}
+    }
 }
