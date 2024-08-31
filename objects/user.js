@@ -84,7 +84,6 @@ class User {
     }
 
     async loadServerUser(serverId) {
-        console.log("Loading Server Data for Server: ", serverId);
         const db = new Database();
 
         let serverUserRaw = await db.query(`SELECT * FROM server_users WHERE user_id = ${this.id} AND server_id = ${serverId}`);
