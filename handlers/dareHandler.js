@@ -5,8 +5,8 @@ const UserDare = require('../objects/userDare.js');
 const User = require('../objects/user.js');
 const Server = require('../objects/server.js');
 const Dare = require('../objects/dare.js');
-const Logger = require('../objects/logger.js');
 const logger = require('../objects/logger.js');
+const Question = require('../objects/question.js');
 let client = null
 class DareHandler extends Handler {
 
@@ -18,18 +18,24 @@ class DareHandler extends Handler {
 		this.client = client
 	}
 
+	/**
+	 * 
+	 * @param {Interaction} interaction 
+	 * @returns 
+	 */
 	async createDare(interaction) {
+		interaction.deferReply({ephemeral: true});
 		const dare = new Dare();
 
 		dare.question = interaction.options.getString('text');
 		if (!dare.question) {
-			interaction.reply("You need to give me a dare!");
+			interaction.editReply("You need to give me a dare!");
 			logger.error(`Aborted Dare creation: Nothing Given`);
 			return;
 		}
 		let dares = await this.db.list("dares");
 		if (dares.some(q => q.question === dare.question)) {
-			interaction.reply("This dare already exists!");
+			interaction.editReply("This dare already exists!");
 			logger.error(`Aborted Dare creation: Already exists`);
 			return;
 		} else {
@@ -40,9 +46,10 @@ class DareHandler extends Handler {
 				.setDescription(dare.question)
 				.setColor('#00ff00')
 				.setFooter({ text: ' Created by ' + interaction.user.username, iconURL: interaction.user.displayAvatarURL() });
-			interaction.reply({ content: "Thank you for your submission. A member of the moderation team will review your dare shortly", embeds: [embed] });
+			interaction.editReply({ content: "Thank you for your submission. A member of the moderation team will review your dare shortly"});
+			interaction.channel.send({embeds: [embed] });
 
-			Logger.newDare(createdDare);
+			logger.newDare(createdDare);
 		}
 	}
 
@@ -54,7 +61,7 @@ class DareHandler extends Handler {
 
 	async dare(interaction) {
 		try {
-			const dares = await this.db.list("dares");
+			const dares = await Question.collect('dare');
 			if (!dares || dares.length === 0) {
 				return interaction.reply("Hmm, I can't find any dares. This might be a bug, try again later");
 			}
@@ -172,7 +179,12 @@ class DareHandler extends Handler {
 			.setColor('#6A5ACD')
 			.setFooter({ text: `Requested by ${interaction.user.username} | Created By ${username} | #${dare.id}`, iconURL: interaction.user.displayAvatarURL() });
 	}
-
+	/**
+	 * 
+	 * @param {UserDare} userDare 
+	 * @param {Interaction} interaction 
+	 * @returns 
+	 */
 	async createUpdatedDareEmbed(userDare, interaction) {
 		let dare = await userDare.getQuestion();
 		let question = dare.question;
@@ -250,12 +262,17 @@ class DareHandler extends Handler {
 		}
 	}
 
+	/**
+	 * 
+	 * @param {Interaction} interaction 
+	 * @returns 
+	 */
 	async vote(interaction) {
-
+		interaction.deferReply({content: "Registering your vote", ephemeral: true})
 		const userDare = await new UserDare().load(interaction.message.id, 'dare');
 
 		if (!userDare) {
-			await interaction.reply("I'm sorry, I couldn't find the dare to track votes. This is a brain fart. Please reach out for support on the official server.");
+			await interaction.editReply("I'm sorry, I couldn't find the dare to track votes. This is a brain fart. Please reach out for support on the official server.");
 			logger.error(`Brain Fart: Couldn't find dare to track votes. Message ID missing`);
 			return;
 		}
@@ -288,12 +305,12 @@ class DareHandler extends Handler {
 	async doSkip(interaction, userDare, dareUser, user) {
 
 		if (dareUser != interaction.user.id) {
-			interaction.reply({ content: "You can't skip someone else's dare!", ephemeral: true });
+			interaction.editReply({ content: "You can't skip someone else's dare!", ephemeral: true });
 			return;
 		}
 
 		if (!user.hasValidVote()) {
-			await interaction.reply({ content: "Uh oh! You're out of Skips!\nNot to worry, You can earn skips up to 10 by voting for the bot every day on [top.gg](https://top.gg/bot/1079207025315164331/vote)!", ephemeral: true });
+			await interaction.editReply({ content: "Uh oh! You're out of Skips!\nNot to worry, You can earn skips up to 10 by voting for the bot every day on [top.gg](https://top.gg/bot/1079207025315164331/vote)!", ephemeral: true });
 			return;
 		}
 
@@ -303,7 +320,7 @@ class DareHandler extends Handler {
 		//use the userDare.messageId to edit the embed in the message
 		await interaction.message.edit({ embeds: [embed], components: [row] });
 		await user.burnVote();
-		await interaction.reply({ content: `Your truth has been skipped! You have ${user.voteCount} skips remaining!`, ephemeral: true });
+		await interaction.editReply({ content: `Your truth has been skipped! You have ${user.voteCount} skips remaining!`, ephemeral: true });
 
 	}
 
@@ -311,7 +328,7 @@ class DareHandler extends Handler {
 	async doVote(interaction, userDare, dareUser, user, server) {
 
 		if (dareUser == interaction.user.id && !this.ALPHA) {
-			interaction.reply({ content: "You can't vote on your own dare!", ephemeral: true });
+			interaction.editReply({ content: "You can't vote on your own dare!", ephemeral: true });
 			return;
 		}
 
@@ -319,9 +336,11 @@ class DareHandler extends Handler {
 
 		const couldVote = await userDare.vote(interaction.user.id, vote);
 		if (!couldVote && !this.ALPHA) {
-			await interaction.reply({ content: "You've already voted on this dare!", ephemeral: true });
+			await interaction.editReply({ content: "You've already voted on this dare!", ephemeral: true });
 			return;
 		}
+
+		
 
 		const embed = await this.createUpdatedDareEmbed(userDare, interaction);
 
@@ -343,7 +362,7 @@ class DareHandler extends Handler {
 
 		//use the userDare.messageId to edit the embed in the message
 		await interaction.message.edit({ embeds: [embed], components: [row] });
-		await interaction.reply({ content: "Your vote has been recorded!", ephemeral: true });
+		await interaction.editReply({ content: "Your vote has been recorded!", ephemeral: true });
 	}
 
 	/**

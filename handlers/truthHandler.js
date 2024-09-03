@@ -5,7 +5,6 @@ const UserTruth = require('../objects/userTruth.js');
 const User = require('../objects/user.js');
 const Server = require('../objects/server.js');
 const Truth = require('../objects/truth.js');
-const Logger = require('../objects/logger.js');
 const logger = require('../objects/logger.js');
 let client = null;
 
@@ -18,19 +17,24 @@ class TruthHandler extends Handler {
 		super("truth")
 		this.client = client
 	}
-
+	/**
+	 * 
+	 * @param {Interaction} interaction 
+	 * @returns 
+	 */
 	async createTruth(interaction) {
+		interaction.deferReply({ephemeral: true});
 		const truth = new Truth();
 
 		truth.question = interaction.options.getString('text');
 		if (!truth.question) {
-			interaction.reply("You need to give me a truth!");
+			interaction.editReply("You need to give me a truth!");
 			logger.error(`Aborted Truth creation: Nothing Given`);
 			return;
 		}
 		let truths = await this.db.list("truths");
 		if (truths.some(q => q.question === truth.question)) {
-			interaction.reply("This Truth already exists!");
+			interaction.editReply("This Truth already exists!");
 			logger.error(`Aborted Truth creation: Already exists`);
 			return;
 		} else {
@@ -41,9 +45,10 @@ class TruthHandler extends Handler {
 				.setDescription(truth.question)
 				.setColor('#00ff00')
 				.setFooter({ text: ' Created by ' + interaction.user.username, iconURL: interaction.user.displayAvatarURL() });
-			interaction.reply({ content: "Thank you for your submission. A member of the moderation team will review your truth shortly", embeds: [embed] });
+			interaction.editReply({ content: "Thank you for your submission. A member of the moderation team will review your truth shortly"});
+			interaction.channel.send({embeds: [embed] });
 
-			Logger.newTruth(createdTruth);
+			logger.newTruth(createdTruth);
 		}
 	}
 
@@ -153,6 +158,12 @@ class TruthHandler extends Handler {
 			.setFooter({ text: `Requested by ${interaction.user.username} | Created By ${creator} | #${truth.id}`, iconURL: interaction.user.displayAvatarURL() });
 	}
 
+	/**
+	 * 
+	 * @param {UserTruth} userTruth 
+	 * @param {Interaction} interaction 
+	 * @returns Promise<EmbedBuilder>
+	 */
 	async createUpdatedTruthEmbed(userTruth, interaction) {
 		let truth = await userTruth.getQuestion();
 		let question = truth.question;
@@ -229,8 +240,13 @@ class TruthHandler extends Handler {
 		}
 	}
 
+	/**
+	 * 
+	 * @param {Interaction} interaction 
+	 * @returns 
+	 */
 	async vote(interaction) {
-
+		interaction.deferReply({ ephemeral: true });
 		const userTruth = await new UserTruth().load(interaction.message.id, 'truth');
 
 		if (!userTruth) {
@@ -267,12 +283,12 @@ class TruthHandler extends Handler {
 	async doSkip(interaction, userTruth, truthUser, user) {
 
 		if (truthUser != interaction.user.id) {
-			interaction.reply({ content: "You can't skip someone else's truth!", ephemeral: true });
+			interaction.editReply({ content: "You can't skip someone else's truth!", ephemeral: true });
 			return;
 		}
 
 		if (!user.hasValidVote()) {
-			await interaction.reply({ content: "Uh oh! You're out of Skips!\nNot to worry, You can earn skips up to 10 by voting for the bot every day on [top.gg](https://top.gg/bot/1079207025315164331/vote)!", ephemeral: true });
+			await interaction.editReply({ content: "Uh oh! You're out of Skips!\nNot to worry, You can earn skips up to 10 by voting for the bot every day on [top.gg](https://top.gg/bot/1079207025315164331/vote)!", ephemeral: true });
 			return;
 		}
 
@@ -282,9 +298,9 @@ class TruthHandler extends Handler {
 		//use the userTruth.messageId to edit the embed in the message
 		await interaction.message.edit({ embeds: [embed], components: [row] });
 		await user.burnVote();
-		await interaction.reply({ content: `Your truth has been skipped! You have ${user.voteCount} skips remaining!`, ephemeral: true });
+		await interaction.editReply({ content: `Your truth has been skipped! You have ${user.voteCount} skips remaining!`, ephemeral: true });
 
-		
+
 
 	}
 
@@ -292,7 +308,7 @@ class TruthHandler extends Handler {
 	async doVote(interaction, userTruth, truthUser, user, server) {
 
 		if (truthUser == interaction.user.id && !this.ALPHA) {
-			interaction.reply({ content: "You can't vote on your own truth!", ephemeral: true });
+			interaction.editReply({ content: "You can't vote on your own truth!", ephemeral: true });
 			return;
 		}
 
@@ -300,7 +316,7 @@ class TruthHandler extends Handler {
 
 		const couldVote = await userTruth.vote(interaction.user.id, vote);
 		if (!couldVote && !this.ALPHA) {
-			await interaction.reply({ content: "You've already voted on this truth!", ephemeral: true });
+			await interaction.editReply({ content: "You've already voted on this truth!", ephemeral: true });
 			return;
 		}
 
@@ -324,7 +340,7 @@ class TruthHandler extends Handler {
 
 		//use the userTruth.messageId to edit the embed in the message
 		await interaction.message.edit({ embeds: [embed], components: [row] });
-		await interaction.reply({ content: "Your vote has been recorded!", ephemeral: true });
+		await interaction.editReply({ content: "Your vote has been recorded!", ephemeral: true });
 	}
 
 	/**
