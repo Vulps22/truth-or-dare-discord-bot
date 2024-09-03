@@ -165,13 +165,14 @@ class Handler {
    * @param {Question} question 
    */
   async approve(interaction, question) {
+    interaction.deferReply({ephemeral: true});
     await question.load();
     await question.approve();
     const message = interaction.message;
     const actionRow = this.createApprovedActionRow();
     //const newEmbed = getEmbed(question);
     await message.edit({ components: [actionRow] });
-    interaction.reply({ content: 'Question has been approved', ephemeral: true });
+    interaction.editReply({ content: 'Question has been approved', ephemeral: true });
   }
 
   getEmbed(question) {

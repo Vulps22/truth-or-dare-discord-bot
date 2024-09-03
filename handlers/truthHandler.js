@@ -1,4 +1,4 @@
-const { Interaction, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { Interaction, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, Client } = require('discord.js');
 
 const Handler = require('./handler.js')
 const UserTruth = require('../objects/userTruth.js');
@@ -6,6 +6,7 @@ const User = require('../objects/user.js');
 const Server = require('../objects/server.js');
 const Truth = require('../objects/truth.js');
 const logger = require('../objects/logger.js');
+const Question = require('../objects/question.js');
 let client = null;
 
 class TruthHandler extends Handler {
@@ -23,7 +24,7 @@ class TruthHandler extends Handler {
 	 * @returns 
 	 */
 	async createTruth(interaction) {
-		interaction.deferReply({ephemeral: true});
+		interaction.deferReply({ ephemeral: true });
 		const truth = new Truth();
 
 		truth.question = interaction.options.getString('text');
@@ -45,8 +46,8 @@ class TruthHandler extends Handler {
 				.setDescription(truth.question)
 				.setColor('#00ff00')
 				.setFooter({ text: ' Created by ' + interaction.user.username, iconURL: interaction.user.displayAvatarURL() });
-			interaction.editReply({ content: "Thank you for your submission. A member of the moderation team will review your truth shortly"});
-			interaction.channel.send({embeds: [embed] });
+			interaction.editReply({ content: "Thank you for your submission. A member of the moderation team will review your truth shortly" });
+			interaction.channel.send({ embeds: [embed] });
 
 			logger.newTruth(createdTruth);
 		}
@@ -59,11 +60,12 @@ class TruthHandler extends Handler {
 	 */
 	async truth(interaction) {
 		try {
-			const truths = await this.db.list("truths")
+			const truths = await Question.collect("truth");
 			if (!truths || truths.length === 0) { interaction.reply("Hmm, I can't find any truths. This might be a bug, try again later"); return; }
 			const unBannedQuestions = truths.filter(q => !q.isBanned && q.isApproved);
 			if (unBannedQuestions.length === 0) { interaction.reply("There are no approved truths to give."); return; }
 			const truth = this.selectRandomTruth(unBannedQuestions);
+			//truth = this.db.get()
 			const creator = this.getCreator(truth, this.client);
 
 			const embed = this.createTruthEmbed(truth, interaction, creator);
@@ -78,6 +80,11 @@ class TruthHandler extends Handler {
 		}
 	}
 
+	/**
+	 * 
+	 * @param {Interaction} interaction 
+	 * @returns 
+	 */
 	giveTruth(interaction) {
 		const user = interaction.options.getUser('user');
 		const truth = interaction.options.getString('truth');
@@ -106,6 +113,10 @@ class TruthHandler extends Handler {
 		interaction.reply({ embeds: [embed] });
 	}
 
+	/**
+	 * 
+	 * @param {Interaction} interaction 
+	 */
 	async listAll(interaction) {
 		await this.db.list("truths").then((truths) => {
 
@@ -127,6 +138,11 @@ class TruthHandler extends Handler {
 		})
 	}
 
+	/**
+	 * 
+	 * @param {Interaction} interaction 
+	 * @returns 
+	 */
 	ban(interaction) {
 		let id = interaction.options.getInteger("id");
 		let truth = this.db.get("truths", id);
@@ -137,25 +153,42 @@ class TruthHandler extends Handler {
 		interaction.reply("Truth " + id + " has been banned!");
 	}
 
+	/**
+	 * 
+	 * @param {Truth[]} truths 
+	 * @returns 
+	 */
 	selectRandomTruth(truths) {
 		const random = Math.floor(Math.random() * truths.length);
 		return truths[random];
 	}
-
+/**
+ * 
+ * @param {Truth} truth 
+ * @param {Client} client 
+ * @returns 
+ */
 	getCreator(truth, client) {
 		let creator = client.users.cache.get(truth.creator);
 		return creator || { username: "Somebody" };
 	}
 
+	/**
+	 * 
+	 * @param {Truth} truth 
+	 * @param {Interaction} interaction 
+	 * @param {User} creator 
+	 * @returns {EmbedBuilder}
+	 */
 	createTruthEmbed(truth, interaction, creator) {
-
+		console.log(creator);
 		let truthText = `${truth.question}\n\n **Votes:** 0 Done | 0 Failed`;
 
 		return new EmbedBuilder()
 			.setTitle('truth!')
 			.setDescription(truthText)
 			.setColor('#6A5ACD')
-			.setFooter({ text: `Requested by ${interaction.user.username} | Created By ${creator} | #${truth.id}`, iconURL: interaction.user.displayAvatarURL() });
+			.setFooter({ text: `Requested by ${interaction.user.username} | Created By ${creator.username} | #${truth.id}`, iconURL: interaction.user.displayAvatarURL() });
 	}
 
 	/**

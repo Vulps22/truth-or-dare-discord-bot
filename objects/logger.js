@@ -105,6 +105,7 @@ module.exports = {
 
     /**
      * @param {Truth} truth 
+     * @param {boolean} [userBan] 
      */
     async updateTruth(truth, userBan = false) {
         let serverName = 'pre-v5';
