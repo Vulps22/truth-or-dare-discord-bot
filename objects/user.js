@@ -154,6 +154,37 @@ class User {
         return Math.ceil(xp);
     }
 
+    getTotalGlobalXP() {
+        let totalXP = 0;
+    
+        // Sum XP required for all levels up to the current level
+        for (let level = 1; level <= this.globalLevel; level++) {
+            totalXP += this.calculateXpForLevel(level);
+        }
+    
+        // Add the XP gained in the current level
+        totalXP += this.globalLevelXP;
+    
+        return totalXP;
+    }
+
+    getTotalServerXP() {
+        if (!this.serverUserLoaded) return 0;
+    
+        let totalXP = 0;
+    
+        // Sum XP required for all server levels up to the current level
+        for (let level = 1; level <= this.serverLevel; level++) {
+            totalXP += this.calculateXpForLevel(level);
+        }
+    
+        // Add the XP gained in the current server level
+        totalXP += this.serverLevelXP;
+    
+        return totalXP;
+    }
+    
+
     willLevelUpGlobally(xpChange) {
         let currentLevel = this.globalLevel;
         let newXp = this.globalLevelXP + xpChange;

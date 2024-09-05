@@ -10,6 +10,7 @@ const User = require("../objects/user");
 const Truth = require("../objects/truth");
 const Server = require("../objects/server");
 const UserHandler = require("./userHandler");
+const GivenQuestion = require("../objects/givenQuestion");
 
 class ButtonEventHandler {
     /**
@@ -46,6 +47,9 @@ class ButtonEventHandler {
                 break;
             case 'user':
                 handleUserModerationCommand(this.interaction, idComponents);
+                break;
+            case 'given':
+                handleGivenQuestion(this.interaction, idComponents);
                 break;
             default:
                 await logger.error(`**Failed to find Button Command** | **server**: ${this.interaction.guild.name} \n\n**Button ID**: ${buttonId}`);
@@ -91,32 +95,95 @@ function handleContentResponse(interaction, idComponents) {
  */
 async function handleUserModerationCommand(interaction, idComponents) {
     const type = idComponents[1];
+    let entity;
 
-    /** @type {User} */
-    let owner;
-
-    switch(type) {
+    switch (type) {
         case 'dare':
-            const dare = await new Dare().find(interaction.message.id);
-            await dare.load()
-            owner = new User(dare.creator);
+            entity = await new Dare().find(interaction.message.id);
             break;
         case 'truth':
-            const truth = await new Truth().find(interaction.message.id);
-            await truth.load()
-            owner = new User(truth.creator);
+            entity = await new Truth().find(interaction.message.id);
             break;
         case 'server':
-            const server = await new Server().find(interaction.message.id);
-            await server.load()
-            owner = new User(server.creator);
+            entity = await new Server().find(interaction.message.id);
             break;
         default:
-            throw Error("Undefined user moderation type");
+            throw new Error("Undefined user moderation type");
     }
 
-    owner.get();
+    await entity.load();
+    const owner = new User(entity.creator);
+    await owner.get();
+    await new UserHandler().banUser(interaction, owner);
+}
 
-    new UserHandler().banUser(interaction, owner);
 
+/**
+ * 
+ * @param {Interaction} interaction 
+ * @param {Array<string>} idComponents 
+ */
+async function handleGivenQuestion(interaction, idComponents) {
+    /** @type {GivenQuestion} */
+    const given = await GivenQuestion.find(interaction.message.id);
+    if (!given) {
+        return interaction.reply({ content: "This question could not be found.", ephemeral: true });
+    }
+
+
+    const target = new User(given.targetId);
+    await target.get();
+
+    if (interaction.user.id == given.targetId && idComponents[1] !== 'skip') {
+        interaction.reply({ content: `You can't vote on your own ${given.type}!`, ephemeral: true })
+        return;
+    }
+
+    switch (idComponents[1]) {
+        case 'done':
+            await given.incrementDone();
+            break;
+        case 'failed':
+            await given.incrementFail();
+            break;
+        case 'skip':
+            if (interaction.user.id !== given.targetId) {
+                interaction.reply({ content: `You can't skip someone else's ${given.type}!`, ephemeral: true });
+                return;
+            }
+
+            if (target.hasValidVote()) {
+                await target.burnVote();
+                await given.skip();
+            } else {
+                interaction.reply({ content: "Uh oh! You're out of Skips!\nNot to worry, You can earn up to 10 skips by voting for the bot every day on [top.gg](https://top.gg/bot/1079207025315164331/vote)!", ephemeral: true });
+                return;
+            }
+            break;
+    }
+    const newEmbed = given.createEmbed();
+
+    console.log(interaction.message.id);
+
+    interaction.message.edit({ embeds: [newEmbed.embed], components: [newEmbed.row] })
+    if (idComponents[1] !== 'skip') interaction.reply({ content: "Your vote has been registered", ephemeral: true });
+    else interaction.reply({ content: `Your ${given.type} has been skipped! You have ${target.voteCount} skips remaining!`, ephemeral: true })
+
+    if (given.doneCount >= my.required_votes) {
+
+        const xpType = given.xpType;
+
+        const sender = new User(given.senderId);
+        await sender.get();
+        switch (xpType) {
+            case 'server':
+                await sender.subtractServerXP(given.wager);
+                await target.addServerXP(given.wager);
+                break;
+            case 'global':
+                await sender.subtractXP(given.wager);
+                await target.addXP(given.wager);
+                break;
+        }
+    }
 }

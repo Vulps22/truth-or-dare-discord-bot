@@ -7,6 +7,7 @@ const Server = require('../objects/server.js');
 const Truth = require('../objects/truth.js');
 const logger = require('../objects/logger.js');
 const Question = require('../objects/question.js');
+const GivenQuestion = require('../objects/givenQuestion.js');
 let client = null;
 
 class TruthHandler extends Handler {
@@ -85,32 +86,30 @@ class TruthHandler extends Handler {
 	 * @param {Interaction} interaction 
 	 * @returns 
 	 */
-	giveTruth(interaction) {
-		const user = interaction.options.getUser('user');
-		const truth = interaction.options.getString('truth');
+	async giveTruth(interaction) {
+		const target = interaction.options.getUser('user');
+		const question = interaction.options.getString('truth');
+		const wager = interaction.options.getInteger('wager');
+		const xpType = interaction.options.getString('type');
 
 		// Send an error message if no user was mentioned
-		if (!user) {
-			interaction.reply('Please mention a user to ask!');
+		if (!target) {
+			interaction.reply('Please mention a user to give a truth to!');
 			return;
 		}
 
-		// Send an error message if no question was provided
-		if (!truth) {
-			interaction.reply('Please provide a Question!');
+		// Send an error message if no dare was provided
+		if (!question) {
+			interaction.reply('Please provide a question!');
 			return;
 		}
 
-		// Construct the message to send
-		const messageText = `${user}, ${interaction.user} has asked you ${truth}!\n Remember to answer honestly :P`;
-
-		// Create an embed with the message and send it
-		const embed = new EmbedBuilder()
-			.setTitle("Answer Honestly!")
-			.setDescription(messageText)
-			.setColor('#6A5ACD')
-
-		interaction.reply({ embeds: [embed] });
+		if (wager < 1) {
+			interaction.reply('You must offer a wager');
+			return;
+		}
+		const given = GivenQuestion.create(interaction, question, interaction.user.id, target.id, interaction.guildId, wager, xpType, "truth");
+		interaction.reply({ content: "Your truth has been sent", ephemeral: true });
 	}
 
 	/**

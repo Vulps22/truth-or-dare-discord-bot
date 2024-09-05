@@ -131,7 +131,10 @@ class Server {
 
     async hasPremium() {
         if (!this._loaded) await this.load();
-        return this.is_entitled > 0 && await this.getEntitlementEndDate() > Date.now();
+
+        const endDate = await this.getEntitlementEndDate();
+
+        return this.is_entitled > 0 && (!endDate || endDate > Date.now());
     }
 
     /**

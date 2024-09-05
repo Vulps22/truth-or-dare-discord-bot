@@ -7,6 +7,7 @@ const Server = require('../objects/server.js');
 const Dare = require('../objects/dare.js');
 const logger = require('../objects/logger.js');
 const Question = require('../objects/question.js');
+const GivenQuestion = require('../objects/givenQuestion.js')
 let client = null
 class DareHandler extends Handler {
 
@@ -24,7 +25,7 @@ class DareHandler extends Handler {
 	 * @returns 
 	 */
 	async createDare(interaction) {
-		interaction.deferReply({ephemeral: true});
+		interaction.deferReply({ ephemeral: true });
 		const dare = new Dare();
 
 		dare.question = interaction.options.getString('text');
@@ -46,8 +47,8 @@ class DareHandler extends Handler {
 				.setDescription(dare.question)
 				.setColor('#00ff00')
 				.setFooter({ text: ' Created by ' + interaction.user.username, iconURL: interaction.user.displayAvatarURL() });
-			interaction.editReply({ content: "Thank you for your submission. A member of the moderation team will review your dare shortly"});
-			interaction.channel.send({embeds: [embed] });
+			interaction.editReply({ content: "Thank you for your submission. A member of the moderation team will review your dare shortly" });
+			interaction.channel.send({ embeds: [embed] });
 
 			logger.newDare(createdDare);
 		}
@@ -84,34 +85,35 @@ class DareHandler extends Handler {
 			logger.error(`Brain Fart: Error in dare function: ${error}`);
 		}
 	}
-
+	/**
+	 * 
+	 * @param {Interaction} interaction 
+	 * @returns 
+	 */
 	async giveDare(interaction) {
-		const user = interaction.options.getUser('user');
-		const dare = interaction.options.getString('dare');
+		const target = interaction.options.getUser('user');
+		const question = interaction.options.getString('dare');
+		const wager = interaction.options.getInteger('wager');
+		const xpType = interaction.options.getString('type');
 
 		// Send an error message if no user was mentioned
-		if (!user) {
+		if (!target) {
 			interaction.reply('Please mention a user to give a dare to!');
 			return;
 		}
 
 		// Send an error message if no dare was provided
-		if (!dare) {
+		if (!question) {
 			interaction.reply('Please provide a dare!');
 			return;
 		}
 
-		// Construct the message to send
-		const messageText = `${user}, ${interaction.user} has dared you to ${dare}!`;
-
-		// Create an embed with the message and send it
-		const embed = new EmbedBuilder()
-			.setTitle("You've been dared!")
-			.setDescription(messageText)
-			.setColor('#6A5ACD')
-
-
-		const messageId = await interaction.reply({ embeds: [embed], fetchReply: true });
+		if (wager < 1) {
+			interaction.reply('You must offer a wager');
+			return;
+		}
+		const given = GivenQuestion.create(interaction, question, interaction.user.id, target.id, interaction.guildId, wager, xpType ,"dare");
+		interaction.reply({ content: "Your dare has been sent", ephemeral: true });
 	}
 
 	async listAll(interaction) {
@@ -268,7 +270,7 @@ class DareHandler extends Handler {
 	 * @returns 
 	 */
 	async vote(interaction) {
-		interaction.deferReply({content: "Registering your vote", ephemeral: true})
+		interaction.deferReply({ content: "Registering your vote", ephemeral: true })
 		const userDare = await new UserDare().load(interaction.message.id, 'dare');
 
 		if (!userDare) {
@@ -340,7 +342,7 @@ class DareHandler extends Handler {
 			return;
 		}
 
-		
+
 
 		const embed = await this.createUpdatedDareEmbed(userDare, interaction);
 
