@@ -19,7 +19,7 @@ class Question {
 
 	exists = false;
 
-	constructor(id, type) {
+	constructor(id, type = '') {
 		this.id = id;
 		this.type = type;
 		this.question = ' ';
@@ -35,6 +35,7 @@ class Question {
 
 		const question = await this.db.get('questions', this.id);
 		if (!question) return;
+		this.type = question.type;
 		this.question = question.question;
 		this.creator = question.creator;
 		this.isApproved = question.isApproved;
@@ -96,9 +97,10 @@ class Question {
 
 	async find(messageId) {
 		console.log(messageId)
-
+		/** @type {Array} */
 		const question = await this.db.query(`select id FROM questions WHERE messageId = ${messageId}`);
-		if (!question) return null;
+		if (!question || question.length == 0) return null;
+		console.log(question);
 		const questionId = question[0].id;
 		this.id = questionId;
 		console.log(this.id);
@@ -121,6 +123,12 @@ class Question {
 	async ban(reason) {
 		this.isBanned = 1;
 		this.banReason = reason;
+		return this.save();
+	}
+
+	async unBan() {
+		this.isBanned = 0;
+		this.banReason = null;
 		return this.save();
 	}
 

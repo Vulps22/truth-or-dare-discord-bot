@@ -5,11 +5,11 @@ const Server = require('./server.js');
 module.exports = {
 
     async log(message) {
-        try{
-        let channel = getChannel(my.logs);
-        channel.send(message);
-        console.log(message);
-        } catch(error) {
+        try {
+            let channel = getChannel(my.logs);
+            channel.send(message);
+            console.log(message);
+        } catch (error) {
             console.log(error);
         }
     },
@@ -62,10 +62,10 @@ module.exports = {
         let embed = new EmbedBuilder()
             .setTitle("New Dare")
             .addFields(
-                { name: "Dare", value: dare.question ?? '' },
-                { name: "Author Name", value: `${await dare.getCreatorUsername()} | ${dare.creator}` ?? '' },
+                { name: "Dare", value: dare.question ?? ' ' },
+                { name: "Author Name", value: `${await dare.getCreatorUsername()} | ${dare.creator}` ?? ' ' },
                 { name: "Server:", value: serverName },
-                { name: "Ban Reason:", value: dare.banReason ?? '' },
+                { name: "Ban Reason:", value: dare.banReason ?? ' ' },
             )
             .setFooter({ text: `ID: #${dare.id}` })
         let actionRow = createActionRow("dare", dare.isBanned, userBan);
@@ -116,10 +116,10 @@ module.exports = {
         let embed = new EmbedBuilder()
             .setTitle("New Truth")
             .addFields(
-                { name: "Truth", value: truth.question ?? '' },
-                { name: "Author Name", value: `${await truth.getCreatorUsername()} | ${truth.creator}` ?? '' },
+                { name: "Truth", value: truth.question ?? ' ' },
+                { name: "Author Name", value: `${await truth.getCreatorUsername()} | ${truth.creator}` ?? ' ' },
                 { name: "Server:", value: serverName },
-                { name: "Ban Reason:", value: truth.banReason ?? '' },
+                { name: "Ban Reason:", value: truth.banReason ?? ' ' },
             )
             .setFooter({ text: `ID: #${truth.id}` })
         let actionRow = createActionRow("truth", truth.isBanned, userBan)
@@ -131,6 +131,31 @@ module.exports = {
         }
 
         return true;
+    },
+
+    /**
+     * 
+     * @param {User} user 
+     * @param {number} questions 
+     * @param {number} servers 
+     */
+    async bannedUser(user, questions, servers) {
+
+        let channel = getChannel(my.banned_users_log);
+
+        let embed = new EmbedBuilder()
+            .setTitle("User Banned")
+            .addFields(
+                { name: "Id", value: user.id ?? ' ' },
+                { name: "Username", value: user.username ?? ' ' },
+                { name: "Questions:", value: String(questions) ?? ' ' },
+                { name: "Servers:", value: String(servers) ?? ' ' },
+                { name: "Ban Reason:", value: user.banReason ?? ' ' },
+
+            )
+        const message = await channel.send({ embeds: [embed], fetchReply: true });
+        user.ban_message_id = message.id;
+        await user.save();
     },
 
     /**

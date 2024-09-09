@@ -25,7 +25,7 @@ class DareHandler extends Handler {
 	 * @returns 
 	 */
 	async createDare(interaction) {
-		interaction.deferReply({ ephemeral: true });
+
 		const dare = new Dare();
 
 		dare.question = interaction.options.getString('text');
@@ -112,7 +112,7 @@ class DareHandler extends Handler {
 			interaction.reply('You must offer a wager');
 			return;
 		}
-		const given = GivenQuestion.create(interaction, question, interaction.user.id, target.id, interaction.guildId, wager, xpType ,"dare");
+		const given = GivenQuestion.create(interaction, question, interaction.user.id, target.id, interaction.guildId, wager, xpType, "dare");
 		interaction.reply({ content: "Your dare has been sent", ephemeral: true });
 	}
 
@@ -359,7 +359,6 @@ class DareHandler extends Handler {
 
 			user.subtractXP(this.failXp);
 			user.subtractServerXP(server.dare_fail_xp);
-
 		}
 
 		//use the userDare.messageId to edit the embed in the message
@@ -373,10 +372,16 @@ class DareHandler extends Handler {
 	 * @param {string<"ban"|"approve"} decision 
 	 */
 	async setDare(interaction, decision) {
+		if(!interaction.deferred) interaction.deferReply({ ephemeral: true })
 		let dare = await new Dare().find(interaction.message.id);
 		switch (decision) {
 			case "ban":
 				this.getBanReason(interaction, dare.id);
+				break;
+			case 'unban':
+				await dare.unBan();
+				logger.updateDare(dare);
+				interaction.editReply("Truth has been Unbanned");
 				break;
 			case "approve":
 				this.approve(interaction, dare);

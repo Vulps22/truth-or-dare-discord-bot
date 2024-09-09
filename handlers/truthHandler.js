@@ -25,7 +25,6 @@ class TruthHandler extends Handler {
 	 * @returns 
 	 */
 	async createTruth(interaction) {
-		interaction.deferReply({ ephemeral: true });
 		const truth = new Truth();
 
 		truth.question = interaction.options.getString('text');
@@ -161,12 +160,12 @@ class TruthHandler extends Handler {
 		const random = Math.floor(Math.random() * truths.length);
 		return truths[random];
 	}
-/**
- * 
- * @param {Truth} truth 
- * @param {Client} client 
- * @returns 
- */
+	/**
+	 * 
+	 * @param {Truth} truth 
+	 * @param {Client} client 
+	 * @returns 
+	 */
 	getCreator(truth, client) {
 		let creator = client.users.cache.get(truth.creator);
 		return creator || { username: "Somebody" };
@@ -381,10 +380,16 @@ class TruthHandler extends Handler {
  * @param {string<"ban"|"approve">} decision 
  */
 	async setTruth(interaction, decision) {
+		interaction.deferReply({ ephemeral: true });
 		let truth = await new Truth().find(interaction.message.id);
 		switch (decision) {
 			case "ban":
 				this.getBanReason(interaction, truth.id);
+				break;
+			case 'unban':
+				await truth.unBan();
+				logger.updateTruth(truth);
+				interaction.editReply("Truth has been Unbanned");
 				break;
 			case "approve":
 				this.approve(interaction, truth);
