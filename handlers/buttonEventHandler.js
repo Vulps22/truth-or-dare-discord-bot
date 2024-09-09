@@ -24,7 +24,7 @@ class ButtonEventHandler {
     }
 
     async execute() {
-        this.interaction.deferReply({ ephemeral: true });
+        await this.interaction.deferReply({ ephemeral: true });
         let buttonId = this.interaction.customId;
         /** @type {Array<string>} */
         let idComponents = buttonId.split('_')
@@ -52,6 +52,14 @@ class ButtonEventHandler {
             case 'given':
                 handleGivenQuestion(this.interaction, idComponents);
                 break;
+            case 'rules':
+                let user = new User(this.interaction.user.id);
+                await user.get();
+                user.rulesAccepted = true;
+                await user.save();
+                this.interaction.editReply('Rules Accepted.')
+                logger.editLog(this.interaction.logMessage.id, `${this.interaction.logInteraction} User has Accepted the Rules and can now create new Truths or Dares`);
+                break;
             default:
                 await logger.error(`**Failed to find Button Command** | **server**: ${this.interaction.guild.name} \n\n**Button ID**: ${buttonId}`);
                 this.interaction.reply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:");
@@ -66,7 +74,6 @@ function handleSetupButton(interaction, step) {
     console.log(step)
     switch (step) {
         case "1":
-            console.log('step 1')
             setupHandler.action_1(interaction);
             break;
     }
@@ -169,8 +176,6 @@ async function handleGivenQuestion(interaction, idComponents) {
             break;
     }
     const newEmbed = given.createEmbed();
-
-    console.log(interaction.message.id);
 
     interaction.message.edit({ embeds: [newEmbed.embed], components: [newEmbed.row] })
     if (idComponents[1] !== 'skip') interaction.editReply({ content: "Your vote has been registered", ephemeral: true });

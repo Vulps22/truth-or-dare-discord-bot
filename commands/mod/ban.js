@@ -136,7 +136,6 @@ module.exports = {
 		if (focusedOption.name === 'reason') {
 			choices = banReasonList;
 		}
-		console.log(choices);
 		interaction.respond(choices);
 	},
 

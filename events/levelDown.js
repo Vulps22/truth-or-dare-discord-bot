@@ -26,7 +26,7 @@ module.exports = {
         await server.load();
 
         // Get the previous level's role to remove
-        const oldLevelRole = await server.getLevelRole(user.serverLevel + 1); // Assuming previous level is current level + 1
+        const oldLevelRole = await server.getLevelRole(user._serverLevel + 1); // Assuming previous level is current level + 1
         if (!oldLevelRole) return;
 
         /** @type {TextChannel} */

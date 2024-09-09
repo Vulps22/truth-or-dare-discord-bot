@@ -18,7 +18,6 @@ module.exports = {
 			await newServer.save();
 			await newServer.load();
 		}
-		console.log("Got here!")
 		await logger.newServer(newServer);
 	}
 }

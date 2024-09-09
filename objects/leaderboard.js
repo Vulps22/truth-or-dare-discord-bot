@@ -126,7 +126,7 @@ class Leaderboard {
 
         this.drawAndTruncateText(ctx, player.username, textX - 120, avatarY + 60, 700, 60, 90);
 
-        let level = global ? player.globalLevel : player.serverLevel;
+        let level = global ? player.globalLevel : player._serverLevel;
 
         this.drawLevel(ctx, level, global, avatarY + 115);
 

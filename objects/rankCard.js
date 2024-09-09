@@ -16,8 +16,7 @@ class RankCard {
     }
 
     async generateCard() {
-        console.log(this.user);
-        this.premium = await this.user.server.hasPremium();
+        this.premium = await this.user._server.hasPremium();
         const canvas = this.createCanvas();
         const ctx = canvas.getContext('2d');
 
@@ -69,7 +68,6 @@ class RankCard {
         };
 
         const level = this.user.globalLevel;
-        console.log('level', level);
 
         // Draw the blue circle outline
         ctx.beginPath();
@@ -93,7 +91,7 @@ class RankCard {
             radius: 35 // Radius of the level circle
         };
 
-        const level = this.user.serverLevel;
+        const level = this.user._serverLevel;
 
         // Draw the blue circle outline
         ctx.beginPath();
@@ -122,7 +120,7 @@ class RankCard {
 
         let stats = await this.getStats();
 
-        let serverText = `${this.user.serverLevelXP ?? 0} / ${this.user.calculateXpForLevel(this.user.serverLevel + 1)}`;
+        let serverText = `${this.user._serverLevelxP ?? 0} / ${this.user.calculateXpForLevel(this.user._serverLevel + 1)}`;
         if (!this.premium) serverText = 'GET PREMIUM TO VIEW';
 
         ctx.font = '20px sans-serif'; // Set a smaller font size for the details
@@ -159,11 +157,9 @@ class RankCard {
         const xpForNextLevel = this.user.calculateXpForLevel(currentLevel + 1);
         const progressBarWidth = this.calculateProgressBarWidth(this.user.globalLevelXP, xpForNextLevel);
 
-        const currentServerLevel = this.user.serverLevel;
+        const currentServerLevel = this.user._serverLevel;
         const xpForNextServerLevel = this.user.calculateXpForLevel(currentServerLevel + 1);
-        console.log('xpForNextServerLevel', xpForNextServerLevel)
-        const progressBarWidthServer = this.calculateProgressBarWidth(this.user.serverLevelXP, xpForNextServerLevel);
-        console.log('progressBarWidthServer', progressBarWidthServer)
+        const progressBarWidthServer = this.calculateProgressBarWidth(this.user._serverLevelxP, xpForNextServerLevel);
 
         ctx.fillStyle = '#4169E1'; // global Bar fill color
         ctx.fillRect(240, 190, progressBarWidth, 17.5);

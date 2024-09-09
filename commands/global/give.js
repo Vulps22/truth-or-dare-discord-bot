@@ -108,7 +108,6 @@ async function hasEnoughXP(user, xpType, wager, interaction) {
 		const server = new Server(interaction.guildId);
 		await server.load();
 		const premium = await server.hasPremium();
-		console.log(premium);
 		if (!premium) {
 			await interaction.reply({
 				content: "Wagering Server XP is a premium feature. Premium is not quite ready yet, But I'm working hard to make these commands available for everyone :)",

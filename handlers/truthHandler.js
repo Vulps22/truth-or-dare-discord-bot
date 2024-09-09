@@ -179,7 +179,6 @@ class TruthHandler extends Handler {
 	 * @returns {EmbedBuilder}
 	 */
 	createTruthEmbed(truth, interaction, creator) {
-		console.log(creator);
 		let truthText = `${truth.question}\n\n **Votes:** 0 Done | 0 Failed`;
 
 		return new EmbedBuilder()
@@ -380,7 +379,7 @@ class TruthHandler extends Handler {
  * @param {string<"ban"|"approve">} decision 
  */
 	async setTruth(interaction, decision) {
-		interaction.deferReply({ ephemeral: true });
+		if(!interaction.deferred) interaction.deferReply({ ephemeral: true });
 		let truth = await new Truth().find(interaction.message.id);
 		switch (decision) {
 			case "ban":

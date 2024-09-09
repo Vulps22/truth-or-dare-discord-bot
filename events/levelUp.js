@@ -29,7 +29,7 @@ module.exports = {
 
                 // Send level-up message
                 if (type === "server") {
-                        channel.send(`Congratulations <@${user.id}>! You have leveled up to level ${user.serverLevel}! Use \`/rank\` to check your rank!`);
+                        channel.send(`Congratulations <@${user.id}>! You have leveled up to level ${user._serverLevel}! Use \`/rank\` to check your rank!`);
                 } else if (type === "global") {
                         channel.send(`Congratulations <@${user.id}>! You have leveled up globally to level ${user.globalLevel}! Use \`/rank\` to check your rank!`);
                 }
@@ -37,7 +37,7 @@ module.exports = {
                 // For server leveling, assign role if applicable
                 if (type !== 'server') return;
 
-                const role = await server.getLevelRole(user.serverLevel);
+                const role = await server.getLevelRole(user._serverLevel);
                 if (!role) return;
 
                 const member = await channel.guild.members.fetch(user.id);
@@ -50,7 +50,7 @@ module.exports = {
 
                 // Check if the member already has the role
                 if (member.roles.cache.has(role)) {
-                        logger.log(`User ${user.username} already has the role for level ${user.serverLevel}. No need to add.`);
+                        logger.log(`User ${user.username} already has the role for level ${user._serverLevel}. No need to add.`);
                         return;
                 }
 

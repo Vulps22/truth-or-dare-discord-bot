@@ -96,14 +96,11 @@ class Question {
 	}
 
 	async find(messageId) {
-		console.log(messageId)
 		/** @type {Array} */
 		const question = await this.db.query(`select id FROM questions WHERE messageId = ${messageId}`);
 		if (!question || question.length == 0) return null;
-		console.log(question);
 		const questionId = question[0].id;
 		this.id = questionId;
-		console.log(this.id);
 		await this.load();
 		return this;
 	}

@@ -1,8 +1,10 @@
-const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandStringOption, Interaction } = require("discord.js");
+const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandStringOption, Interaction, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 const DareHandler = require("../../handlers/dareHandler");
 const TruthHandler = require("../../handlers/truthHandler");
 const Database = require("../../objects/database");
 const logger = require("../../objects/logger");
+const User = require("../../objects/user");
+const embedder = require("../../embedder");
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -34,6 +36,22 @@ module.exports = {
 	 * @returns 
 	 */
 	async execute(interaction) {
+
+		const user = new User(interaction.user.id);
+		await user.get();
+		if (!await user.canCreate()) {
+			const row = new ActionRowBuilder()
+				.addComponents(
+					new ButtonBuilder()
+						.setCustomId('rules_accept')
+						.setLabel('Accept Rules')
+						.setStyle(ButtonStyle.Success),
+				);
+			interaction.reply({ content: "You must accept the rules before creating a Truth or Dare", embeds: [embedder.rules()], components: [row], ephemeral: true });
+			logger.editLog(interaction.logMessage.id, `${interaction.logInteraction} Aborted: User has not accepted the rules`);
+			return;
+		}
+
 		interaction.deferReply({ ephemeral: true });
 		//handle different subcommands
 		const subcommand = interaction.options.getSubcommand();

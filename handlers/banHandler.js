@@ -8,6 +8,7 @@ const logger = require("../objects/logger");
 const Truth = require("../objects/truth");
 const User = require("../objects/user");
 const Question = require("../objects/question");
+const embedder = require("../embedder");
 
 class BanHandler {
     constructor() {
@@ -61,9 +62,10 @@ class BanHandler {
 
     async sendBanNotification(question, reason, type, interaction) {
         const userId = question.creator;
+
         client = global.client;
         try {
-            let embed = this.guidanceEmbed();
+            let embed = embedder.rules();
 
             client.users.send(userId, {
                 content: `Your ${type} has been banned: \n- **ID**: ${question.id}\n- **Question**: ${question.question}\n- **Reason**: ${reason}\n\nIf you feel this was in error you may appeal the ban by opening a ticket on our [Official Server](https://discord.gg/${env.DISCORD_INVITE_CODE})\n\n`,
@@ -76,6 +78,7 @@ class BanHandler {
                 }
             });
         } catch (error) {
+            console.log("Failed to notify user of ban:", error)
             interaction.channel.send('Failed to notify User of ban. Check Logs for more information');
             logger.log('User Notification Failed: ')
             logger.log(JSON.stringify(error));
@@ -91,7 +94,7 @@ class BanHandler {
         const userId = user.id
         client = global.client;
         try {
-            let embed = this.guidanceEmbed();
+            let embed = embedder.rules();
 
             client.users.send(userId, {
                 content: `You have been banned from using Truth Or Dare Online 18+\n- **Reason**: ${reason}\n- All your Truths and Dares have also been automatically banned as a precaution\n- Any servers you own that are currently using the bot have also been banned\n- Any servers you add in the future will automatically be banned as a precaution\n\nIf you feel this was in error you may appeal the ban by opening a ticket on our [Official Server](https://discord.gg/${env.DISCORD_INVITE_CODE})\n\n`,
@@ -154,27 +157,6 @@ class BanHandler {
             );
         await message.edit({ components: [actionRow] });
         return true;
-    }
-
-    guidanceEmbed() {
-        const embed = new EmbedBuilder()
-            .setTitle('Avoiding Bans')
-            .setDescription('Here are some tips to avoid your truths/dares being banned:')
-            .addFields(
-                { name: 'No Dangerous Or Illegal Content', value: '- Keep it safe and legal' },
-                { name: 'No Targeting Specific People', value: '- Truths/dares are global and should work for everyone' },
-                { name: 'No Mentions Of "The Giver"', value: '- Use /give for those types of dares' },
-                { name: 'Follow Discord Guidelines', value: '- No Racism, Underage references etc.' },
-                { name: 'Use English', value: '- For bot language support' },
-                { name: 'No Nonsense Content', value: '- Avoid keyboard smashing, single letters etc' },
-                { name: 'No Childish Content', value: '- Could be written by a child/teen, or likely to be ignored' },
-                { name: 'No Shoutouts', value: '- Using names, "I am awesome!"' },
-                { name: 'No Dares That Require More Than One Person', value: '- This is an **online** bot!' },
-                { name: 'Check Spelling And Grammar', value: '- Low-Effort content will not be accepted' },
-                { name: '\n', value: '\n' },
-                { name: 'Important Note', value: '**You could be banned from using the bot** if we have to repeatedly ban your dares!' }
-            );
-        return embed;
     }
 
     truncateString(str, num) {

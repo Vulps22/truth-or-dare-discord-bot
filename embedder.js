@@ -82,6 +82,27 @@ module.exports = {
 				{ name: 'Got your own community?', value: `[Add The Bot](${process.env.BOT_INVITE_URL})\n\n`, inline: true },
 			)
 	},
+	rules() {
+        const embed = new EmbedBuilder()
+            .setTitle('Avoiding Bans')
+            .setDescription('Here are some tips to avoid your truths/dares being banned:')
+            .addFields(
+				{name: 'Your submissions are ***global***', value: "- We moderate and approve/ban every submission.\n- Everything you submit with /create that gets approved could show up on any server.\n\n These rules are the guidance we use to decide whether to approve or ban your submissions"},
+                { name: 'No Dangerous Or Illegal Content', value: '- Keep it safe and legal' },
+                { name: 'No Targeting Specific People', value: '- Truths/dares are global and should work for everyone' },
+                { name: 'No Mentions Of "The Giver"', value: '- Use /give for those types of dares' },
+                { name: 'Follow Discord Guidelines', value: '- No Racism, Underage references etc.' },
+                { name: 'Use English', value: '- For bot language support' },
+                { name: 'No Nonsense Content', value: '- Avoid keyboard smashing, single letters etc' },
+                { name: 'No Childish Content', value: '- Could be written by a child/teen, or likely to be ignored' },
+                { name: 'No Shoutouts', value: '- Using names, "I am awesome!"' },
+                { name: 'No Dares That Require More Than One Person', value: '- This is an **online** bot!' },
+                { name: 'Check Spelling And Grammar', value: '- Low-Effort content will not be accepted' },
+                { name: '\n', value: '\n' },
+                { name: 'Important Notes', value: '- **You could be banned from using the bot** if we have to repeatedly ban your dares!\n- This is not a limit to the reasons why we may ban your submissions.\n- Moderators reserve the right to ban your submissions for any reason they deem appropriate.\n- You are free to appeal any ban if you feel it is unjust or unfair.' },
+            );
+        return embed;
+    },
 	accepted() {
 		//"Setup complete. You can now use /dare or /truth"
 		return new EmbedBuilder()

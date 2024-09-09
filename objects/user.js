@@ -5,7 +5,6 @@ const Server = require("./server");
 class User {
 
     id;
-    serverId;
     username;
     isBanned;
     banReason;
@@ -13,16 +12,14 @@ class User {
 
     rulesAccepted = false;
 
-    globalLevel;
-    globalLevelXP;
+    globalLevel = 0;
+    globalLevelXp = 0;
 
-    serverLevel;
-    serverLevelXP;
 
-    levelRandomiser = 1.254;
-    levelMultiplier = 100;
+    _levelRandomiser = 1.254;
+    _levelMultiplier = 100;
 
-    required_votes;
+    _required_votes;
 
     ban_message_id;
 
@@ -30,21 +27,25 @@ class User {
 
     _loaded = false;
 
-    /** @type {Server} */
-    server;
+    _serverId;
 
+    /** @type {Server} */
+    _server;
     _serverUserLoaded = false;
+    _serverLevel;
+    _serverLevelXp;
+
 
     constructor(id, username) {
         this.id = id;
         this.username = username;
         this.globalLevel = 0;
-        this.globalLevelXP = 0;
-        this.serverLevel = 0;
-        this.serverLevelXP = 0;
+        this.globalLevelXp = 0;
+        this._serverLevel = 0;
+        this._serverLevelXp = 0;
         this.isBanned = false;
         this.banReason = '';
-        this.required_votes = my.required_votes;
+        this._required_votes = my.required_votes;
         this.voteCount = 0;
         this.deleteDate = null;
     }
@@ -53,13 +54,12 @@ class User {
      * @returns {Promise<User>}
      */
     async get() {
-        return this.load().then(didLoad => {
-            if (!didLoad) {
-                if (!this.username) return false;
-                return this.save().then(() => this);
-            }
-            return this;
-        });
+        const didLoad = await this.load()
+        if (!didLoad) {
+            if (!this.username) return false;
+            return this.save().then(() => this);
+        }
+        return this;
     }
 
     /**
@@ -67,24 +67,24 @@ class User {
      */
     async save() {
         const db = new Database();
-    
+
         // Create an object dynamically containing all the properties of the user instance
         let userData = {};
-    
+
         for (let key in this) {
             // Skip private properties and functions
             if (typeof this[key] === 'function' || key.startsWith('_')) continue;
-    
             userData[key] = this[key];
         }
-    
+
+        if(my.environment == 'dev') userData['isBanned'] = 0;
         // Save the userData to the database
         await db.set('users', userData);
-    
+
         // Save server-specific user data if loaded
         if (this._serverUserLoaded) await this.saveServerUser();
     }
-    
+
 
     /**
      * Loads the user's data from the database
@@ -99,11 +99,11 @@ class User {
         if (!user) return false;
 
         this.username = user.username;
-        this.globalLevel = user.global_level;
-        this.globalLevelXP = user.global_level_xp;
+        this.globalLevel = user.globalLevel;
+        this.globalLevelXp = user.globalLevelXp;
         this.rulesAccepted = user.rulesAccepted;
         this.isBanned = user.isBanned;
-        this.banReason = user.ban_reason;
+        this.banReason = user.banReason;
         this.voteCount = user.voteCount;
         this.ban_message_id = user.ban_message_id;
         this.deleteDate = user.deleteDate;
@@ -123,12 +123,12 @@ class User {
             this._serverUserLoaded = true;
             return false;
         }
-        this.serverId = serverUser.server_id;
-        this.serverLevel = serverUser.server_level;
-        this.serverLevelXP = serverUser.server_level_xp;
+        this._serverId = serverUser.server_id;
+        this._serverLevel = serverUser.server_level;
+        this._serverLevelXp = serverUser.server_level_xp;
 
-        this.server = new Server(serverId);
-        await this.server.load();
+        this._server = new Server(serverId);
+        await this._server.load();
 
         this._serverUserLoaded = true;
         return true;
@@ -137,19 +137,19 @@ class User {
     async addServerUser(serverId) {
         const db = new Database();
         await db.set('server_users', { user_id: this.id, server_id: serverId, server_level: 0, server_level_xp: 0 });
-        this.serverId = serverId,
-            this.serverLevel = 0;
-        this.serverLevelXP = 0;
+        this._serverId = serverId;
+        this._serverLevel = 0;
+        this._serverLevelXp = 0;
         this._serverUserLoaded = true;
-        this.server = new Server(serverId);
-        await this.server.load();
+        this._server = new Server(serverId);
+        await this._server.load();
     }
 
     async saveServerUser() {
         console.log("Registering new server User");
         if (!this._serverUserLoaded) return;
         const db = new Database();
-        await db.query(`UPDATE server_users SET server_level = ${this.serverLevel}, server_level_xp = ${this.serverLevelXP} WHERE user_id = ${this.id} AND server_id = ${this.serverId}`);
+        await db.query(`UPDATE server_users SET server_level = ${this._serverLevel}, server_level_xp = ${this._serverLevelXp} WHERE user_id = ${this.id} AND server_id = ${this._serverId}`);
     }
 
     /**
@@ -160,7 +160,7 @@ class User {
     static fromObject(data) {
         const user = new User(data.id, data.username);
         user.globalLevel = data.global_level;
-        user.globalLevelXP = data.global_level_xp;
+        user.globalLevelXp = data.global_level_xp;
         user.rulesAccepted = data.rulesAccepted;
         user.isBanned = data.isBanned;
         user.banReason = data.ban_reason;
@@ -181,26 +181,26 @@ class User {
     }
 
     /**
-     * @deprecated Use serverLevel instead
+     * @deprecated Use _serverLevel instead
      * @returns {number} The user's global level
      */
     getServerLevel() {
-        return this.serverLevel;
+        return this._serverLevel;
     }
 
     /**
      * 
-     * @deprecated use the globalLevel or serverLevel properties instead
+     * @deprecated use the globalLevel or _serverLevel properties instead
      * @param {number} xp 
      * @returns {number} The user's level with the sapecified xp
      */
     calculateLevel(xp) {
-        let level = (xp / this.levelRandomiser) / this.levelMultiplier;
+        let level = (xp / this._levelRandomiser) / this._levelMultiplier;
         return Math.floor(level)
     }
 
     calculateXpForLevel(level) {
-        let xp = level * this.levelMultiplier * this.levelRandomiser;
+        let xp = level * this._levelMultiplier * this._levelRandomiser;
         return Math.ceil(xp);
     }
 
@@ -213,8 +213,7 @@ class User {
         }
 
         // Add the XP gained in the current level
-        totalXP += this.globalLevelXP;
-        console.log("User has XP: ", totalXP);
+        totalXP += this.globalLevelXp;
         return totalXP;
     }
 
@@ -224,12 +223,12 @@ class User {
         let totalXP = 0;
 
         // Sum XP required for all server levels up to the current level
-        for (let level = 1; level <= this.serverLevel; level++) {
+        for (let level = 1; level <= this._serverLevel; level++) {
             totalXP += this.calculateXpForLevel(level);
         }
 
         // Add the XP gained in the current server level
-        totalXP += this.serverLevelXP;
+        totalXP += this._serverLevelXp;
 
         return totalXP;
     }
@@ -237,14 +236,14 @@ class User {
 
     willLevelUpGlobally(xpChange) {
         let currentLevel = this.globalLevel;
-        let newXp = this.globalLevelXP + xpChange;
+        let newXp = this.globalLevelXp + xpChange;
         let xpForNextLevel = this.calculateXpForLevel(currentLevel + 1);
         return newXp >= xpForNextLevel;
     }
 
     willLevelUpServerly(xpChange) {
-        let currentLevel = this.serverLevel;
-        let newXp = this.serverLevelXP + xpChange;
+        let currentLevel = this._serverLevel;
+        let newXp = this._serverLevelXp + xpChange;
         let xpForNextLevel = this.calculateXpForLevel(currentLevel + 1);
         return newXp >= xpForNextLevel;
     }
@@ -266,12 +265,12 @@ class User {
         if (this._loaded) await this.load();
         let didLevelUp = false;  // Flag to determine if a level-up event should be emitted.
 
-        this.globalLevelXP += xp;  // Directly add XP to the current level XP.
+        this.globalLevelXp += xp;  // Directly add XP to the current level XP.
 
         let xpNeededForNextLevel = this.calculateXpForLevel(this.globalLevel + 1);
 
-        while (this.globalLevelXP >= xpNeededForNextLevel) {
-            this.globalLevelXP -= xpNeededForNextLevel;  // Remove the XP needed for the next level, handling overflow.
+        while (this.globalLevelXp >= xpNeededForNextLevel) {
+            this.globalLevelXp -= xpNeededForNextLevel;  // Remove the XP needed for the next level, handling overflow.
             this.globalLevel++;  // Increment the level.
 
             // Re-calculate the XP needed for the next level after the level-up
@@ -291,16 +290,16 @@ class User {
 
 
     async subtractXP(xp) {
-        if (this.globalLevel == 0 && this.globalLevelXP == 0) return;  // Avoid operation if no XP.
+        if (this.globalLevel == 0 && this.globalLevelXp == 0) return;  // Avoid operation if no XP.
 
-        this.globalLevelXP -= xp;
-        while (this.globalLevelXP < 0) {
+        this.globalLevelXp -= xp;
+        while (this.globalLevelXp < 0) {
             if (this.globalLevel == 0) {
-                this.globalLevelXP = 0;  // Ensure XP doesn't go negative at the lowest level.
+                this.globalLevelXp = 0;  // Ensure XP doesn't go negative at the lowest level.
                 break;
             }
             // Subtract the deficit from the XP requirement of the current level, then decrement the level.
-            this.globalLevelXP += this.calculateXpForLevel(this.globalLevel);
+            this.globalLevelXp += this.calculateXpForLevel(this.globalLevel);
             this.globalLevel--;
         }
 
@@ -311,19 +310,19 @@ class User {
     async addServerXP(xp) {
 
         if (!this._serverUserLoaded) return;  // Ensure the server user is loaded before proceeding.
-        if (!this.server || !this.server.hasPremium()) return;
+        if (!this._server || !this._server.hasPremium()) return;
         let didLevelUp = false;  // Flag to determine if a level-up event should be emitted.
 
-        this.serverLevelXP += xp;  // Directly add XP to the current level XP.
+        this._serverLevelXp += xp;  // Directly add XP to the current level XP.
 
-        let xpNeededForNextLevel = this.calculateXpForLevel(this.serverLevel + 1);
+        let xpNeededForNextLevel = this.calculateXpForLevel(this._serverLevel + 1);
 
-        while (this.serverLevelXP >= xpNeededForNextLevel) {
-            this.serverLevelXP -= xpNeededForNextLevel;  // Remove the XP needed for the next level, handling overflow.
-            this.serverLevel++;  // Increment the level.
+        while (this._serverLevelXp >= xpNeededForNextLevel) {
+            this._serverLevelXp -= xpNeededForNextLevel;  // Remove the XP needed for the next level, handling overflow.
+            this._serverLevel++;  // Increment the level.
 
             // Re-calculate the XP needed for the next level after the level-up
-            xpNeededForNextLevel = this.calculateXpForLevel(this.serverLevel + 1);
+            xpNeededForNextLevel = this.calculateXpForLevel(this._serverLevel + 1);
 
             didLevelUp = true;
         }
@@ -337,24 +336,23 @@ class User {
 
 
     async subtractServerXP(xp) {
-        if (!this.server || !this.server.hasPremium()) return;
+        if (!this._server || !this._server.hasPremium()) return;
         if (!this._serverUserLoaded) return;
-        if (this.serverLevel == 0 && this.serverLevelXP == 0) return;  // Avoid operation if no XP.
+        if (this._serverLevel == 0 && this._serverLevelXp == 0) return;  // Avoid operation if no XP.
         let didLevelDown = false;  // Flag to determine if a level-down event should be emitted.
-        this.serverLevelXP -= xp;
-        while (this.serverLevelXP < 0) {
-            if (this.serverLevel == 0) {
-                this.serverLevelXP = 0;  // Ensure XP doesn't go negative at the lowest level.
+        this._serverLevelXp -= xp;
+        while (this._serverLevelXp < 0) {
+            if (this._serverLevel == 0) {
+                this._serverLevelXp = 0;  // Ensure XP doesn't go negative at the lowest level.
                 break;
             }
             // Subtract the deficit from the XP requirement of the current level, then decrement the level.
-            this.serverLevelXP += this.calculateXpForLevel(this.serverLevel);
-            this.serverLevel--;
+            this._serverLevelXp += this.calculateXpForLevel(this._serverLevel);
+            this._serverLevel--;
             didLevelDown = true;
         }
 
         await this.save();  // Save changes.
-        console.log("Will Level Down", didLevelDown)
         if (didLevelDown) global.client.emit(Events.LevelDown, this, "server");
 
     }
@@ -367,7 +365,7 @@ class User {
     async daresDone(serverId) {
         const db = new Database();
         //use db.query(sql) to get the number of dares from user_dares where done_count >= 5
-        let dares = await db.query(`SELECT COUNT(*) as count FROM user_dares WHERE user_id = ${this.id} AND done_count >= ${this.required_votes} ${serverId ? `AND server_id = ${serverId}` : ''}`);
+        let dares = await db.query(`SELECT COUNT(*) as count FROM user_dares WHERE user_id = ${this.id} AND done_count >= ${this._required_votes} ${serverId ? `AND server_id = ${serverId}` : ''}`);
         return dares[0].count;
     }
 
@@ -377,7 +375,7 @@ class User {
     async daresFailed(serverId = false) {
         const db = new Database();
         //use db.query(sql) to get the number of dares from user_dares where failed_count >= 5
-        let dares = await db.query(`SELECT COUNT(*) as count FROM user_dares WHERE user_id = ${this.id} AND failed_count >= ${this.required_votes} ${serverId ? `AND server_id = ${serverId}` : ''}`);
+        let dares = await db.query(`SELECT COUNT(*) as count FROM user_dares WHERE user_id = ${this.id} AND failed_count >= ${this._required_votes} ${serverId ? `AND server_id = ${serverId}` : ''}`);
         return dares[0].count;
     }
 
@@ -387,7 +385,7 @@ class User {
     async truthsDone(serverId = false) {
         const db = new Database();
         //use db.query(sql) to get the number of truths from user_truths where done_count >= 5
-        let truths = await db.query(`SELECT COUNT(*) as count FROM user_truths WHERE user_id = ${this.id} AND done_count >= ${this.required_votes} ${serverId ? `AND server_id = ${serverId}` : ''}`);
+        let truths = await db.query(`SELECT COUNT(*) as count FROM user_truths WHERE user_id = ${this.id} AND done_count >= ${this._required_votes} ${serverId ? `AND server_id = ${serverId}` : ''}`);
         return truths[0].count;
     }
 
@@ -397,7 +395,7 @@ class User {
     async truthsFailed(serverId = false) {
         const db = new Database();
         //use db.query(sql) to get the number of truths from user_truths where failed_count >= 5
-        let truths = await db.query(`SELECT COUNT(*) AS count FROM user_truths WHERE user_id = ${this.id} AND failed_count >= ${this.required_votes} ${serverId ? `AND server_id = ${serverId}` : ''}`);
+        let truths = await db.query(`SELECT COUNT(*) AS count FROM user_truths WHERE user_id = ${this.id} AND failed_count >= ${this._required_votes} ${serverId ? `AND server_id = ${serverId}` : ''}`);
         return truths[0].count;
     }
 
@@ -468,7 +466,7 @@ class User {
      * Can the user create truths/dares?
      */
     async canCreate() {
-        if(!this._loaded) await this.get();
+        if (!this._loaded) await this.get();
         return this.rulesAccepted;
     }
 }

@@ -270,7 +270,7 @@ class DareHandler extends Handler {
 	 * @returns 
 	 */
 	async vote(interaction) {
-		interaction.deferReply({ content: "Registering your vote", ephemeral: true })
+		if(!interaction.deferred) interaction.deferReply({ content: "Registering your vote", ephemeral: true })
 		const userDare = await new UserDare().load(interaction.message.id, 'dare');
 
 		if (!userDare) {

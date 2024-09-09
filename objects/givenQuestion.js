@@ -102,8 +102,6 @@ class GivenQuestion {
 
 	async save() {
 		this.exists = true;
-		console.log("=============================");
-		console.log(this.messageId);
 		let savable = {
 			id: this.id,
 			senderId: this.senderId,
@@ -173,7 +171,6 @@ class GivenQuestion {
 
 	async incrementFail() {
 		this.failCount++
-		console.log(this.failCount);
 		this.save();
 		return this.failCount;
 	}
@@ -188,10 +185,8 @@ class GivenQuestion {
 	 * @returns {{embed: EmbedBuilder, row: ActionRowBuilder}}
 	 */
 	createEmbed() {
-		console.log(this.doneCount);
 		// Construct the message to send
 		const messageText = `<@${this.targetId}>, <@${this.senderId}> has ${this.type == 'dare' ? 'dared you to' : 'asked you'}  ${this.question}!\n\nPassing this is worth ${this.wager} of their XP\n\n Done: ${this.doneCount} | Failed: ${this.failCount}`;
-		console.log(messageText);
 		// Create an embed with the message and send it
 		const embed = new EmbedBuilder()
 			.setTitle("You've been dared!")
@@ -217,9 +212,7 @@ class GivenQuestion {
 					.setLabel('SKIP')
 					.setStyle(ButtonStyle.Secondary), // Red button
 			);
-			console.log("VOTES", my.required_votes);
 		if (this.doneCount >= my.required_votes) {
-			console.log("Got HERE");
 			actionRow = new ActionRowBuilder()
 				.addComponents(
 					new ButtonBuilder()

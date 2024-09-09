@@ -174,12 +174,10 @@ class UserQuestion {
       if (!type) throw new Error("Type must be provided for UserQuestion load");
       this.type = type;
       let question = await db.get('user_questions', messageId, "messageId");
-      console.log(question);
       this.id = question.messageId;
       this.userId = question.userId;
       this.questionId = question.questionId;
       this.serverId = question.serverId;
-      console.log("server ID: ", this.serverId);
       this.username = question.username;
       this.image = question.imageUrl;
       this.doneCount = question.doneCount;

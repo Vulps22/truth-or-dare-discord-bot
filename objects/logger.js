@@ -4,15 +4,38 @@ const Truth = require('./truth.js');
 const Server = require('./server.js');
 module.exports = {
 
+    /**
+     * 
+     * @param {string} message 
+     * @returns {Message}
+     */
     async log(message) {
         try {
             let channel = getChannel(my.logs);
-            channel.send(message);
+            const loggedMessage = await channel.send({content: message, fetchReply: true});
             console.log(message);
+            return loggedMessage
         } catch (error) {
             console.log(error);
         }
     },
+
+    async editLog(messageId, newString) {
+        try {
+            let channel = getChannel(my.logs); // Fetch the logs channel
+            const message = await channel.messages.fetch(messageId); // Fetch the message by its ID
+            
+            if (message) {
+                await message.edit({ content: newString }); // Edit the message content
+                console.log(`Log message updated: ${newString}`);
+            } else {
+                console.log(`Message with ID ${messageId} not found.`);
+            }
+        } catch (error) {
+            console.log(`Error editing log message with ID ${messageId}:`, error);
+        }
+    },
+    
 
     async error(message) {
         let channel = getChannel(my.errors_log);
@@ -215,7 +238,6 @@ function serverEmbed(server) {
         { name: "Banned", value: server.bannedString() },
         { name: "Ban Reason", value: server.banReason ?? ' ' }
     ]
-    console.log(embedObject);
     return new EmbedBuilder()
         .setTitle("New Server")
         .addFields(

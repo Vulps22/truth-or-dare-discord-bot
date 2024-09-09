@@ -94,7 +94,6 @@ class SetupHandler extends Handler {
         let server = new Server(interaction.guildId);
         await server.load();
         let channelId = interaction.values[0];
-        console.log(channelId);
         if (!hasPermission(interaction.guildId, channelId)) {
             interaction.reply('I need permission to view, send messages, embed links, and attach files in that channel');
             return;
