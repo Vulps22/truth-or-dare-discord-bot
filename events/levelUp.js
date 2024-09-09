@@ -15,7 +15,7 @@ module.exports = {
         async execute(user, type) {
                 logger.log(`Handling level up for user: ${user.username} with ID: ${user.id}`);
                 const client = global.client;
-                if (!user.serverUserLoaded) await user.loadServerUser();
+                if (!user._serverUserLoaded) await user.loadServerUser();
 
                 if (!user.serverId) throw new Error("Level up was triggered but no server ID was present to notify the user");
 

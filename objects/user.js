@@ -11,6 +11,8 @@ class User {
     banReason;
     voteCount;
 
+    rulesAccepted = false;
+
     globalLevel;
     globalLevelXP;
 
@@ -31,7 +33,7 @@ class User {
     /** @type {Server} */
     server;
 
-    serverUserLoaded = false;
+    _serverUserLoaded = false;
 
     constructor(id, username) {
         this.id = id;
@@ -47,7 +49,7 @@ class User {
         this.deleteDate = null;
     }
     /**
-     * 
+     * Load the user from the database or create a new one if none exist with the specified ID
      * @returns {Promise<User>}
      */
     async get() {
@@ -65,21 +67,24 @@ class User {
      */
     async save() {
         const db = new Database();
-
-        let userData = {
-            id: this.id,
-            username: this.username,
-            global_Level: this.globalLevel,
-            global_level_xp: this.globalLevelXP,
-            isBanned: my.environment == 'dev' ? 0 : this.isBanned,
-            ban_reason: this.banReason,
-            voteCount: this.voteCount,
-            ban_message_id: this.ban_message_id
+    
+        // Create an object dynamically containing all the properties of the user instance
+        let userData = {};
+    
+        for (let key in this) {
+            // Skip private properties and functions
+            if (typeof this[key] === 'function' || key.startsWith('_')) continue;
+    
+            userData[key] = this[key];
         }
-
+    
+        // Save the userData to the database
         await db.set('users', userData);
-        if (this.serverUserLoaded) await this.saveServerUser();
+    
+        // Save server-specific user data if loaded
+        if (this._serverUserLoaded) await this.saveServerUser();
     }
+    
 
     /**
      * Loads the user's data from the database
@@ -96,6 +101,7 @@ class User {
         this.username = user.username;
         this.globalLevel = user.global_level;
         this.globalLevelXP = user.global_level_xp;
+        this.rulesAccepted = user.rulesAccepted;
         this.isBanned = user.isBanned;
         this.banReason = user.ban_reason;
         this.voteCount = user.voteCount;
@@ -114,7 +120,7 @@ class User {
         if (!serverUser) {
             console.log("no server user, adding one");
             await this.addServerUser(serverId);
-            this.serverUserLoaded = true;
+            this._serverUserLoaded = true;
             return false;
         }
         this.serverId = serverUser.server_id;
@@ -124,7 +130,7 @@ class User {
         this.server = new Server(serverId);
         await this.server.load();
 
-        this.serverUserLoaded = true;
+        this._serverUserLoaded = true;
         return true;
     }
 
@@ -134,14 +140,14 @@ class User {
         this.serverId = serverId,
             this.serverLevel = 0;
         this.serverLevelXP = 0;
-        this.serverUserLoaded = true;
+        this._serverUserLoaded = true;
         this.server = new Server(serverId);
         await this.server.load();
     }
 
     async saveServerUser() {
         console.log("Registering new server User");
-        if (!this.serverUserLoaded) return;
+        if (!this._serverUserLoaded) return;
         const db = new Database();
         await db.query(`UPDATE server_users SET server_level = ${this.serverLevel}, server_level_xp = ${this.serverLevelXP} WHERE user_id = ${this.id} AND server_id = ${this.serverId}`);
     }
@@ -212,7 +218,7 @@ class User {
     }
 
     getTotalServerXP() {
-        if (!this.serverUserLoaded) return 0;
+        if (!this._serverUserLoaded) return 0;
 
         let totalXP = 0;
 
@@ -274,7 +280,7 @@ class User {
         }
 
         if (didLevelUp) {
-            if (!this.serverUserLoaded) throw Error("Attempted to emit level up before loading server User");
+            if (!this._serverUserLoaded) throw Error("Attempted to emit level up before loading server User");
             global.client.emit(Events.LevelUp, this, "global");
         }
 
@@ -303,7 +309,7 @@ class User {
 
     async addServerXP(xp) {
 
-        if (!this.serverUserLoaded) return;  // Ensure the server user is loaded before proceeding.
+        if (!this._serverUserLoaded) return;  // Ensure the server user is loaded before proceeding.
         if (!this.server || !this.server.hasPremium()) return;
         let didLevelUp = false;  // Flag to determine if a level-up event should be emitted.
 
@@ -323,7 +329,7 @@ class User {
 
         await this.save();  // Save changes to the database.
         if (didLevelUp) {
-            if (!this.serverUserLoaded) throw Error("Attempted to emit level up before loading server User");
+            if (!this._serverUserLoaded) throw Error("Attempted to emit level up before loading server User");
             global.client.emit(Events.LevelUp, this, "server");
         }
     }
@@ -331,7 +337,7 @@ class User {
 
     async subtractServerXP(xp) {
         if (!this.server || !this.server.hasPremium()) return;
-        if (!this.serverUserLoaded) return;
+        if (!this._serverUserLoaded) return;
         if (this.serverLevel == 0 && this.serverLevelXP == 0) return;  // Avoid operation if no XP.
         let didLevelDown = false;  // Flag to determine if a level-down event should be emitted.
         this.serverLevelXP -= xp;
@@ -455,6 +461,14 @@ class User {
                 WHERE id = '${this.id}'
             `);
         }
+    }
+
+    /**
+     * Can the user create truths/dares?
+     */
+    async canCreate() {
+        if(!this._loaded) await this.get();
+        return this.rulesAccepted;
     }
 }
 

@@ -263,7 +263,7 @@ async function registerServerUser(interaction) {
     if (!didLoad) await user.save()
     await user.loadServerUser(interaction.guildId);
 
-    if (!user.serverUserLoaded) await user.saveServerUser();
+    if (!user._serverUserLoaded) await user.saveServerUser();
 
     return user;
 }

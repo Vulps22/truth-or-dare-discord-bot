@@ -19,7 +19,7 @@ module.exports = {
         /** @type {Client} */
         const client = global.client;
 
-        if (!user.serverUserLoaded) await user.loadServerUser();
+        if (!user._serverUserLoaded) await user.loadServerUser();
         if (!user.serverId) throw new Error("Level down was triggered but no server ID was present.");
 
         const server = new Server(user.serverId);
