@@ -161,6 +161,7 @@ class User {
         const user = new User(data.id, data.username);
         user.globalLevel = data.global_level;
         user.globalLevelXP = data.global_level_xp;
+        user.rulesAccepted = data.rulesAccepted;
         user.isBanned = data.isBanned;
         user.banReason = data.ban_reason;
         user.voteCount = data.voteCount;
