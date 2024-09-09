@@ -206,6 +206,11 @@ class Server {
             WHERE server_users.server_id = '${this.id}'
         `);
 
+        if(!userRecords.length > 0) {
+            console.log("No server_users found.")
+            return [];
+        }
+        console.log(`Found ${userRecords.length} server_users`);
         // Convert the plain objects into User instances
         return userRecords.map(userRecord => User.fromObject(userRecord));
     }

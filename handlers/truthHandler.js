@@ -276,7 +276,7 @@ class TruthHandler extends Handler {
 	 * @returns 
 	 */
 	async vote(interaction) {
-		interaction.deferReply({ ephemeral: true });
+		if(!interaction.deferred) interaction.deferReply({ ephemeral: true });
 		const userTruth = await new UserTruth().load(interaction.message.id, 'truth');
 
 		if (!userTruth) {

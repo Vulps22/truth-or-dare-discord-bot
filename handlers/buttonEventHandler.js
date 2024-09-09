@@ -24,6 +24,27 @@ class ButtonEventHandler {
     }
 
     async execute() {
+
+        // The target date: 5th September 2024 at 05:11 AM (UK time)
+        const targetDate = new Date('2024-09-05T05:11:00Z'); // UTC date format
+
+        // Message creation date
+        const messageTimestamp = this.interaction.message.createdAt;
+
+        // Check if the message was created before the target date
+        if (messageTimestamp < targetDate) {
+            this.interaction.logMessage.edit(`${this.interaction.logInteraction} Button Interaction Aborted: Incompatible Versions (message too old)`)
+            this.interaction.message.edit({
+                content: this.interaction.message.content, // Keep the same content
+                embeds: this.interaction.message.embeds, // Keep the same embeds
+                components: [] // Remove the components (e.g., buttons, dropdowns, etc.)
+            });
+            this.interaction.reply("A recent Update has changed how I identify bots. I am unable to register any votes on messages created before <t:1725855060:F>")
+        } else {
+            console.log("Message was created after or at 05/09/24 05:11.");
+        }
+
+
         await this.interaction.deferReply({ ephemeral: true });
         let buttonId = this.interaction.customId;
         /** @type {Array<string>} */
@@ -188,7 +209,7 @@ async function handleGivenQuestion(interaction, idComponents) {
         const sender = new User(given.senderId);
         await sender.get();
         await sender.loadServerUser(interaction.guildId);
-        
+
         switch (xpType) {
             case 'server':
                 await sender.subtractServerXP(given.wager);
