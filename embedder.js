@@ -48,7 +48,7 @@ module.exports = {
 				name: '**Utility Commands**',
 				value:
 					'- `/vote` - See a list of Bot lists where you can vote to support our bot and help it grow faster!\n' +
-					'- `terms` - View the Terms of Use this server has agreed to follow.\n\t\tUse `/report server` if this server has broken those Terms\n' +
+					'- `/terms` - View the Terms of Use this server has agreed to follow.\n\t\tUse `/report server` if this server has broken those Terms\n' +
 					'- `/help` - See a list of available commands\n\n'
 			}
 		)
@@ -87,55 +87,6 @@ module.exports = {
 		return new EmbedBuilder()
 			.setTitle("Terms Accepted")
 			.setDescription("We hope you enjoy playing Truth or Dare with our massive global database of dares! 🙂");
-	},
-	v5() {
-		return new EmbedBuilder()
-			.setTitle('🎉 Introducing Version 5.0.0 of Truth Or Dare Online 18+ 🎉')
-			.setDescription('Hello amazing users! I\'m beyond excited to share this massive update with you. From just a few bored and horny strangers, to 1400 servers—what a journey it\'s been! 🌟')
-			.setColor(10181046)
-			.addFields(
-				{
-					name: 'A Personal Thank You',
-					value: 'Starting this was all about creating something fun for communities I cared about. Now, seeing it grow to this scale is unbelievable. I can\'t thank you enough for installing, playing, and sharing this bot with me!'
-				},
-				{
-					name: 'Major Changes & Why They Matter',
-					value: '🔹 **Announcements Feature** - For only the most crucial updates and notifications, keeping spam minimal.\n🔹 **Overhauled Truths & Dares** - With community voting to ensure everyone\'s held accountable, making the game more engaging.'
-				},
-				{
-					name: 'Competition & Community',
-					value: '🔹 **New Leaderboards & Ranks** - See top players worldwide or check your status with `/leaderboard` and `/rank`.\n🔹 **Proof of Dare** - The new voting system offers incentive to actually _do_ the dares ;)'
-				},
-				{
-					name: 'Simplified Interactions',
-					value: '🔹 **Improved Setup Process** - More intuitive with buttons and dropdowns, making it easier than ever to get started.\n🔹 **Streamlined Commands** - No more clunky `/accept-terms`, just smooth sailing.'
-				},
-				{
-					name: 'Future-Proofing with Premium',
-					value: 'Due to the astounding popularity of the bot, Some of the new features are now paywalled behind a premium subscription. Rest assured, all previous features remain free!\n Every subscription helps make this bot better. It tells me I\'m doing something you enjoy! It tells me I should work harder to give you _even more_ features, games and improvements! :D (and it would let me pay the moderators who really do a ton of work behind the scenes)'
-				},
-				{
-					name: 'New Premium Features',
-					value: '🔹 **Server-Specific Leaderboards and Levels** - Unique to each premium server.\n🔹 **Role Assignments by Level** - Automatic role updates as you level up in the server.'
-				},
-				{
-					name: 'Admin Tools and Server Customization',
-					value: '🔹 **Custom XP Values** - Server admins can now set XP values for activities to fine-tune the game balance.\n🔹 **Server-Only Truth/Dare Pools** - Premium servers can have their own Truth/Dare content, independent of the global pool.'
-				},
-				{
-					name: 'Operation Moderation!',
-					value: 'The day before we released v5.0.0, the moderators and I undertook the immense task of re-moderating the _entire_ database. We banned and reviewed EVERY SINGLE Truth/Dare in the database. No more \'Giver Dares\' or strange-ass truths asking which parent you\'d rather fuck (you know who you are! 🤣).\nFrom now on, every global truth or dare must be approved or banned by a moderator before anybody sees it :)'
-				},
-				{
-					name: 'Quality of Life Improvements',
-					value: 'We\'ve not only moderated existing truths and dares but also introduced a host of interface and usability enhancements. And there’s more on the way!'
-				},
-				{
-					name: 'Let\'s Make It Better Together!',
-					value: 'Your feedback is invaluable. If you have ideas or suggestions, please share them in our official server. Your input directly influences future updates!'
-				}
-			)
-			.setFooter({ text: 'Looking forward to hearing your thoughts and seeing how you enjoy the new features! Stay tuned for v5.1.0 with full premium launch!' });
 	},
 	vote() {
 		return new EmbedBuilder()
