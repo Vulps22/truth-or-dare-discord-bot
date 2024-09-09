@@ -1,4 +1,4 @@
-const { Interaction, Message } = require("discord.js");
+const { Interaction, Message, InteractionResponse } = require("discord.js");
 const DareHandler = require("./dareHandler");
 const TruthHandler = require("./truthHandler");
 const BanHandler = require("./banHandler");
@@ -24,6 +24,7 @@ class ButtonEventHandler {
     }
 
     async execute() {
+        this.interaction.deferReply({ ephemeral: true });
         let buttonId = this.interaction.customId;
         /** @type {Array<string>} */
         let idComponents = buttonId.split('_')
@@ -70,8 +71,13 @@ function handleSetupButton(interaction, step) {
             break;
     }
 }
-
-function handleContentResponse(interaction, idComponents) {
+/**
+ * 
+ * @param {Interaction} interaction 
+ * @param {Array<string>} idComponents 
+ */
+async function handleContentResponse(interaction, idComponents) {
+    if (!interaction.deferred) interaction.deferReply({ ephemeral: true })
     const type = idComponents[1];
     const decision = idComponents[2];
 
@@ -133,6 +139,7 @@ async function handleGivenQuestion(interaction, idComponents) {
 
     const target = new User(given.targetId);
     await target.get();
+    await target.loadServerUser(interaction.guildId);
 
     if (interaction.user.id == given.targetId && idComponents[1] !== 'skip') {
         interaction.reply({ content: `You can't vote on your own ${given.type}!`, ephemeral: true })
@@ -166,7 +173,7 @@ async function handleGivenQuestion(interaction, idComponents) {
     console.log(interaction.message.id);
 
     interaction.message.edit({ embeds: [newEmbed.embed], components: [newEmbed.row] })
-    if (idComponents[1] !== 'skip') interaction.reply({ content: "Your vote has been registered", ephemeral: true });
+    if (idComponents[1] !== 'skip') interaction.editReply({ content: "Your vote has been registered", ephemeral: true });
     else interaction.reply({ content: `Your ${given.type} has been skipped! You have ${target.voteCount} skips remaining!`, ephemeral: true })
 
     if (given.doneCount >= my.required_votes) {
@@ -175,6 +182,8 @@ async function handleGivenQuestion(interaction, idComponents) {
 
         const sender = new User(given.senderId);
         await sender.get();
+        await sender.loadServerUser(interaction.guildId);
+        
         switch (xpType) {
             case 'server':
                 await sender.subtractServerXP(given.wager);

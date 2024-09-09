@@ -9,6 +9,7 @@ const User = require('./objects/user.js');
 const logger = require('./objects/logger.js');
 const Server = require('./objects/server.js');
 const util = require('util');
+const UserHandler = require('./handlers/userHandler.js');
 
 overrideConsoleLog();
 
@@ -102,6 +103,8 @@ async function main() {
             console.error('Ping failed:', error.message);
         }
     }, 60000); // 60000 milliseconds = 60 seconds
+
+    scheduleDailyCleanup();
 
 }
 
@@ -294,3 +297,39 @@ function overrideConsoleLog() {
         originalLog.call(console, prefix, util.format(...args));
     };
 }
+
+function scheduleDailyCleanup() {
+    const userHandler = new UserHandler();
+
+    // Function to calculate the milliseconds until midnight
+    function getTimeUntilMidnight() {
+        const now = new Date();
+        const nextMidnight = new Date(now);
+        nextMidnight.setHours(24, 0, 0, 0); // Set to midnight of the next day
+
+        const timeTill = nextMidnight.getTime() - now.getTime(); // Milliseconds until next midnight
+
+        // Convert milliseconds into hours, minutes, and seconds
+        const hours = Math.floor(timeTill / (1000 * 60 * 60));
+        const minutes = Math.floor((timeTill % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((timeTill % (1000 * 60)) / 1000);
+
+        console.log(`Cleanup will commence in: ${hours} hours, ${minutes} minutes, and ${seconds} seconds.`);
+        return timeTill;
+    }
+
+    // Schedule the first cleanUp at the next midnight
+    setTimeout(() => {
+        // Run cleanUp immediately at midnight
+        userHandler.cleanUp();
+
+        // Set an interval to run the cleanUp every 24 hours after the first run
+        setInterval(() => {
+            userHandler.cleanUp();
+        }, 24 * 60 * 60 * 1000); // 24 hours in milliseconds
+
+    }, getTimeUntilMidnight());
+}
+
+
+

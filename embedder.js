@@ -34,7 +34,8 @@ module.exports = {
 				name: '**Challenge Commands**',
 				value:
 					'- `/give dare` - Challenge someone to a dare\n' +
-					'- `/give truth` - Challenge someone to a truth'
+					'- `/give truth` - Challenge someone to a truth\n' + 
+					'- `NEW` Incentivise targeted player by wagering your own XP'
 			},
 			{
 				name: '**Report Commands**',

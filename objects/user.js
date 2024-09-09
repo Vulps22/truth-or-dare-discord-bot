@@ -22,6 +22,10 @@ class User {
 
     required_votes;
 
+    ban_message_id;
+
+    deleteDate;
+
     _loaded = false;
 
     /** @type {Server} */
@@ -40,8 +44,12 @@ class User {
         this.banReason = '';
         this.required_votes = my.required_votes;
         this.voteCount = 0;
+        this.deleteDate = null;
     }
-
+    /**
+     * 
+     * @returns {Promise<User>}
+     */
     async get() {
         return this.load().then(didLoad => {
             if (!didLoad) {
@@ -57,8 +65,20 @@ class User {
      */
     async save() {
         const db = new Database();
-        await db.set('users', { id: this.id, username: this.username, global_Level: this.globalLevel, global_level_xp: this.globalLevelXP, isBanned: this.isBanned, ban_reason: this.banReason, voteCount: this.voteCount });
-        if(this.serverUserLoaded) await this.saveServerUser();
+
+        let userData = {
+            id: this.id,
+            username: this.username,
+            global_Level: this.globalLevel,
+            global_level_xp: this.globalLevelXP,
+            isBanned: my.environment == 'dev' ? 0 : this.isBanned,
+            ban_reason: this.banReason,
+            voteCount: this.voteCount,
+            ban_message_id: this.ban_message_id
+        }
+
+        await db.set('users', userData);
+        if (this.serverUserLoaded) await this.saveServerUser();
     }
 
     /**
@@ -79,6 +99,8 @@ class User {
         this.isBanned = user.isBanned;
         this.banReason = user.ban_reason;
         this.voteCount = user.voteCount;
+        this.ban_message_id = user.ban_message_id;
+        this.deleteDate = user.deleteDate;
         this._loaded = true;
         return true;
     }
@@ -113,6 +135,8 @@ class User {
             this.serverLevel = 0;
         this.serverLevelXP = 0;
         this.serverUserLoaded = true;
+        this.server = new Server(serverId);
+        await this.server.load();
     }
 
     async saveServerUser() {
@@ -120,6 +144,25 @@ class User {
         if (!this.serverUserLoaded) return;
         const db = new Database();
         await db.query(`UPDATE server_users SET server_level = ${this.serverLevel}, server_level_xp = ${this.serverLevelXP} WHERE user_id = ${this.id} AND server_id = ${this.serverId}`);
+    }
+
+    /**
+     * Creates a User instance from a plain object without needing to reload from the database.
+     * @param {object} data - The object containing user data.
+     * @returns {User} The instantiated User object.
+     */
+    static fromObject(data) {
+        const user = new User(data.id, data.username);
+        user.globalLevel = data.global_level;
+        user.globalLevelXP = data.global_level_xp;
+        user.isBanned = data.isBanned;
+        user.banReason = data.ban_reason;
+        user.voteCount = data.voteCount;
+        user.ban_message_id = data.ban_message_id;
+        user.deleteDate = data.deleteDate;
+        user._loaded = true;
+
+        return user;
     }
 
     /**
@@ -156,34 +199,34 @@ class User {
 
     getTotalGlobalXP() {
         let totalXP = 0;
-    
+
         // Sum XP required for all levels up to the current level
         for (let level = 1; level <= this.globalLevel; level++) {
             totalXP += this.calculateXpForLevel(level);
         }
-    
+
         // Add the XP gained in the current level
         totalXP += this.globalLevelXP;
-    
+        console.log("User has XP: ", totalXP);
         return totalXP;
     }
 
     getTotalServerXP() {
         if (!this.serverUserLoaded) return 0;
-    
+
         let totalXP = 0;
-    
+
         // Sum XP required for all server levels up to the current level
         for (let level = 1; level <= this.serverLevel; level++) {
             totalXP += this.calculateXpForLevel(level);
         }
-    
+
         // Add the XP gained in the current server level
         totalXP += this.serverLevelXP;
-    
+
         return totalXP;
     }
-    
+
 
     willLevelUpGlobally(xpChange) {
         let currentLevel = this.globalLevel;
@@ -202,7 +245,7 @@ class User {
     async getImage() {
         let discordUser = await global.client.users.fetch(this.id);
         let avatarURL = await discordUser.displayAvatarURL();
-        
+
         // Fetching the avatar URL and ensuring it's a PNG
         const urlParts = avatarURL.split('.');
         urlParts[urlParts.length - 1] = 'png'; // Ensure the extension is 'png'
@@ -213,7 +256,7 @@ class User {
 
 
     async addXP(xp) {
-
+        if (this._loaded) await this.load();
         let didLevelUp = false;  // Flag to determine if a level-up event should be emitted.
 
         this.globalLevelXP += xp;  // Directly add XP to the current level XP.
@@ -230,9 +273,12 @@ class User {
             didLevelUp = true;
         }
 
-        if (didLevelUp) global.client.emit(Events.LevelUp, this, "global");
+        if (didLevelUp) {
+            if (!this.serverUserLoaded) throw Error("Attempted to emit level up before loading server User");
+            global.client.emit(Events.LevelUp, this, "global");
+        }
 
-        
+
         await this.save();  // Save changes to the database.
     }
 
@@ -256,9 +302,9 @@ class User {
 
 
     async addServerXP(xp) {
-    
+
         if (!this.serverUserLoaded) return;  // Ensure the server user is loaded before proceeding.
-        if(!this.server || !this.server.hasPremium()) return;
+        if (!this.server || !this.server.hasPremium()) return;
         let didLevelUp = false;  // Flag to determine if a level-up event should be emitted.
 
         this.serverLevelXP += xp;  // Directly add XP to the current level XP.
@@ -276,12 +322,15 @@ class User {
         }
 
         await this.save();  // Save changes to the database.
-        if (didLevelUp) global.client.emit(Events.LevelUp, this, "server");
+        if (didLevelUp) {
+            if (!this.serverUserLoaded) throw Error("Attempted to emit level up before loading server User");
+            global.client.emit(Events.LevelUp, this, "server");
+        }
     }
 
 
     async subtractServerXP(xp) {
-        if(!this.server || !this.server.hasPremium()) return;
+        if (!this.server || !this.server.hasPremium()) return;
         if (!this.serverUserLoaded) return;
         if (this.serverLevel == 0 && this.serverLevelXP == 0) return;  // Avoid operation if no XP.
         let didLevelDown = false;  // Flag to determine if a level-down event should be emitted.
@@ -356,13 +405,56 @@ class User {
     }
 
     async addVote(count = 1) {
-        if(this.voteCount == 10) return;
+        if (this.voteCount == 10) return;
 
         this.voteCount += count;
-        
-        if(this.voteCount > 10) this.voteCount = 10;
-        
+
+        if (this.voteCount > 10) this.voteCount = 10;
+
         await this.save();
+    }
+
+    /**
+     * Get a list of all the server IDs a user is currently associated with
+     * @returns {Promise<string[]>} - A list of server IDs
+     */
+    async getServerList() {
+        const db = new Database();
+
+        // Query the server_users table to find all servers the user is linked to
+        const results = await db.query(`
+        SELECT server_id 
+        FROM server_users 
+        WHERE user_id = '${this.id}'
+    `);
+
+        // Extract the server IDs from the results
+        const serverIds = results.map(row => row.server_id);
+
+        return serverIds;
+    }
+
+    /**
+    * Marks the user for deletion in 30 days if they are not banned and no longer in any servers.
+    */
+    async checkAndMarkForDeletion() {
+        const db = new Database();
+        const userInOtherServers = await db.query(`
+            SELECT COUNT(*) as serverCount
+            FROM server_users
+            WHERE user_id = '${this.id}'
+        `);
+
+        if (userInOtherServers[0].serverCount === 0 && !this.isBanned) {
+            const now = new Date();
+            const deleteDate = new Date(now.setDate(now.getDate() + 30)).toISOString().split('T')[0];
+
+            await db.query(`
+                UPDATE users
+                SET deleteDate = '${deleteDate}'
+                WHERE id = '${this.id}'
+            `);
+        }
     }
 }
 

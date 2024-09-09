@@ -57,9 +57,10 @@ class Leaderboard {
 
         for (const userInfo of top) {
             // The user instantiation might need 'id' instead of 'user_id' based on your query structure
+            /** @type {User} */
             let user = new User(userInfo.id || userInfo.user_id); // Handling both global and server-specific cases
             let player = await user.get();
-            player.loadServerUser(this.interaction.guild.id);
+            if(!global) player.loadServerUser(this.interaction.guild.id);
             users.push(player);
         }
 

@@ -16,6 +16,7 @@ class RankCard {
     }
 
     async generateCard() {
+        console.log(this.user);
         this.premium = await this.user.server.hasPremium();
         const canvas = this.createCanvas();
         const ctx = canvas.getContext('2d');

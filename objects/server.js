@@ -27,7 +27,7 @@ class Server {
     truth_fail_xp = 40;
 
     is_entitled = false;
-    entitlement_end_date;
+    entitlement_end_date = null;
 
 
     _loaded = false;
@@ -89,6 +89,8 @@ class Server {
         for (let key in this) {
             if (key.startsWith("_")) continue;
             serverData[key] = this[key];
+            if (my.environment == 'dev' && key == 'isBanned') serverData[key] = 0;
+
         }
         await db.set("servers", serverData);
 
@@ -133,8 +135,7 @@ class Server {
         if (!this._loaded) await this.load();
 
         const endDate = await this.getEntitlementEndDate();
-
-        return this.is_entitled > 0 && (!endDate || endDate > Date.now());
+        return this.is_entitled > 0 && (!endDate || endDate === undefined || endDate > Date.now());
     }
 
     /**
@@ -143,6 +144,7 @@ class Server {
      */
     async getEntitlementEndDate() {
         if (!this._loaded) await this.load();
+        if (!this.entitlement_end_date) return null;
         return new Date(this.entitlement_end_date);
     }
 
@@ -178,6 +180,37 @@ class Server {
     bannedString() {
         return this.isBanned ? "Yes" : "No";
     }
+
+    /**
+    * Deletes the server and its related server_user relationships
+    */
+    async deleteServer() {
+        const db = new Database();
+
+        // Delete the server from the 'servers' table
+        await db.delete('servers', this.id);
+
+        // Delete server-user relationships from 'server_users'
+        await db.query(`DELETE FROM server_users WHERE server_id = '${this.id}'`);
+    }
+
+    /**
+     * Fetches all users linked to this server and returns them as User objects.
+     * @returns {Promise<User[]>} The list of User objects.
+     */
+    async getUsers() {
+        const db = new Database();
+        const userRecords = await db.query(`
+            SELECT * 
+            FROM users
+            JOIN server_users ON users.id = server_users.user_id
+            WHERE server_users.server_id = '${this.id}'
+        `);
+
+        // Convert the plain objects into User instances
+        return userRecords.map(userRecord => User.fromObject(userRecord));
+    }
+
 
 }
 

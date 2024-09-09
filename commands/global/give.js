@@ -76,7 +76,7 @@ module.exports = {
 		const subcommand = interaction.options.getSubcommand();
 		const xpType = interaction.options.getString('type');
 		const wager = interaction.options.getInteger('wager');
-		const user = new User(interaction.userId);
+		const user = new User(interaction.user.id);
 		await user.get();
 
 		if (!(await hasEnoughXP(user, xpType, wager, interaction))) return;
@@ -89,15 +89,23 @@ module.exports = {
 	}
 };
 
+/**
+ * 
+ * @param {User} user 
+ * @param {XP_TYPES} xpType 
+ * @param {number} wager 
+ * @param {Interaction} interaction 
+ * @returns 
+ */
 async function hasEnoughXP(user, xpType, wager, interaction) {
 	if (xpType === XP_TYPES.GLOBAL) {
 		if (user.getTotalGlobalXP() < wager) {
-			await interaction.reply({ content: `You do not have ${wager} ${xpType} XP to wager` });
+			await interaction.reply({ content: `You do not have ${wager} ${xpType} XP to wager`, ephemeral: true});
 			return false;
 		}
 		
 	} else if (xpType === XP_TYPES.SERVER) {
-		const server = new Server(interaction.guild);
+		const server = new Server(interaction.guildId);
 		await server.load();
 		const premium = await server.hasPremium();
 		console.log(premium);

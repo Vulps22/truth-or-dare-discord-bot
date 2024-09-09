@@ -88,7 +88,8 @@ class Handler {
       .setMinValues(1)
       .setOptions(reasons);
     const row = new ActionRowBuilder().addComponents(menu);
-    const reply = await interaction.reply({ content: 'Select a reason for this ban', components: [row], fetchReply: true });
+    const reply = await interaction.followUp({ content: 'Select a reason for this ban', components: [row], fetchReply: true });
+    interaction.editReply("Choose a Reason");
 
     const collector = reply.createMessageComponentCollector({
       ComponentType: ComponentType.StringSelect,
@@ -110,8 +111,8 @@ class Handler {
   /**
    * 
    * @param {Interac} interaction 
-   * @param {*} id 
-   * @param {*} reason 
+   * @param {number} id 
+   * @param {string} reason 
    */
   async doBan(interaction, id, reason) {
     await interaction.deferReply({ephemeral: true});
@@ -120,10 +121,10 @@ class Handler {
 
     switch (this.type) {
       case 'dare':
-        didBan = await new BanHandler().banDare(id, reason, interaction);
+        didBan = await new BanHandler().banQuestion(id, reason, interaction);
         break;
       case 'truth':
-        didBan = await new BanHandler().banTruth(id, reason, interaction);
+        didBan = await new BanHandler().banQuestion(id, reason, interaction);
         break;
       case 'server':
         didBan = await new BanHandler().banServer(id, reason, interaction);
@@ -132,13 +133,8 @@ class Handler {
         didBan = await new BanHandler().banUser(id, reason, interaction);
     }
 
-    if (didBan) {
-      // Delete the original message
-      if (interaction.message) {
-        await interaction.message.delete();
-      }
-    } else {
-      // You can also respond with an ephemeral message indicating failure if needed
+    if (!didBan) {
+       // You can also respond with an ephemeral message indicating failure if needed
       await interaction.followUp({ content: 'Ban Failed', ephemeral: true });
     }
 }
@@ -165,7 +161,7 @@ class Handler {
    * @param {Question} question 
    */
   async approve(interaction, question) {
-    interaction.deferReply({ephemeral: true});
+    if(!interaction.deferred) interaction.deferReply({ephemeral: true});
     await question.load();
     await question.approve();
     const message = interaction.message;
