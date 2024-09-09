@@ -60,9 +60,8 @@ async function main() {
     }
 
     try {
-        const dares = await db.list("dares");
-        const truths = await db.list("truths");
-        console.log("loaded: ", dares.length + truths.length);
+        const questions = await db.list('questions');
+        console.log("loaded: ", questions.length);
     } catch (error) {
         console.error('Error loading dares and truths:', error);
     }
