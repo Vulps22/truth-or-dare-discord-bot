@@ -48,9 +48,11 @@ class Database {
 						resolve(results);
 					}
 				});
+			}).finally(() => {
+				this.connection.end()
 			});
-		} finally {
-			this.connection.end()
+		} catch(error) {
+			throw new Error("Unexpected Error in database query: ", sql, "\n\n", error);
 		}
 	}
 
