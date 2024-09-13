@@ -97,7 +97,7 @@ class UserHandler extends Handler {
             deletedUsers++;
         }
 
-        logger.log(`Deleted ${deletedUsers} users in daily cleanup`);
+        logger.log(`**Daily Cleanup** | Deleted ${deletedUsers} users in daily cleanup`);
     }
 
 }

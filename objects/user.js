@@ -1,6 +1,8 @@
+const { ServerResponse } = require("http");
 const Events = require("../events/Events");
 const Database = require("./database");
 const Server = require("./server");
+const logger = require("./logger");
 
 class User {
 
@@ -77,7 +79,7 @@ class User {
             userData[key] = this[key];
         }
 
-        if(my.environment == 'dev') userData['isBanned'] = 0;
+        if (my.environment == 'dev') userData['isBanned'] = 0;
         // Save the userData to the database
         await db.set('users', userData);
 
@@ -87,8 +89,8 @@ class User {
 
 
     /**
-     * Loads the user's data from the database
-     * Should only be used within the class constructor
+     * Loads the user's data from the database without creating a new record if an existing record does not exist
+     * 
      * @returns {boolean} Whether the user was successfully loaded
      */
     async load() {
@@ -111,16 +113,18 @@ class User {
         return true;
     }
 
-    async loadServerUser(serverId) {
+    async loadServerUser(serverId, orCreate = false) {
         const db = new Database();
 
         let serverUserRaw = await db.query(`SELECT * FROM server_users WHERE user_id = ${this.id} AND server_id = ${serverId}`);
         let serverUser = serverUserRaw[0];
 
         if (!serverUser) {
-            console.log("no server user, adding one");
-            await this.addServerUser(serverId);
-            this._serverUserLoaded = true;
+            if (orCreate) {
+                console.log("no server user, adding one");
+                await this.addServerUser(serverId);
+                this._serverUserLoaded = true;
+            }
             return false;
         }
         this._serverId = serverUser.server_id;
@@ -150,6 +154,29 @@ class User {
         if (!this._serverUserLoaded) return;
         const db = new Database();
         await db.query(`UPDATE server_users SET server_level = ${this._serverLevel}, server_level_xp = ${this._serverLevelXp} WHERE user_id = ${this.id} AND server_id = ${this._serverId}`);
+    }
+
+    /**
+     * Remove the server_users record for linking this user to the specified serverId. Mark the user to be deleted if they are not registered with any more servers.
+     * @param {string} serverId 
+     * @returns 
+     */
+    async deleteServerUser(serverId) {
+        const didLoad = this.loadServerUser(serverId);
+
+        if (!didLoad) return false;
+        const db = new Database();
+        db.query(`DELETE FROM server_users WHERE server_id = '${serverId}' && user_id = '${this.id}`);
+
+        const servers = await this.getServerList();
+
+        if (await servers.length > 0) {
+            return false;
+        }
+
+        this.markForDeletion();
+        logger.log(`**User** ${this.id} is no longer using the bot and Will be deleted in 30 days...`)
+        return true;
     }
 
     /**
@@ -440,26 +467,18 @@ class User {
     }
 
     /**
-    * Marks the user for deletion in 30 days if they are not banned and no longer in any servers.
+    * Marks the user for deletion in 30 days
     */
-    async checkAndMarkForDeletion() {
-        const db = new Database();
-        const userInOtherServers = await db.query(`
-            SELECT COUNT(*) as serverCount
-            FROM server_users
-            WHERE user_id = '${this.id}'
-        `);
+    async markForDeletion() {
 
-        if (userInOtherServers[0].serverCount === 0 && !this.isBanned) {
-            const now = new Date();
-            const deleteDate = new Date(now.setDate(now.getDate() + 30)).toISOString().split('T')[0];
+        const now = new Date();
+        const deleteDate = new Date(now.setDate(now.getDate() + 30)).toISOString().split('T')[0];
 
-            await db.query(`
+        await db.query(`
                 UPDATE users
                 SET deleteDate = '${deleteDate}'
                 WHERE id = '${this.id}'
             `);
-        }
     }
 
     /**

@@ -27,15 +27,14 @@ module.exports = {
             /** @type {User[]} */
             const users = await server.getUsers();
 
+            users.forEach(user => {
+                user.deleteServerUser();
+            });
+
             // Delete the server and its server-user relationships
             await server.deleteServer();
 
-            // Mark each user for deletion if they are not banned and not in any other servers
-            for (const user of users) {
-                await user.checkAndMarkForDeletion();
-            }
-
-            logger.log("Deleted server:", guild.id);
+            logger.log(`Deleted server: ${guild.id}`);
         } catch (error) {
             console.error("Error during guildDelete event:", error);
         }
