@@ -1,7 +1,7 @@
 const { Events, Entitlement } = require("discord.js")
-const Server = require("../objects/server");
-const logger = require("../objects/logger");
-const Purchase = require("../objects/purchase");
+const Server = require("objects/server");
+const logger = require("objects/logger");
+const Purchase = require("objects/purchase");
 
 module.exports = {
     name: Events.EntitlementDelete,

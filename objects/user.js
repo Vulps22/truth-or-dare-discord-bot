@@ -1,8 +1,6 @@
-const { ServerResponse } = require("http");
-const Events = require("../events/Events");
-const Database = require("./database");
-const Server = require("./server");
-const logger = require("./logger");
+const Events = require("events/Events");
+const Database = require("objects/database");
+const Server = require("objects/server");
 
 class User {
 
@@ -175,6 +173,7 @@ class User {
         }
 
         this.markForDeletion();
+        const logger = require('logger');
         logger.log(`**User** ${this.id} is no longer using the bot and Will be deleted in 30 days...`)
         return true;
     }

@@ -1,16 +1,16 @@
 const { Interaction, Message, InteractionResponse } = require("discord.js");
-const DareHandler = require("./dareHandler");
-const TruthHandler = require("./truthHandler");
-const BanHandler = require("./banHandler");
-const logger = require("../objects/logger");
-const SetupHandler = require("./setupHandler");
-const ServerHandler = require("./serverHandler");
-const Dare = require("../objects/dare");
-const User = require("../objects/user");
-const Truth = require("../objects/truth");
-const Server = require("../objects/server");
-const UserHandler = require("./userHandler");
-const GivenQuestion = require("../objects/givenQuestion");
+const DareHandler = require("handlers/dareHandler");
+const TruthHandler = require("handlers/truthHandler");
+const BanHandler = require("handlers/banHandler");
+const logger = require("objects/logger");
+const SetupHandler = require("handlers/setupHandler");
+const ServerHandler = require("handlers/serverHandler");
+const Dare = require("objects/dare");
+const User = require("objects/user");
+const Truth = require("objects/truth");
+const Server = require("objects/server");
+const UserHandler = require("handlers/userHandler");
+const GivenQuestion = require("objects/givenQuestion");
 
 class ButtonEventHandler {
     /**

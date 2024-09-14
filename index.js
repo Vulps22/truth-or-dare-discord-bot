@@ -2,14 +2,14 @@ require('dotenv').config();
 const fs = require('node:fs');
 const path = require('node:path');
 const { Client, GatewayIntentBits, Collection, SlashCommandRoleOption, EmbedBuilder } = require('discord.js');
-const Database = require('./objects/database.js'); // Import Database class
+const Database = require('objects/database.js'); // Import Database class
 const express = require('express');
 const cors = require('cors');
-const User = require('./objects/user.js');
-const logger = require('./objects/logger.js');
-const Server = require('./objects/server.js');
+const User = require('objects/user.js');
+const logger = require('objects/logger.js');
+const Server = require('objects/server.js');
 const util = require('util');
-const UserHandler = require('./handlers/userHandler.js');
+const UserHandler = require('handlers/userHandler.js');
 
 overrideConsoleLog();
 
@@ -52,7 +52,7 @@ async function main() {
 
     const db = new Database();
     try {
-        const data = await db.get('config', 1);
+        const data = await db.get('config', 2);
         global.my = data;
         console.log(my);
     } catch (error) {

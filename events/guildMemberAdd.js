@@ -1,5 +1,5 @@
 const { Events } = require("discord.js");
-const User = require("../objects/user");
+const User = require("objects/user");
 
 module.exports = {
 	name: Events.GuildMemberAdd,

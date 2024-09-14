@@ -1,7 +1,9 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, TextChannel, Message } = require('discord.js');
-const Dare = require('./dare.js');
-const Truth = require('./truth.js');
-const Server = require('./server.js');
+
+const Truth = require('objects/truth.js');
+const Server = require('objects/server.js');
+const Dare = require('./dare');
+
 module.exports = {
 
     /**

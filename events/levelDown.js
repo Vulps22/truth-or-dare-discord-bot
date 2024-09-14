@@ -1,8 +1,8 @@
 const { Client, TextChannel, GuildMember } = require("discord.js");
-const Events = require("./Events");
-const User = require("../objects/user");
-const Server = require("../objects/server");
-const logger = require("../objects/logger");
+const Events = require("events/Events");
+const User = require("objects/user");
+const Server = require("objects/server");
+const logger = require("objects/logger");
 
 module.exports = {
     name: Events.LevelDown, // Assuming you have an event for leveling down

@@ -1,7 +1,7 @@
 require("dotenv").config();
 const { REST, Routes } = require("discord.js");
 const fs = require("node:fs");
-const Database = require('./objects/database.js'); // Import Database class
+const Database = require('objects/database.js'); // Import Database class
 
 // Async function to load configuration from the database and deploy commands
 async function deployCommands() {
@@ -22,11 +22,11 @@ async function deployCommands() {
     const commands = [];
     const commandJson = [];
     const commandFiles = fs
-        .readdirSync("./commands/global")
+        .readdirSync("commands/global")
         .filter((file) => file.endsWith(".js"));
 
     for (const file of commandFiles) {
-        const command = require(`./commands/global/${file}`);
+        const command = require(`commands/global/${file}`);
         if (!command.data) continue;
         commands.push(command.data.toJSON());
 

@@ -1,7 +1,7 @@
 const { SlashCommandBuilder } = require("discord.js");
-const embedder = require("../../embedder");
-const Database = require("../../objects/database");
-const Server = require("../../objects/server");
+const embedder = require("embedder");
+const Database = require("objects/database");
+const Server = require("objects/server");
 
 
 module.exports = {

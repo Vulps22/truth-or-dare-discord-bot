@@ -1,10 +1,10 @@
 
 const { SelectMenuBuilder, ModalBuilder, ActionRowBuilder } = require('@discordjs/builders');
-const Database = require('../objects/database.js');
+const Database = require('objects/database.js');
 const { Interaction, StringSelectMenuOptionBuilder, StringSelectMenuBuilder, ComponentType, ButtonBuilder, ButtonStyle } = require('discord.js');
-const BanHandler = require('./banHandler.js');
-const logger = require('../objects/logger.js');
-const Question = require('../objects/question.js');
+const BanHandler = require('handlers/banHandler.js');
+const logger = require('objects/logger.js');
+const Question = require('objects/question.js');
 
 class Handler {
   /**

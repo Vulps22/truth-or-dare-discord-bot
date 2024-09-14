@@ -1,6 +1,9 @@
-const Database = require("./database");
-const Server = require("./server");
-const User = require("./user");
+const Database = require("objects/database");
+const Server = require("objects/server");
+const User = require("objects/user");
+const { exit } = require("process");
+
+
 
 class Question {
 	/**
@@ -111,7 +114,7 @@ class Question {
 	 */
 	static async collect(type) {
 		const db = new Database();
-		
+
 		const questions = await db.query(`SELECT * FROM questions WHERE type='${type}' AND isBanned=0 AND isApproved=1`);
 
 		return questions ?? [];

@@ -1,12 +1,13 @@
 require('dotenv').config();
 const { EmbedBuilder, Embed } = require('discord.js');
-const User = require('../objects/user.js');
-const Handler = require('./handler.js');
-const Question = require('../objects/question.js');
-const Database = require('../objects/database.js');
-const embedder = require('../embedder.js');
-const Server = require('../objects/server.js'); // Import the Server class
-const logger = require('../objects/logger.js');
+const User = require('objects/user.js');
+const Handler = require('handlers/handler.js');
+const Question = require('objects/question.js');
+const Database = require('objects/database');
+const embedder = require('embedder.js');
+const Server = require('objects/server.js'); // Import the Server class
+const logger = require('objects/logger.js');
+
 
 class UserHandler extends Handler {
     db;

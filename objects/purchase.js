@@ -1,5 +1,5 @@
 const { Entitlement, EntitlementType } = require("discord.js");
-const Database = require("./database");
+const Database = require("objects/database");
 
 class Purchase {
     id = null;

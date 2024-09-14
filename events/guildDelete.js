@@ -1,7 +1,7 @@
 const { Events } = require("discord.js");
-const Server = require("../objects/server");
-const logger = require("../objects/logger");
-const User = require("../objects/user");
+const Server = require("objects/server");
+const logger = require("objects/logger");
+const User = require("objects/user");
 
 module.exports = {
     name: Events.GuildDelete,

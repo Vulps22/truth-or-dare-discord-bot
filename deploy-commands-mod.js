@@ -1,7 +1,7 @@
 require("dotenv").config();
 const { REST, Routes } = require("discord.js");
 const fs = require("node:fs");
-const Database = require('./objects/database.js'); // Import the Database class
+const Database = require('objects/database.js'); // Import the Database class
 
 // Function to deploy commands
 async function deployGuildCommands() {
@@ -23,12 +23,12 @@ async function deployGuildCommands() {
 
     const commands = [];
     const commandFiles = fs
-        .readdirSync("./commands/mod")
+        .readdirSync("commands/mod")
         .filter((file) => file.endsWith(".js"));
 
     // Load each command and prepare for deployment
     for (const file of commandFiles) {
-        const command = require(`./commands/mod/${file}`);
+        const command = require(`commands/mod/${file}`);
         if (!command.data) continue;
         commands.push(command.data.toJSON());
     }

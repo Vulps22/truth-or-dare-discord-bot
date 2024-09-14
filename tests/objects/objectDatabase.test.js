@@ -7,7 +7,7 @@ describe('Database', () => {
 
 /*
 const { createConnection } = require('mysql2/promise');
-const Database = require('../objects/database'); // Adjust the path to your Database class file
+const Database = require('.objects/database'); // Adjust the path to your Database class file
 
 jest.mock('mysql2/promise', () => ({
     ...jest.requireActual('mysql2/promise'), // Import the actual module

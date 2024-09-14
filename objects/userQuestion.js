@@ -1,6 +1,6 @@
-const User = require("./user");
-const Database = require("./database");
-const Question = require("./question");
+const User = require("objects/user");
+const Database = require("objects/database");
+const Question = require("objects/question");
 
 class UserQuestion {
    id; // message_id

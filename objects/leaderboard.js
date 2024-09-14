@@ -1,8 +1,8 @@
 const { AttachmentBuilder } = require('discord.js');
 const { createCanvas, loadImage } = require('canvas');
-const User = require('./user');
+const User = require('objects/user');
 const { userInfo } = require('os');
-const Database = require('./database');
+const Database = require('objects/database');
 
 class Leaderboard {
     constructor(interaction, client) {

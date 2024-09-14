@@ -1,7 +1,7 @@
 const { SlashCommandBuilder, SlashCommandUserOption } = require("discord.js");
-const UserHandler = require("../../handlers/userHandler");
-const RankCard = require("../../objects/rankCard");
-const User = require("../../objects/user");
+const UserHandler = require("handlers/userHandler");
+const RankCard = require("objects/rankCard");
+const User = require("objects/user");
 
 module.exports = {
     data: new SlashCommandBuilder()

@@ -1,6 +1,6 @@
-const Server = require("../objects/server");
-const BanHandler = require("./banHandler");
-const Handler = require("./handler");
+const Server = require("objects/server");
+const BanHandler = require("handlers/banHandler");
+const Handler = require("handlers/handler");
 
 class ServerHandler extends Handler {
     constructor() {

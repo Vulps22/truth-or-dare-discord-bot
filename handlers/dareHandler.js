@@ -1,13 +1,13 @@
 const { Interaction, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, Guild } = require('discord.js');
 
-const Handler = require('./handler.js')
-const UserDare = require('../objects/userDare.js');
-const User = require('../objects/user.js');
-const Server = require('../objects/server.js');
-const Dare = require('../objects/dare.js');
-const logger = require('../objects/logger.js');
-const Question = require('../objects/question.js');
-const GivenQuestion = require('../objects/givenQuestion.js')
+const Handler = require('handlers/handler.js')
+const UserDare = require('objects/userDare.js');
+const User = require('objects/user.js');
+const Server = require('objects/server.js');
+const Dare = require('objects/dare.js');
+const logger = require('objects/logger.js');
+const Question = require('objects/question.js');
+const GivenQuestion = require('objects/givenQuestion.js')
 let client = null
 class DareHandler extends Handler {
 
@@ -27,6 +27,7 @@ class DareHandler extends Handler {
 	async createDare(interaction) {
 
 		const dare = new Dare();
+		console.log(dare);
 
 		dare.question = interaction.options.getString('text');
 		if (!dare.question) {

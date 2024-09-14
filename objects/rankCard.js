@@ -1,6 +1,6 @@
 const { AttachmentBuilder } = require('discord.js');
 const { createCanvas, loadImage } = require('canvas');
-const User = require('./user');
+const User = require('objects/user');
 
 class RankCard {
     user;

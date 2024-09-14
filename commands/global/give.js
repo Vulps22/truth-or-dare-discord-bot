@@ -1,8 +1,8 @@
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandUserOption, SlashCommandStringOption, SlashCommandIntegerOption, Interaction } = require("discord.js");
-const TruthHandler = require("../../handlers/truthHandler");
-const DareHandler = require("../../handlers/dareHandler");
-const User = require("../../objects/user");
-const Server = require("../../objects/server");
+const TruthHandler = require("handlers/truthHandler");
+const DareHandler = require("handlers/dareHandler");
+const User = require("objects/user");
+const Server = require("objects/server");
 
 const XP_TYPES = {
     GLOBAL: 'global',

@@ -1,9 +1,9 @@
 const { Interaction, ButtonBuilder, ComponentBuilder, EmbedBuilder, ButtonStyle } = require('discord.js')
-const Database = require("./database");
-const Server = require("./server");
-const User = require("./user");
+const Database = require("objects/database");
+const Server = require("objects/server");
+const User = require("objects/user");
 const { ActionRowBuilder } = require('@discordjs/builders');
-const Question = require('./question');
+const Question = require('objects/question');
 
 class GivenQuestion {
 

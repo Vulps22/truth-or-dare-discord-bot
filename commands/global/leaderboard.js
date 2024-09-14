@@ -1,8 +1,8 @@
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, Interaction } = require("discord.js");
-const UserHandler = require("../../handlers/userHandler");
-const Leaderboard = require("../../objects/leaderboard");
-const Server = require("../../objects/server");
-const logger = require("../../objects/logger");
+const UserHandler = require("handlers/userHandler");
+const Leaderboard = require("objects/leaderboard");
+const Server = require("objects/server");
+const logger = require("objects/logger");
 
 module.exports = {
 	data: new SlashCommandBuilder()

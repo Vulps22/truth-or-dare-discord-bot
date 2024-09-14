@@ -1,7 +1,7 @@
 require('dotenv').config();
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandNumberOption, SlashCommandStringOption, WebhookClient } = require("discord.js");
-const Database = require("../../objects/database");
-const Server = require("../../objects/server"); // Import the Server class
+const Database = require("objects/database");
+const Server = require("objects/server"); // Import the Server class
 
 module.exports = {
     data: new SlashCommandBuilder()

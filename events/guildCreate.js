@@ -1,6 +1,6 @@
 const { Events, Guild } = require("discord.js")
-const Server = require("../objects/server");
-const logger = require("../objects/logger");
+const Server = require("objects/server");
+const logger = require("objects/logger");
 
 module.exports = {
 	name: Events.GuildCreate,

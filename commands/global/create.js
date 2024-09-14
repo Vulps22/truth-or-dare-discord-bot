@@ -1,10 +1,10 @@
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandStringOption, Interaction, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
-const DareHandler = require("../../handlers/dareHandler");
-const TruthHandler = require("../../handlers/truthHandler");
-const Database = require("../../objects/database");
-const logger = require("../../objects/logger");
-const User = require("../../objects/user");
-const embedder = require("../../embedder");
+const DareHandler = require("handlers/dareHandler");
+const TruthHandler = require("handlers/truthHandler");
+const Database = require("objects/database");
+const logger = require("objects/logger");
+const User = require("objects/user");
+const embedder = require("embedder");
 
 module.exports = {
 	data: new SlashCommandBuilder()

@@ -1,6 +1,6 @@
 const { Events, Message } = require("discord.js");
-const User = require("../objects/user");
-const Database = require("../objects/database");
+const User = require("objects/user");
+const Database = require("objects/database");
 const { exit } = require("process");
 
 module.exports = {

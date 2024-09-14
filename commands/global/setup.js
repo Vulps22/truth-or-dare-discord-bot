@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, PermissionsBitField } = require("discord.js");
-const UserHandler = require("../../handlers/userHandler");
-const SetupHandler = require("../../handlers/setupHandler");
+const UserHandler = require("handlers/userHandler");
+const SetupHandler = require("handlers/setupHandler");
 
 module.exports = {
 	data: new SlashCommandBuilder()

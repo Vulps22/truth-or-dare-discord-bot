@@ -1,7 +1,7 @@
 const { Events, GuildMember } = require("discord.js");
-const User = require("../objects/user");
-const Database = require("../objects/database");
-const logger = require("../objects/logger");
+const User = require("objects/user");
+const Database = require("objects/database");
+const logger = require("objects/logger");
 
 module.exports = {
 	name: Events.GuildMemberRemove,

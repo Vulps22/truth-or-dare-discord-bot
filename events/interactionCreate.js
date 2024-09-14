@@ -1,11 +1,11 @@
 const { Events, Interaction } = require("discord.js");
-const UserHandler = require("../handlers/userHandler");
-const Database = require("../objects/database");
-const Server = require("../objects/server");
-const User = require("../objects/user");
-const ButtonEventHandler = require("../handlers/buttonEventHandler");
-const logger = require("../objects/logger");
-const BanHandler = require("../handlers/banHandler");
+const UserHandler = require("handlers/userHandler");
+const Database = require("objects/database");
+const Server = require("objects/server");
+const User = require("objects/user");
+const ButtonEventHandler = require("handlers/buttonEventHandler");
+const logger = require("objects/logger");
+const BanHandler = require("handlers/banHandler");
 
 let logInteraction = '';
 

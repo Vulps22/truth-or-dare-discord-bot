@@ -1,13 +1,13 @@
 const { Interaction, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, Client } = require('discord.js');
 
-const Handler = require('./handler.js')
-const UserTruth = require('../objects/userTruth.js');
-const User = require('../objects/user.js');
-const Server = require('../objects/server.js');
-const Truth = require('../objects/truth.js');
-const logger = require('../objects/logger.js');
-const Question = require('../objects/question.js');
-const GivenQuestion = require('../objects/givenQuestion.js');
+const Handler = require('handlers/handler.js')
+const UserTruth = require('objects/userTruth.js');
+const User = require('objects/user.js');
+const Server = require('objects/server.js');
+const Truth = require('objects/truth.js');
+const logger = require('objects/logger.js');
+const Question = require('objects/question.js');
+const GivenQuestion = require('objects/givenQuestion.js');
 let client = null;
 
 class TruthHandler extends Handler {
