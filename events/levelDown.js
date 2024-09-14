@@ -19,14 +19,14 @@ module.exports = {
         /** @type {Client} */
         const client = global.client;
 
-        if (!user.serverUserLoaded) await user.loadServerUser();
+        if (!user._serverUserLoaded) await user.loadServerUser();
         if (!user.serverId) throw new Error("Level down was triggered but no server ID was present.");
 
         const server = new Server(user.serverId);
         await server.load();
 
         // Get the previous level's role to remove
-        const oldLevelRole = await server.getLevelRole(user.serverLevel + 1); // Assuming previous level is current level + 1
+        const oldLevelRole = await server.getLevelRole(user._serverLevel + 1); // Assuming previous level is current level + 1
         if (!oldLevelRole) return;
 
         /** @type {TextChannel} */

@@ -1,4 +1,4 @@
-const { Interaction, Message } = require("discord.js");
+const { Interaction, Message, InteractionResponse } = require("discord.js");
 const DareHandler = require("./dareHandler");
 const TruthHandler = require("./truthHandler");
 const BanHandler = require("./banHandler");
@@ -10,6 +10,7 @@ const User = require("../objects/user");
 const Truth = require("../objects/truth");
 const Server = require("../objects/server");
 const UserHandler = require("./userHandler");
+const GivenQuestion = require("../objects/givenQuestion");
 
 class ButtonEventHandler {
     /**
@@ -23,6 +24,28 @@ class ButtonEventHandler {
     }
 
     async execute() {
+
+        // The target date: 5th September 2024 at 05:11 AM (UK time)
+        const targetDate = new Date('2024-09-05T05:11:00Z'); // UTC date format
+
+        // Message creation date
+        const messageTimestamp = this.interaction.message.createdAt;
+
+        // Check if the message was created before the target date
+        if (messageTimestamp < targetDate) {
+            this.interaction.logMessage.edit(`${this.interaction.logInteraction} Button Interaction Aborted: Incompatible Versions (message too old)`)
+            this.interaction.message.edit({
+                content: this.interaction.message.content, // Keep the same content
+                embeds: this.interaction.message.embeds, // Keep the same embeds
+                components: [] // Remove the components (e.g., buttons, dropdowns, etc.)
+            });
+            this.interaction.reply("A recent Update has changed how I identify bots. I am unable to register any votes on messages created before <t:1725855060:F>")
+        } else {
+            console.log("Message was created after or at 05/09/24 05:11.");
+        }
+
+
+        await this.interaction.deferReply({ ephemeral: true });
         let buttonId = this.interaction.customId;
         /** @type {Array<string>} */
         let idComponents = buttonId.split('_')
@@ -47,6 +70,17 @@ class ButtonEventHandler {
             case 'user':
                 handleUserModerationCommand(this.interaction, idComponents);
                 break;
+            case 'given':
+                handleGivenQuestion(this.interaction, idComponents);
+                break;
+            case 'rules':
+                let user = new User(this.interaction.user.id);
+                await user.get();
+                user.rulesAccepted = true;
+                await user.save();
+                this.interaction.editReply('Rules Accepted.')
+                logger.editLog(this.interaction.logMessage.id, `${this.interaction.logInteraction} User has Accepted the Rules and can now create new Truths or Dares`);
+                break;
             default:
                 await logger.error(`**Failed to find Button Command** | **server**: ${this.interaction.guild.name} \n\n**Button ID**: ${buttonId}`);
                 this.interaction.reply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:");
@@ -61,13 +95,17 @@ function handleSetupButton(interaction, step) {
     console.log(step)
     switch (step) {
         case "1":
-            console.log('step 1')
             setupHandler.action_1(interaction);
             break;
     }
 }
-
-function handleContentResponse(interaction, idComponents) {
+/**
+ * 
+ * @param {Interaction} interaction 
+ * @param {Array<string>} idComponents 
+ */
+async function handleContentResponse(interaction, idComponents) {
+    if (!interaction.deferred) interaction.deferReply({ ephemeral: true })
     const type = idComponents[1];
     const decision = idComponents[2];
 
@@ -91,32 +129,96 @@ function handleContentResponse(interaction, idComponents) {
  */
 async function handleUserModerationCommand(interaction, idComponents) {
     const type = idComponents[1];
+    let entity;
 
-    /** @type {User} */
-    let owner;
-
-    switch(type) {
+    switch (type) {
         case 'dare':
-            const dare = await new Dare().find(interaction.message.id);
-            await dare.load()
-            owner = new User(dare.creator);
+            entity = await new Dare().find(interaction.message.id);
             break;
         case 'truth':
-            const truth = await new Truth().find(interaction.message.id);
-            await truth.load()
-            owner = new User(truth.creator);
+            entity = await new Truth().find(interaction.message.id);
             break;
         case 'server':
-            const server = await new Server().find(interaction.message.id);
-            await server.load()
-            owner = new User(server.creator);
+            entity = await new Server().find(interaction.message.id);
             break;
         default:
-            throw Error("Undefined user moderation type");
+            throw new Error("Undefined user moderation type");
     }
 
-    owner.get();
+    await entity.load();
+    const owner = new User(entity.creator);
+    await owner.get();
+    await new UserHandler().banUser(interaction, owner);
+}
 
-    new UserHandler().banUser(interaction, owner);
 
+/**
+ * 
+ * @param {Interaction} interaction 
+ * @param {Array<string>} idComponents 
+ */
+async function handleGivenQuestion(interaction, idComponents) {
+    /** @type {GivenQuestion} */
+    const given = await GivenQuestion.find(interaction.message.id);
+    if (!given) {
+        return interaction.reply({ content: "This question could not be found.", ephemeral: true });
+    }
+
+
+    const target = new User(given.targetId);
+    await target.get();
+    await target.loadServerUser(interaction.guildId);
+
+    if (interaction.user.id == given.targetId && idComponents[1] !== 'skip') {
+        interaction.reply({ content: `You can't vote on your own ${given.type}!`, ephemeral: true })
+        return;
+    }
+
+    switch (idComponents[1]) {
+        case 'done':
+            await given.incrementDone();
+            break;
+        case 'failed':
+            await given.incrementFail();
+            break;
+        case 'skip':
+            if (interaction.user.id !== given.targetId) {
+                interaction.reply({ content: `You can't skip someone else's ${given.type}!`, ephemeral: true });
+                return;
+            }
+
+            if (target.hasValidVote()) {
+                await target.burnVote();
+                await given.skip();
+            } else {
+                interaction.reply({ content: "Uh oh! You're out of Skips!\nNot to worry, You can earn up to 10 skips by voting for the bot every day on [top.gg](https://top.gg/bot/1079207025315164331/vote)!", ephemeral: true });
+                return;
+            }
+            break;
+    }
+    const newEmbed = given.createEmbed();
+
+    interaction.message.edit({ embeds: [newEmbed.embed], components: [newEmbed.row] })
+    if (idComponents[1] !== 'skip') interaction.editReply({ content: "Your vote has been registered", ephemeral: true });
+    else interaction.reply({ content: `Your ${given.type} has been skipped! You have ${target.voteCount} skips remaining!`, ephemeral: true })
+
+    if (given.doneCount >= my.required_votes) {
+
+        const xpType = given.xpType;
+
+        const sender = new User(given.senderId);
+        await sender.get();
+        await sender.loadServerUser(interaction.guildId);
+
+        switch (xpType) {
+            case 'server':
+                await sender.subtractServerXP(given.wager);
+                await target.addServerXP(given.wager);
+                break;
+            case 'global':
+                await sender.subtractXP(given.wager);
+                await target.addXP(given.wager);
+                break;
+        }
+    }
 }

@@ -19,7 +19,7 @@ class Question {
 
 	exists = false;
 
-	constructor(id, type) {
+	constructor(id, type = '') {
 		this.id = id;
 		this.type = type;
 		this.question = ' ';
@@ -32,24 +32,24 @@ class Question {
 	}
 
 	async load() {
-		const table = this.type + "s";
 
-        const dare = await this.db.get(table, this.id);
-		if(!dare) return;
-		this.question = dare.question;
-        this.creator = dare.creator;
-		this.isApproved = dare.isApproved;
-        this.isBanned = dare.isBanned;
-        this.banReason = dare.banReason;
-		this.messageId = dare.messageId;
-        if (dare.serverId) {
-            this.server = new Server(dare.serverId);
-            await this.server.load();
-        }
-        else this.server = "Pre-5"; //Pre-5 is a placeholder for dares created before the serverId was added in version 5
+		const question = await this.db.get('questions', this.id);
+		if (!question) return;
+		this.type = question.type;
+		this.question = question.question;
+		this.creator = question.creator;
+		this.isApproved = question.isApproved;
+		this.isBanned = question.isBanned;
+		this.banReason = question.banReason;
+		this.messageId = question.messageId;
+		if (question.serverId) {
+			this.server = new Server(question.serverId);
+			await this.server.load();
+		}
+		else this.server = "Pre-5"; //Pre-5 is a placeholder for question created before the serverId was added in version 5
 		this.exists = true;
-        return this;
-    }
+		return this;
+	}
 
 	async create(question, creator, serverId) {
 		if (!question || !creator || !serverId) {
@@ -61,15 +61,15 @@ class Question {
 		this.server = new Server(serverId);
 		await this.server.load();
 
-		const table = this.type + "s";
 
-		const newQuestionId = await this.db.set(table, {
+		const newQuestionId = await this.db.set('questions', {
 			question: this.question,
 			creator: this.creator,
 			isBanned: this.isBanned,
 			isApproved: this.isApproved,
 			banReason: this.banReason,
-			serverId: this.server.id
+			serverId: this.server.id,
+			type: this.type,
 		});
 
 		this.id = newQuestionId;
@@ -78,9 +78,8 @@ class Question {
 	}
 
 	async save() {
-		const table = this.type + "s";
 		this.exists = true;
-		if(!this.messageId) throw new Error("Missing Message ID: " + this.id + this.type);
+		if (!this.messageId) throw new Error("Missing Message ID: " + this.id + this.type);
 		let savable = {
 			id: this.id,
 			question: this.question,
@@ -90,26 +89,43 @@ class Question {
 			banReason: this.banReason,
 			serverId: this.server.id ?? 'pre-v5',
 			messageId: this.messageId,
+			type: this.type,
 		}
 
-		return await this.db.set(table, savable)
+		return await this.db.set('questions', savable)
 	}
 
-async find(messageId) {
-	console.log(messageId)
-		const table = this.type + "s";
-		const question = await this.db.query(`select id FROM ${table} WHERE messageId = ${messageId}`);
-		if(!question) return null;
+	async find(messageId) {
+		/** @type {Array} */
+		const question = await this.db.query(`select id FROM questions WHERE messageId = ${messageId}`);
+		if (!question || question.length == 0) return null;
 		const questionId = question[0].id;
 		this.id = questionId;
-		console.log(this.id);
 		await this.load();
 		return this;
-}
+	}
+
+	/**
+	 * 
+	 * @param {"truth" | "dare"} type 
+	 */
+	static async collect(type) {
+		const db = new Database();
+		
+		const questions = await db.query(`SELECT * FROM questions WHERE type='${type}' AND isBanned=0 AND isApproved=1`);
+
+		return questions ?? [];
+	}
 
 	async ban(reason) {
 		this.isBanned = 1;
 		this.banReason = reason;
+		return this.save();
+	}
+
+	async unBan() {
+		this.isBanned = 0;
+		this.banReason = null;
 		return this.save();
 	}
 
@@ -118,7 +134,7 @@ async find(messageId) {
 		await this.save();
 	}
 
-	async getCreatorUsername(){
+	async getCreatorUsername() {
 		const user = new User(this.creator);
 		await user.get();
 
@@ -132,6 +148,7 @@ async find(messageId) {
 		string.creator = this.creator;
 		string.isBanned = this.isBanned;
 		string.banReason = this.banReason;
+		string.type = this.type;
 		return string;
 	}
 }

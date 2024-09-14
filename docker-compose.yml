@@ -1,21 +1,50 @@
-services:
+version: '3.8'
 
+services:
   db:
     image: mysql
-    restart: always
-    env_file: ./.env
+    restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${DATABASE_PASSWORD}
-      MYSQL_DATABASE: ${DATABASE}
+      MYSQL_ROOT_PASSWORD: 
+      MYSQL_DATABASE: tord
     volumes:
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - mysql_data:/var/lib/mysql
     ports:
-      - $DATABASE_LOCAL_PORT:$DATABASE_DOCKER_PORT
+      - "3309:3306"  # Ensure these variable placeholders match your setup or replace with explicit values
 
   bot:
-    build:
-      context: ./
-    #image: vulps23/project-encourage:4.1.4
-    restart: always
+    image: vulps23/project-encourage:5.2.95
+    restart: always  # Automatically restart the bot if it crashes
     depends_on:
       - db
+    environment:
+      DATABASE: tord
+      DATABASE_HOST: db
+      DATABASE_USER: root
+      DATABASE_PASSWORD: 
+      DATABASE_PORT: 3306
+    logging:
+      options:
+        max-size: 10m
+    ports:
+      - "3002:3002"  # Expose port 3002 for the webhook
+
+  wiki:
+    image: requarks/wiki:2
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      DB_TYPE: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASS: 
+      DB_NAME: wiki
+    volumes:
+      - ./data/wiki:/wiki/data
+    ports:
+      - "3003:3000"  # Expose Wiki.js on port 3000
+
+volumes:
+  mysql_data:

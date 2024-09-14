@@ -1,8 +1,10 @@
-const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandStringOption } = require("discord.js");
+const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandStringOption, Interaction, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 const DareHandler = require("../../handlers/dareHandler");
 const TruthHandler = require("../../handlers/truthHandler");
 const Database = require("../../objects/database");
 const logger = require("../../objects/logger");
+const User = require("../../objects/user");
+const embedder = require("../../embedder");
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -28,13 +30,34 @@ module.exports = {
 		),
 	nsfw: true,
 	administrator: false,
+	/**
+	 * 
+	 * @param {Interaction} interaction 
+	 * @returns 
+	 */
 	async execute(interaction) {
+
+		const user = new User(interaction.user.id);
+		await user.get();
+		if (!await user.canCreate()) {
+			const row = new ActionRowBuilder()
+				.addComponents(
+					new ButtonBuilder()
+						.setCustomId('rules_accept')
+						.setLabel('Accept Rules')
+						.setStyle(ButtonStyle.Success),
+				);
+			interaction.reply({ content: "You must accept the rules before creating a Truth or Dare", embeds: [embedder.rules()], components: [row], ephemeral: true });
+			logger.editLog(interaction.logMessage.id, `${interaction.logInteraction} Aborted: User has not accepted the rules`);
+			return;
+		}
+
+		interaction.deferReply({ ephemeral: true });
 		//handle different subcommands
 		const subcommand = interaction.options.getSubcommand();
 		const db = new Database();
-		lastDare = await db.createdWithin('dares', 2, interaction.user.id);
-		lastTruth = await db.createdWithin('truths', 2, interaction.user.id);
-		if ((lastDare.length > 0 || lastTruth.length > 0) && !my.environment === 'dev') {
+		lastQuestion = await db.createdWithin('questions', 2, interaction.user.id);
+		if (lastQuestion.length > 0 && !my.environment === 'dev') {
 			interaction.reply({ content: `Aborted creation: User attempted to create a Truth or Dare within 2 minutes`, ephemeral: true });
 			logger.error(`Aborted creation: User attempted to create a Truth or Dare within 2 minutes`);
 

@@ -1,6 +1,13 @@
-const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandUserOption, SlashCommandStringOption } = require("discord.js");
+const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandUserOption, SlashCommandStringOption, SlashCommandIntegerOption, Interaction } = require("discord.js");
 const TruthHandler = require("../../handlers/truthHandler");
 const DareHandler = require("../../handlers/dareHandler");
+const User = require("../../objects/user");
+const Server = require("../../objects/server");
+
+const XP_TYPES = {
+    GLOBAL: 'global',
+    SERVER: 'server',
+};
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -19,6 +26,20 @@ module.exports = {
 				.setDescription('The Dare to give')
 				.setRequired(true)
 			)
+			.addIntegerOption(new SlashCommandIntegerOption()
+				.setName('wager')
+				.setDescription('How much XP will you wager')
+				.setRequired(true)
+			)
+			.addStringOption(new SlashCommandStringOption()
+				.setName('type')
+				.setDescription('The type of XP you want to wager')
+				.setRequired(true)
+				.setChoices(
+					{ name: "Global XP", value: XP_TYPES.GLOBAL },
+					{ name: "Server XP", value: XP_TYPES.SERVER }
+				)
+			)
 		)
 		.addSubcommand(new SlashCommandSubcommandBuilder()
 			.setName('truth')
@@ -33,21 +54,71 @@ module.exports = {
 				.setDescription('The Truth to ask')
 				.setRequired(true)
 			)
+			.addIntegerOption(new SlashCommandIntegerOption()
+				.setName('wager')
+				.setDescription('How much XP will you wager')
+				.setRequired(true)
+			)
+			.addStringOption(new SlashCommandStringOption()
+				.setName('type')
+				.setDescription('The type of XP you want to wager')
+				.setRequired(true)
+				.setChoices(
+					{ name: "Global XP", value: XP_TYPES.GLOBAL },
+					{ name: "Server XP", value: XP_TYPES.SERVER }
+				)
+			)
 		),
 	nsfw: true,
 	administrator: false,
+/** @param {Interaction} interaction  */
 	async execute(interaction) {
 		const subcommand = interaction.options.getSubcommand();
+		const xpType = interaction.options.getString('type');
+		const wager = interaction.options.getInteger('wager');
+		const user = new User(interaction.user.id);
+		await user.get();
 
-		switch (subcommand) {
-			case 'truth':
-				new TruthHandler(interaction.client).giveTruth(interaction);
-				break;
-			case 'dare':
-				new DareHandler(interaction.client).giveDare(interaction);
-				break;
-			default:
-				break;
+		if (!(await hasEnoughXP(user, xpType, wager, interaction))) return;
+
+		if (subcommand === 'truth') {
+			new TruthHandler(interaction.client).giveTruth(interaction);
+		} else if (subcommand === 'dare') {
+			new DareHandler(interaction.client).giveDare(interaction);
 		}
 	}
+};
+
+/**
+ * 
+ * @param {User} user 
+ * @param {XP_TYPES} xpType 
+ * @param {number} wager 
+ * @param {Interaction} interaction 
+ * @returns 
+ */
+async function hasEnoughXP(user, xpType, wager, interaction) {
+	if (xpType === XP_TYPES.GLOBAL) {
+		if (user.getTotalGlobalXP() < wager) {
+			await interaction.reply({ content: `You do not have ${wager} ${xpType} XP to wager`, ephemeral: true});
+			return false;
+		}
+		
+	} else if (xpType === XP_TYPES.SERVER) {
+		const server = new Server(interaction.guildId);
+		await server.load();
+		const premium = await server.hasPremium();
+		if (!premium) {
+			await interaction.reply({
+				content: "Wagering Server XP is a premium feature. Premium is not quite ready yet, But I'm working hard to make these commands available for everyone :)",
+				ephemeral: true
+			});
+			return false;
+		}
+		if (user.getTotalServerXP() < wager) {
+			await interaction.reply({ content: `You do not have ${wager} ${xpType} XP to wager`, ephemeral: true });
+			return false;
+		}
+	}
+	return true;
 }

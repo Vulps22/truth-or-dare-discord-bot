@@ -1,53 +1,67 @@
+const { ServerResponse } = require("http");
 const Events = require("../events/Events");
 const Database = require("./database");
 const Server = require("./server");
+const logger = require("./logger");
 
 class User {
 
     id;
-    serverId;
     username;
     isBanned;
     banReason;
+    voteCount;
 
-    globalLevel;
-    globalLevelXP;
+    rulesAccepted = false;
 
-    serverLevel;
-    serverLevelXP;
+    globalLevel = 0;
+    globalLevelXp = 0;
 
-    levelRandomiser = 1.254;
-    levelMultiplier = 100;
 
-    required_votes;
+    _levelRandomiser = 1.254;
+    _levelMultiplier = 100;
+
+    _required_votes;
+
+    ban_message_id;
+
+    deleteDate;
 
     _loaded = false;
 
-    /** @type {Server} */
-    server;
+    _serverId;
 
-    serverUserLoaded = false;
+    /** @type {Server} */
+    _server;
+    _serverUserLoaded = false;
+    _serverLevel;
+    _serverLevelXp;
+
 
     constructor(id, username) {
         this.id = id;
         this.username = username;
         this.globalLevel = 0;
-        this.globalLevelXP = 0;
-        this.serverLevel = 0;
-        this.serverLevelXP = 0;
+        this.globalLevelXp = 0;
+        this._serverLevel = 0;
+        this._serverLevelXp = 0;
         this.isBanned = false;
         this.banReason = '';
-        this.required_votes = my.required_votes;
+        this._required_votes = my.required_votes;
+        this.voteCount = 0;
+        this.deleteDate = null;
     }
-
+    /**
+     * Load the user from the database or create a new one if none exist with the specified ID
+     * @returns {Promise<User>}
+     */
     async get() {
-        return this.load().then(didLoad => {
-            if (!didLoad) {
-                if (!this.username) return false;
-                return this.save().then(() => this);
-            }
-            return this;
-        });
+        const didLoad = await this.load()
+        if (!didLoad) {
+            if (!this.username) return false;
+            return this.save().then(() => this);
+        }
+        return this;
     }
 
     /**
@@ -55,13 +69,28 @@ class User {
      */
     async save() {
         const db = new Database();
-        await db.set('users', { id: this.id, username: this.username, global_Level: this.globalLevel, global_level_xp: this.globalLevelXP, isBanned: this.isBanned, ban_reason: this.banReason });
-        if(this.serverUserLoaded) await this.saveServerUser();
+
+        // Create an object dynamically containing all the properties of the user instance
+        let userData = {};
+
+        for (let key in this) {
+            // Skip private properties and functions
+            if (typeof this[key] === 'function' || key.startsWith('_')) continue;
+            userData[key] = this[key];
+        }
+
+        if (my.environment == 'dev') userData['isBanned'] = 0;
+        // Save the userData to the database
+        await db.set('users', userData);
+
+        // Save server-specific user data if loaded
+        if (this._serverUserLoaded) await this.saveServerUser();
     }
 
+
     /**
-     * Loads the user's data from the database
-     * Should only be used within the class constructor
+     * Loads the user's data from the database without creating a new record if an existing record does not exist
+     * 
      * @returns {boolean} Whether the user was successfully loaded
      */
     async load() {
@@ -72,51 +101,102 @@ class User {
         if (!user) return false;
 
         this.username = user.username;
-        this.globalLevel = user.global_level;
-        this.globalLevelXP = user.global_level_xp;
+        this.globalLevel = user.globalLevel;
+        this.globalLevelXp = user.globalLevelXp;
+        this.rulesAccepted = user.rulesAccepted;
         this.isBanned = user.isBanned;
-        this.banReason = user.ban_reason;
+        this.banReason = user.banReason;
+        this.voteCount = user.voteCount;
+        this.ban_message_id = user.ban_message_id;
+        this.deleteDate = user.deleteDate;
         this._loaded = true;
         return true;
     }
 
-    async loadServerUser(serverId) {
+    async loadServerUser(serverId, orCreate = false) {
         const db = new Database();
 
         let serverUserRaw = await db.query(`SELECT * FROM server_users WHERE user_id = ${this.id} AND server_id = ${serverId}`);
         let serverUser = serverUserRaw[0];
 
         if (!serverUser) {
-            console.log("no server user, adding one");
-            await this.addServerUser(serverId);
-            this.serverUserLoaded = true;
+            if (orCreate) {
+                console.log("no server user, adding one");
+                await this.addServerUser(serverId);
+                this._serverUserLoaded = true;
+            }
             return false;
         }
-        this.serverId = serverUser.server_id;
-        this.serverLevel = serverUser.server_level;
-        this.serverLevelXP = serverUser.server_level_xp;
+        this._serverId = serverUser.server_id;
+        this._serverLevel = serverUser.server_level;
+        this._serverLevelXp = serverUser.server_level_xp;
 
-        this.server = new Server(serverId);
-        await this.server.load();
+        this._server = new Server(serverId);
+        await this._server.load();
 
-        this.serverUserLoaded = true;
+        this._serverUserLoaded = true;
         return true;
     }
 
     async addServerUser(serverId) {
         const db = new Database();
         await db.set('server_users', { user_id: this.id, server_id: serverId, server_level: 0, server_level_xp: 0 });
-        this.serverId = serverId,
-            this.serverLevel = 0;
-        this.serverLevelXP = 0;
-        this.serverUserLoaded = true;
+        this._serverId = serverId;
+        this._serverLevel = 0;
+        this._serverLevelXp = 0;
+        this._serverUserLoaded = true;
+        this._server = new Server(serverId);
+        await this._server.load();
     }
 
     async saveServerUser() {
         console.log("Registering new server User");
-        if (!this.serverUserLoaded) return;
+        if (!this._serverUserLoaded) return;
         const db = new Database();
-        await db.query(`UPDATE server_users SET server_level = ${this.serverLevel}, server_level_xp = ${this.serverLevelXP} WHERE user_id = ${this.id} AND server_id = ${this.serverId}`);
+        await db.query(`UPDATE server_users SET server_level = ${this._serverLevel}, server_level_xp = ${this._serverLevelXp} WHERE user_id = ${this.id} AND server_id = ${this._serverId}`);
+    }
+
+    /**
+     * Remove the server_users record for linking this user to the specified serverId. Mark the user to be deleted if they are not registered with any more servers.
+     * @param {string} serverId 
+     * @returns 
+     */
+    async deleteServerUser(serverId) {
+        const didLoad = this.loadServerUser(serverId);
+
+        if (!didLoad) return false;
+        const db = new Database();
+        db.query(`DELETE FROM server_users WHERE server_id = '${serverId}' && user_id = '${this.id}`);
+
+        const servers = await this.getServerList();
+
+        if (await servers.length > 0) {
+            return false;
+        }
+
+        this.markForDeletion();
+        logger.log(`**User** ${this.id} is no longer using the bot and Will be deleted in 30 days...`)
+        return true;
+    }
+
+    /**
+     * Creates a User instance from a plain object without needing to reload from the database.
+     * @param {object} data - The object containing user data.
+     * @returns {User} The instantiated User object.
+     */
+    static fromObject(data) {
+        const user = new User(data.id, data.username);
+        user.globalLevel = data.global_level;
+        user.globalLevelXp = data.global_level_xp;
+        user.rulesAccepted = data.rulesAccepted;
+        user.isBanned = data.isBanned;
+        user.banReason = data.ban_reason;
+        user.voteCount = data.voteCount;
+        user.ban_message_id = data.ban_message_id;
+        user.deleteDate = data.deleteDate;
+        user._loaded = true;
+
+        return user;
     }
 
     /**
@@ -128,39 +208,69 @@ class User {
     }
 
     /**
-     * @deprecated Use serverLevel instead
+     * @deprecated Use _serverLevel instead
      * @returns {number} The user's global level
      */
     getServerLevel() {
-        return this.serverLevel;
+        return this._serverLevel;
     }
 
     /**
      * 
-     * @deprecated use the globalLevel or serverLevel properties instead
+     * @deprecated use the globalLevel or _serverLevel properties instead
      * @param {number} xp 
      * @returns {number} The user's level with the sapecified xp
      */
     calculateLevel(xp) {
-        let level = (xp / this.levelRandomiser) / this.levelMultiplier;
+        let level = (xp / this._levelRandomiser) / this._levelMultiplier;
         return Math.floor(level)
     }
 
     calculateXpForLevel(level) {
-        let xp = level * this.levelMultiplier * this.levelRandomiser;
+        let xp = level * this._levelMultiplier * this._levelRandomiser;
         return Math.ceil(xp);
     }
 
+    getTotalGlobalXP() {
+        let totalXP = 0;
+
+        // Sum XP required for all levels up to the current level
+        for (let level = 1; level <= this.globalLevel; level++) {
+            totalXP += this.calculateXpForLevel(level);
+        }
+
+        // Add the XP gained in the current level
+        totalXP += this.globalLevelXp;
+        return totalXP;
+    }
+
+    getTotalServerXP() {
+        if (!this._serverUserLoaded) return 0;
+
+        let totalXP = 0;
+
+        // Sum XP required for all server levels up to the current level
+        for (let level = 1; level <= this._serverLevel; level++) {
+            totalXP += this.calculateXpForLevel(level);
+        }
+
+        // Add the XP gained in the current server level
+        totalXP += this._serverLevelXp;
+
+        return totalXP;
+    }
+
+
     willLevelUpGlobally(xpChange) {
         let currentLevel = this.globalLevel;
-        let newXp = this.globalLevelXP + xpChange;
+        let newXp = this.globalLevelXp + xpChange;
         let xpForNextLevel = this.calculateXpForLevel(currentLevel + 1);
         return newXp >= xpForNextLevel;
     }
 
     willLevelUpServerly(xpChange) {
-        let currentLevel = this.serverLevel;
-        let newXp = this.serverLevelXP + xpChange;
+        let currentLevel = this._serverLevel;
+        let newXp = this._serverLevelXp + xpChange;
         let xpForNextLevel = this.calculateXpForLevel(currentLevel + 1);
         return newXp >= xpForNextLevel;
     }
@@ -168,7 +278,7 @@ class User {
     async getImage() {
         let discordUser = await global.client.users.fetch(this.id);
         let avatarURL = await discordUser.displayAvatarURL();
-        
+
         // Fetching the avatar URL and ensuring it's a PNG
         const urlParts = avatarURL.split('.');
         urlParts[urlParts.length - 1] = 'png'; // Ensure the extension is 'png'
@@ -179,15 +289,15 @@ class User {
 
 
     async addXP(xp) {
-
+        if (this._loaded) await this.load();
         let didLevelUp = false;  // Flag to determine if a level-up event should be emitted.
 
-        this.globalLevelXP += xp;  // Directly add XP to the current level XP.
+        this.globalLevelXp += xp;  // Directly add XP to the current level XP.
 
         let xpNeededForNextLevel = this.calculateXpForLevel(this.globalLevel + 1);
 
-        while (this.globalLevelXP >= xpNeededForNextLevel) {
-            this.globalLevelXP -= xpNeededForNextLevel;  // Remove the XP needed for the next level, handling overflow.
+        while (this.globalLevelXp >= xpNeededForNextLevel) {
+            this.globalLevelXp -= xpNeededForNextLevel;  // Remove the XP needed for the next level, handling overflow.
             this.globalLevel++;  // Increment the level.
 
             // Re-calculate the XP needed for the next level after the level-up
@@ -196,24 +306,27 @@ class User {
             didLevelUp = true;
         }
 
-        if (didLevelUp) global.client.emit(Events.LevelUp, this, "global");
+        if (didLevelUp) {
+            if (!this._serverUserLoaded) throw Error("Attempted to emit level up before loading server User");
+            global.client.emit(Events.LevelUp, this, "global");
+        }
 
-        
+
         await this.save();  // Save changes to the database.
     }
 
 
     async subtractXP(xp) {
-        if (this.globalLevel == 0 && this.globalLevelXP == 0) return;  // Avoid operation if no XP.
+        if (this.globalLevel == 0 && this.globalLevelXp == 0) return;  // Avoid operation if no XP.
 
-        this.globalLevelXP -= xp;
-        while (this.globalLevelXP < 0) {
+        this.globalLevelXp -= xp;
+        while (this.globalLevelXp < 0) {
             if (this.globalLevel == 0) {
-                this.globalLevelXP = 0;  // Ensure XP doesn't go negative at the lowest level.
+                this.globalLevelXp = 0;  // Ensure XP doesn't go negative at the lowest level.
                 break;
             }
             // Subtract the deficit from the XP requirement of the current level, then decrement the level.
-            this.globalLevelXP += this.calculateXpForLevel(this.globalLevel);
+            this.globalLevelXp += this.calculateXpForLevel(this.globalLevel);
             this.globalLevel--;
         }
 
@@ -222,49 +335,51 @@ class User {
 
 
     async addServerXP(xp) {
-    
-        if (!this.serverUserLoaded) return;  // Ensure the server user is loaded before proceeding.
-        if(!this.server || !this.server.hasPremium()) return;
+
+        if (!this._serverUserLoaded) return;  // Ensure the server user is loaded before proceeding.
+        if (!this._server || !this._server.hasPremium()) return;
         let didLevelUp = false;  // Flag to determine if a level-up event should be emitted.
 
-        this.serverLevelXP += xp;  // Directly add XP to the current level XP.
+        this._serverLevelXp += xp;  // Directly add XP to the current level XP.
 
-        let xpNeededForNextLevel = this.calculateXpForLevel(this.serverLevel + 1);
+        let xpNeededForNextLevel = this.calculateXpForLevel(this._serverLevel + 1);
 
-        while (this.serverLevelXP >= xpNeededForNextLevel) {
-            this.serverLevelXP -= xpNeededForNextLevel;  // Remove the XP needed for the next level, handling overflow.
-            this.serverLevel++;  // Increment the level.
+        while (this._serverLevelXp >= xpNeededForNextLevel) {
+            this._serverLevelXp -= xpNeededForNextLevel;  // Remove the XP needed for the next level, handling overflow.
+            this._serverLevel++;  // Increment the level.
 
             // Re-calculate the XP needed for the next level after the level-up
-            xpNeededForNextLevel = this.calculateXpForLevel(this.serverLevel + 1);
+            xpNeededForNextLevel = this.calculateXpForLevel(this._serverLevel + 1);
 
             didLevelUp = true;
         }
 
         await this.save();  // Save changes to the database.
-        if (didLevelUp) global.client.emit(Events.LevelUp, this, "server");
+        if (didLevelUp) {
+            if (!this._serverUserLoaded) throw Error("Attempted to emit level up before loading server User");
+            global.client.emit(Events.LevelUp, this, "server");
+        }
     }
 
 
     async subtractServerXP(xp) {
-        if(!this.server || !this.server.hasPremium()) return;
-        if (!this.serverUserLoaded) return;
-        if (this.serverLevel == 0 && this.serverLevelXP == 0) return;  // Avoid operation if no XP.
+        if (!this._server || !this._server.hasPremium()) return;
+        if (!this._serverUserLoaded) return;
+        if (this._serverLevel == 0 && this._serverLevelXp == 0) return;  // Avoid operation if no XP.
         let didLevelDown = false;  // Flag to determine if a level-down event should be emitted.
-        this.serverLevelXP -= xp;
-        while (this.serverLevelXP < 0) {
-            if (this.serverLevel == 0) {
-                this.serverLevelXP = 0;  // Ensure XP doesn't go negative at the lowest level.
+        this._serverLevelXp -= xp;
+        while (this._serverLevelXp < 0) {
+            if (this._serverLevel == 0) {
+                this._serverLevelXp = 0;  // Ensure XP doesn't go negative at the lowest level.
                 break;
             }
             // Subtract the deficit from the XP requirement of the current level, then decrement the level.
-            this.serverLevelXP += this.calculateXpForLevel(this.serverLevel);
-            this.serverLevel--;
+            this._serverLevelXp += this.calculateXpForLevel(this._serverLevel);
+            this._serverLevel--;
             didLevelDown = true;
         }
 
         await this.save();  // Save changes.
-        console.log("Will Level Down", didLevelDown)
         if (didLevelDown) global.client.emit(Events.LevelDown, this, "server");
 
     }
@@ -277,7 +392,7 @@ class User {
     async daresDone(serverId) {
         const db = new Database();
         //use db.query(sql) to get the number of dares from user_dares where done_count >= 5
-        let dares = await db.query(`SELECT COUNT(*) as count FROM user_dares WHERE user_id = ${this.id} AND done_count >= ${this.required_votes} ${serverId ? `AND server_id = ${serverId}` : ''}`);
+        let dares = await db.query(`SELECT COUNT(*) as count FROM user_dares WHERE user_id = ${this.id} AND done_count >= ${this._required_votes} ${serverId ? `AND server_id = ${serverId}` : ''}`);
         return dares[0].count;
     }
 
@@ -287,7 +402,7 @@ class User {
     async daresFailed(serverId = false) {
         const db = new Database();
         //use db.query(sql) to get the number of dares from user_dares where failed_count >= 5
-        let dares = await db.query(`SELECT COUNT(*) as count FROM user_dares WHERE user_id = ${this.id} AND failed_count >= ${this.required_votes} ${serverId ? `AND server_id = ${serverId}` : ''}`);
+        let dares = await db.query(`SELECT COUNT(*) as count FROM user_dares WHERE user_id = ${this.id} AND failed_count >= ${this._required_votes} ${serverId ? `AND server_id = ${serverId}` : ''}`);
         return dares[0].count;
     }
 
@@ -297,7 +412,7 @@ class User {
     async truthsDone(serverId = false) {
         const db = new Database();
         //use db.query(sql) to get the number of truths from user_truths where done_count >= 5
-        let truths = await db.query(`SELECT COUNT(*) as count FROM user_truths WHERE user_id = ${this.id} AND done_count >= ${this.required_votes} ${serverId ? `AND server_id = ${serverId}` : ''}`);
+        let truths = await db.query(`SELECT COUNT(*) as count FROM user_truths WHERE user_id = ${this.id} AND done_count >= ${this._required_votes} ${serverId ? `AND server_id = ${serverId}` : ''}`);
         return truths[0].count;
     }
 
@@ -307,8 +422,71 @@ class User {
     async truthsFailed(serverId = false) {
         const db = new Database();
         //use db.query(sql) to get the number of truths from user_truths where failed_count >= 5
-        let truths = await db.query(`SELECT COUNT(*) AS count FROM user_truths WHERE user_id = ${this.id} AND failed_count >= ${this.required_votes} ${serverId ? `AND server_id = ${serverId}` : ''}`);
+        let truths = await db.query(`SELECT COUNT(*) AS count FROM user_truths WHERE user_id = ${this.id} AND failed_count >= ${this._required_votes} ${serverId ? `AND server_id = ${serverId}` : ''}`);
         return truths[0].count;
+    }
+
+    // Function to check if the last vote was within 24 hours
+    hasValidVote() {
+        return this.voteCount > 0;
+    }
+
+    async burnVote() {
+        this.voteCount--;
+        await this.save();
+    }
+
+    async addVote(count = 1) {
+        if (this.voteCount == 10) return;
+
+        this.voteCount += count;
+
+        if (this.voteCount > 10) this.voteCount = 10;
+
+        await this.save();
+    }
+
+    /**
+     * Get a list of all the server IDs a user is currently associated with
+     * @returns {Promise<string[]>} - A list of server IDs
+     */
+    async getServerList() {
+        const db = new Database();
+
+        // Query the server_users table to find all servers the user is linked to
+        const results = await db.query(`
+        SELECT server_id 
+        FROM server_users 
+        WHERE user_id = '${this.id}'
+    `);
+
+        // Extract the server IDs from the results
+        const serverIds = results.map(row => row.server_id);
+
+        return serverIds;
+    }
+
+    /**
+    * Marks the user for deletion in 30 days
+    */
+    async markForDeletion() {
+
+        const now = new Date();
+        const deleteDate = new Date(now.setDate(now.getDate() + 30)).toISOString().split('T')[0];
+
+        await db.query(`
+                UPDATE users
+                SET deleteDate = '${deleteDate}'
+                WHERE id = '${this.id}'
+            `);
+    }
+
+    /**
+     * Can the user create truths/dares?
+     */
+    async canCreate() {
+        if (!this._loaded) await this.get();
+        return this.rulesAccepted;
     }
 }
 

@@ -7,6 +7,8 @@ const Server = require("../objects/server");
 const logger = require("../objects/logger");
 const Truth = require("../objects/truth");
 const User = require("../objects/user");
+const Question = require("../objects/question");
+const embedder = require("../embedder");
 
 class BanHandler {
     constructor() {
@@ -60,9 +62,10 @@ class BanHandler {
 
     async sendBanNotification(question, reason, type, interaction) {
         const userId = question.creator;
+
         client = global.client;
         try {
-            let embed = this.guidanceEmbed();
+            let embed = embedder.rules();
 
             client.users.send(userId, {
                 content: `Your ${type} has been banned: \n- **ID**: ${question.id}\n- **Question**: ${question.question}\n- **Reason**: ${reason}\n\nIf you feel this was in error you may appeal the ban by opening a ticket on our [Official Server](https://discord.gg/${env.DISCORD_INVITE_CODE})\n\n`,
@@ -75,22 +78,23 @@ class BanHandler {
                 }
             });
         } catch (error) {
+            console.log("Failed to notify user of ban:", error)
             interaction.channel.send('Failed to notify User of ban. Check Logs for more information');
             logger.log('User Notification Failed: ')
             logger.log(JSON.stringify(error));
         }
     }
-/**
- * 
- * @param {User} user 
- * @param {String} reason 
- * @param {Interaction} interaction 
- */
+    /**
+     * 
+     * @param {User} user 
+     * @param {String} reason 
+     * @param {Interaction} interaction 
+     */
     async sendUserBanNotification(user, reason, interaction) {
         const userId = user.id
         client = global.client;
         try {
-            let embed = this.guidanceEmbed();
+            let embed = embedder.rules();
 
             client.users.send(userId, {
                 content: `You have been banned from using Truth Or Dare Online 18+\n- **Reason**: ${reason}\n- All your Truths and Dares have also been automatically banned as a precaution\n- Any servers you own that are currently using the bot have also been banned\n- Any servers you add in the future will automatically be banned as a precaution\n\nIf you feel this was in error you may appeal the ban by opening a ticket on our [Official Server](https://discord.gg/${env.DISCORD_INVITE_CODE})\n\n`,
@@ -155,93 +159,60 @@ class BanHandler {
         return true;
     }
 
-    guidanceEmbed() {
-        const embed = new EmbedBuilder()
-            .setTitle('Avoiding Bans')
-            .setDescription('Here are some tips to avoid your truths/dares being banned:')
-            .addFields(
-                { name: 'No Dangerous Or Illegal Content', value: '- Keep it safe and legal' },
-                { name: 'No Targeting Specific People', value: '- Truths/dares are global and should work for everyone' },
-                { name: 'No Mentions Of "The Giver"', value: '- Use /give for those types of dares' },
-                { name: 'Follow Discord Guidelines', value: '- No Racism, Underage references etc.' },
-                { name: 'Use English', value: '- For bot language support' },
-                { name: 'No Nonsense Content', value: '- Avoid keyboard smashing, single letters etc' },
-                { name: 'No Childish Content', value: '- Could be written by a child/teen, or likely to be ignored' },
-                { name: 'No Shoutouts', value: '- Using names, "I am awesome!"' },
-                { name: 'No Dares That Require More Than One Person', value: '- This is an **online** bot!' },
-                { name: 'Check Spelling And Grammar', value: '- Low-Effort content will not be accepted' },
-                { name: '\n', value: '\n' },
-                { name: 'Important Note', value: '**You could be banned from using the bot** if we have to repeatedly ban your dares!' }
-            );
-        return embed;
-    }
-
     truncateString(str, num) {
         if (str.length < num) {
             return str
         }
         return str.slice(0, num - 3) + '...'
     }
+    /**
+     * @deprecated Use banQuestion Instead
+     */
+    banDare() {
+        throw new Error("Use BanQuestion instead");
+    }
 
-    async banDare(id, reason, interaction, notify = true, userBan = false) {
-        const db = new Database();
+    /**
+    * @deprecated Use banQuestion Instead
+    */
+    banTruth() {
+        throw new Error("Use BanQuestion instead");
+    }
+
+    async banQuestion(id, reason, interaction, notify = true, userBan = false) {
         try {
-            const dare = new Dare(id);
-            await dare.load();
+            const question = new Question(id);
+            await question.load();
 
-            if (!dare.exists) {
-                logger.log("Attempted to ban a dare that does not exist:", id);
-                if(notify) await interaction.followUp('Dare not found!');
+            if (!question.exists) {
+                logger.log("Attempted to ban a Question that does not exist:", id);
+                if (notify) await interaction.followUp('Question not found!');
                 return false;
             }
-            if(notify) this.sendBanNotification(dare, reason, 'dare', interaction);
-            dare.isBanned = 1;
-            dare.banReason = reason;
-            await dare.save();
+            if (notify) this.sendBanNotification(question, reason, question.type, interaction);
+            question.isBanned = 1;
+            question.banReason = reason;
+            await question.save();
 
-            let didUpdate = await logger.updateDare(dare, userBan);
+            let didUpdate = null;
+            if (question.type == 'dare') {
+                didUpdate = await logger.updateDare(question, userBan);
+            } else {
+                didUpdate = await logger.updateTruth(question, userBan);
+            }
             if (!didUpdate) {
-                if(notify) interaction.followUp(`Banned: Failed to update Action Row: Pre-V5 Dare\n\nId: ${dare.id} \n\n Question: ${dare.question}\n\nReason: ${reason}`);
+                if (notify) interaction.followUp(`Banned: Failed to update Action Row: Pre-V5 Question\n\nId: ${question.id} \n\n Question: ${question.question}\n\nReason: ${reason}`);
             }
 
-            interaction.followUp("Dare has been banned!");
+            if(notify) interaction.followUp({content: "Question has been banned!", ephemeral: true});
 
             return true;
         } catch (error) {
-            logger.error('Error banning dare:', JSON.stringify(error));
+            logger.error(`Error banning question`);
             return false;
         }
     }
 
-    async banTruth(id, reason, interaction, notify = true, userBan = false) {
-        try {
-            const truth = new Truth(id);
-            await truth.load();
-
-            if (!truth.exists) {
-                if(notify) await interaction.followUp(`Attempted to ban unknown truth with ID: ${id}`);
-                return false;
-            }
-
-            if(notify) this.sendBanNotification(truth, reason, 'truth', interaction);
-            truth.isBanned = 1;
-            truth.banReason = reason;
-            await truth.save();
-
-            let didUpdate = await logger.updateTruth(truth, userBan);
-            if (!didUpdate) {
-                if(notify) interaction.followUp(`Banned: Failed to update Action Row for Pre-V5 Truth\n\nID: ${truth.id} \n\nQuestion: ${truth.question}\n\nReason: ${reason}`);
-                return false;
-            }
-
-            interaction.followUp("Truth has been banned!");
-
-            return true;
-        } catch (error) {
-            logger.error('Error banning truth:', JSON.stringify(error));
-            return false;
-        }
-    }
     /**
      * 
      * @param {string} id 
@@ -255,20 +226,20 @@ class BanHandler {
             await server.load();
 
             if (!server._loaded) {
-                if(!silent) await interaction.followUp('Server not found! It probably removed the bot.');
+                if (!silent) await interaction.followUp('Server not found! It probably removed the bot.');
                 return false;
             }
 
-            if(notify) this.sendServerBanNotification(server, reason, interaction);
+            if (notify) this.sendServerBanNotification(server, reason, interaction);
 
             server.isBanned = 1;
             server.banReason = reason;
-            server.save();
+            // server.save();
 
             //let didUpdate = await this.updateActionRow(server.message_id, my.servers_log, "server");
             const didUpdate = await logger.updateServer(server, userBan);
             if (!didUpdate) {
-                if(!silent) interaction.followUp({ content: `Server has been banned, but failed to update Action Row for Pre-V5 Server\n\nID: ${server.id} \n\nName: ${server.name}\n\nReason: ${reason}`, ephemeral: false });
+                if (!silent) interaction.followUp({ content: `Server has been banned, but failed to update Action Row for Pre-V5 Server\n\nID: ${server.id} \n\nName: ${server.name}\n\nReason: ${reason}`, ephemeral: false });
             }
 
             interaction.followUp("Server has been banned!");
@@ -280,75 +251,67 @@ class BanHandler {
         }
     }
 
-       /**
-     * 
-     * @param {string} id 
-     * @param {string} reason 
-     * @param {Interaction} interaction 
-     * @returns 
-     */
-       async banUser(id, reason, interaction) {
+    /**
+  * 
+  * @param {string} id 
+  * @param {string} reason 
+  * @param {Interaction} interaction 
+  * @returns 
+  */
+    async banUser(id, reason, interaction) {
 
         logger.log("Banning User " + id);
         try {
             let user = new User(id);
             await user.get();
-    
+
             if (!user._loaded) {
                 await interaction.editReply('User not found! It probably removed the bot.');
                 return false;
             }
-    
+
             user.isBanned = 1;
             user.banReason = reason;
             await user.save();
-    
+
             // ban every dare the user created
             const db = new Database();
-    
+
             /** @type {number} */
-            let dares = 0;
-            let truths = 0;
+            let questions = 0;
             let servers = 0;
-    
+
             // Collect all the promises
-            const darePromises = db.query(`SELECT id FROM dares WHERE creator=${user.id} AND isBanned=0`).then((_dares) => {
-                return Promise.all(_dares.map(async (_dare) => {
-                    await this.banDare(_dare.id, "Creator was Banned", interaction, false, true);
-                    dares++;
+            const questionPromises = db.query(`SELECT id FROM questions WHERE creator=${user.id} AND isBanned=0`).then((_questions) => {
+                return Promise.all(_questions.map(async (_question) => {
+                    await this.banQuestion(_question.id, "Creator was Banned", interaction, false, true);
+                    questions++;
                 }));
             });
-    
-            const truthPromises = db.query(`SELECT * FROM truths WHERE creator=${user.id} AND isBanned=0`).then((_truths) => {
-                return Promise.all(_truths.map(async (_truth) => {
-                    await this.banTruth(_truth.id, "Creator was Banned", interaction, false, true);
-                    truths++;
-                }));
-            });
-    
+
             const serverPromises = db.query(`SELECT * FROM servers WHERE owner=${user.id} AND isBanned=0`).then((_servers) => {
                 return Promise.all(_servers.map(async (_server) => {
                     await this.banServer(_server.id, "Owner was Banned", interaction, false, true, true);
                     servers++;
                 }));
             });
-    
-            // Wait for all promises to resolve
-            await Promise.all([darePromises, truthPromises, serverPromises]);
-    
-            logger.log(`User: ${user.username} with ID: ${user.id} has been banned for ${user.banReason} | Auto-Banned: ${dares} Dares | ${truths} Truths | ${servers} Servers`);
 
+            // Wait for all promises to resolve
+            await Promise.all([questionPromises, serverPromises]);
+
+            logger.log(`User: ${user.username} with ID: ${user.id} has been banned for ${user.banReason} | Auto-Banned: ${questions} Truths/Dares | ${servers} Servers`);
+            logger.bannedUser(user, questions, servers);
             interaction.followUp("User has been banned. Check #logs for details");
-    
+
             await this.sendUserBanNotification(user, reason, interaction);
-    
+
             return true;
         } catch (error) {
             logger.error('Error banning user:', JSON.stringify(error));
             return false;
         }
     }
-    
+
 
 }
 
