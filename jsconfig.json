@@ -1,0 +1,7 @@
+{
+    "compilerOptions": {
+      "baseUrl": ".", // This tells VSCode that the base directory for modules is the root of the project
+    },
+    "exclude": ["node_modules"]
+  }
+  
