@@ -147,7 +147,7 @@ describe('Question', () => {
             messageId: 'MessageID',
         };
     
-        expect(dbMock.set).toHaveBeenCalledWith('truths', expectedData);
+        expect(dbMock.set).toHaveBeenCalledWith('questions', expectedData);
     });
     
 

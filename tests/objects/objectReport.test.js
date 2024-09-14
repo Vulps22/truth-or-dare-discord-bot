@@ -1,9 +1,9 @@
-const Database = require('../../objects/database');
-const Question = require('../../objects/question');
-const Report = require('../../objects/report');
+const Database = require('objects/database');
+const Question = require('objects/question');
+const Report = require('objects/report');
 
 
-jest.mock('../objects/database', () => {
+jest.mock('objects/database', () => {
     return jest.fn().mockImplementation(() => {
         return {
             get: jest.fn(),
@@ -12,7 +12,7 @@ jest.mock('../objects/database', () => {
     });
 });
 
-jest.mock('../objects/question', () => {
+jest.mock('objects/question', () => {
     return jest.fn().mockImplementation((question, creator, isBanned) => {
         return {
             question: question,

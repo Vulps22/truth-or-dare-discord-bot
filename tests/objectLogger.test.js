@@ -1,8 +1,8 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder } = require('discord.js');
-const Dare = require('../objects/dare');
-const Truth = require('../objects/truth');
-const Server = require('../objects/server');
-const moduleToTest = require('../objects/logger'); // Adjust this to the actual module name
+const Dare = require('objects/dare');
+const Truth = require('objects/truth');
+const Server = require('objects/server');
+const moduleToTest = require('objects/logger'); // Adjust this to the actual module name
 const getChannelMock = jest.fn();
 
 
@@ -22,9 +22,9 @@ jest.mock('discord.js', () => {
     };
 });
 
-jest.mock('../objects/dare.js');
-jest.mock('../objects/truth.js');
-jest.mock('../objects/server.js');
+jest.mock('objects/dare.js');
+jest.mock('objects/truth.js');
+jest.mock('objects/server.js');
 
 global.client = {
     channels: {

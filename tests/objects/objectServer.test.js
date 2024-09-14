@@ -1,5 +1,6 @@
-const Database = require('../../objects/database'); // Adjust the path to your Database class file
-const Server = require('../../objects/server'); // Adjust the path to your Server class file
+const Database = require('objects/database'); // Adjust the path to your Database class file
+const Server = require('objects/server'); // Adjust the path to your Server class file
+const { applyGlobals } = require('tests/setuptest.js');
 
 let serverData = {
     id: 1,
@@ -22,7 +23,7 @@ let serverData = {
 }
 
 
-jest.mock('../objects/database', () => {
+jest.mock('objects/database', () => {
     return jest.fn().mockImplementation(() => {
         return {
             connect: jest.fn(),
@@ -54,9 +55,12 @@ jest.mock('../objects/database', () => {
 
 describe('Server', () => {
     let dbMock;
+    /** @type {Server} */
     let server;
-    
+
     beforeEach(() => {
+        applyGlobals(); // This will set global.my before each test
+
         dbMock = new Database();
         server = new Server(1, 'Test Server');
         server._db = dbMock; // Inject mock database instance
@@ -96,11 +100,13 @@ describe('Server', () => {
             message_id: null,
             dare_success_xp: 50,
             dare_fail_xp: 25,
+            message_xp: 0,
             truth_success_xp: 40,
             truth_fail_xp: 40,
             is_entitled: false,
-            entitlement_end_date: undefined
+            entitlement_end_date: null,
         };
+
 
         expect(dbMock.set).toHaveBeenCalledWith('servers', expectedData);
     });
