@@ -1,5 +1,5 @@
-const Database = require('../objects/database'); // Adjust the path to your Database class file
-const Server = require('../objects/server'); // Adjust the path to your Server class file
+const Database = require('../../objects/database'); // Adjust the path to your Database class file
+const Server = require('../../objects/server'); // Adjust the path to your Server class file
 
 let serverData = {
     id: 1,

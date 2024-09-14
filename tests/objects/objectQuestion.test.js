@@ -1,11 +1,11 @@
-const Database = require('../objects/database');
-const Server = require('../objects/server');
-const User = require('../objects/user');
-const Question = require('../objects/question');
-const Dare = require('../objects/dare');
-const Truth = require('../objects/truth');
+const Database = require('objects/database');
+const Server = require('objects/server');
+const User = require('objects/user');
+const Question = require('objects/question');
+const Dare = require('objects/dare');
+const Truth = require('objects/truth');
 
-jest.mock('../objects/database', () => {
+jest.mock('objects/database', () => {
     return jest.fn().mockImplementation(() => {
         return {
             get: jest.fn(),
@@ -15,7 +15,7 @@ jest.mock('../objects/database', () => {
     });
 });
 
-jest.mock('../objects/server', () => {
+jest.mock('objects/server', () => {
     return jest.fn().mockImplementation((id) => {
         return {
             id: id,
@@ -42,7 +42,7 @@ jest.mock('../objects/server', () => {
     });
 });
 
-jest.mock('../objects/user', () => {
+jest.mock('objects/user', () => {
     return jest.fn().mockImplementation((id) => {
         return {
             id: id,

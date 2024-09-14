@@ -1,6 +1,6 @@
-const Database = require('../objects/database');
-const Question = require('../objects/question');
-const Report = require('../objects/report');
+const Database = require('../../objects/database');
+const Question = require('../../objects/question');
+const Report = require('../../objects/report');
 
 
 jest.mock('../objects/database', () => {
