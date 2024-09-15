@@ -52,7 +52,7 @@ async function main() {
 
     const db = new Database();
     try {
-        const data = await db.get('config', 2);
+        const data = await db.get('config', 3);
         global.my = data;
         console.log(my);
     } catch (error) {
