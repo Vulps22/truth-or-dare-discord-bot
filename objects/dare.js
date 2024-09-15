@@ -1,4 +1,4 @@
-const Question = require("./question");
+const Question = require("objects/question");
 
 class Dare extends Question {
     constructor(id = null) {

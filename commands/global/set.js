@@ -1,5 +1,5 @@
-const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandNumberOption, SlashCommandStringOption, SlashCommandChannelOption, TextChannel, SlashCommandRoleOption } = require("discord.js");
-const Server = require("../../objects/server");
+const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandNumberOption, SlashCommandStringOption, SlashCommandChannelOption, TextChannel, SlashCommandRoleOption, Guild, Interaction, GuildMemberManager, GuildMember } = require("discord.js");
+const Server = require("objects/server");
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -35,6 +35,7 @@ module.exports = {
                     { name: "Dare Failed", value: 'dare_fail' },
                     { name: "Truth Complete", value: 'truth_success' },
                     { name: "Truth Failed", value: 'truth_fail' },
+                    { name: "Message Sent", value: 'message_sent' },
                 )
             )
             .addNumberOption(new SlashCommandNumberOption()
@@ -107,7 +108,7 @@ async function setXP(interaction) {
     const type = interaction.options.getString('type');
     const amount = interaction.options.getNumber('amount');
 
-    if(amount < 0) {
+    if (amount < 0) {
         interaction.reply('You cannot set negative XP');
         return;
     }
@@ -152,8 +153,8 @@ async function setLevelUpChannel(channel, interaction) {
 
     const server = new Server(channel.guildId);
     await server.load();
-    
-    if(!server.hasPremium()) {
+
+    if (!await server.hasPremium()) {
         interaction.reply("This is a premium command. Premium is not quite ready yet, But I'm working hard to make these commands available for everyone :)")
 
         //interaction.sendPremiumRequired();
@@ -167,21 +168,45 @@ async function setLevelUpChannel(channel, interaction) {
     interaction.reply(`Level up notifications will be sent to <#${channel.id}>`);
 }
 
+/**
+ * 
+ * @param {Interaction} interaction 
+ * @returns 
+ */
 async function setLevelForRole(interaction) {
-    
-    if(!server.hasPremium()) {
+
+    const server = new Server(interaction.guildId)
+    await server.load();
+
+    if (!server.hasPremium()) {
         interaction.reply("This is a premium command. Premium is not quite ready yet, But I'm working hard to make these commands available for everyone :)")
 
         //interaction.sendPremiumRequired();
         return;
     }
+    /**
+     * @type {Guild}
+     */
+    const guild = interaction.guild;
+    /**
+     * @type {GuildMemberManager}
+     */
+    const member = guild.members
+    /**
+     * @type {GuildMember}
+     */
+    const me = member.me
+
+    const hasPermission = interaction.guild.members.me.permissions.has('ManageRoles');
+
+    if (!hasPermission) {
+        interaction.reply("Unable to set the role to the level. I require the Manage Roles permission to give and take roles when players level up")
+    }
 
     const role = interaction.options.getRole('role');
     const level = interaction.options.getNumber('level');
 
-    const server = new Server(interaction.guildId);
-    await server.load();
-    server.setLevelRole(role.id, level);
+    await server.setLevelRole(role.id, level);
     await server.save();
 
     interaction.reply(`Set <@&${role.id}> to level ${level}`);

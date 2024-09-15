@@ -1,6 +1,6 @@
 require('dotenv').config();
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandNumberOption, SlashCommandStringOption, WebhookClient } = require("discord.js");
-const Database = require("../../objects/database")
+const Database = require("objects/database")
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -56,10 +56,10 @@ module.exports = {
         let table = 'servers'
         switch (subcommand) {
             case 'dare':
-                table = 'dares';
+                table = 'questions';
                 break;
             case 'truth':
-                table = 'truths';
+                table = 'questions';
                 break;
             case 'server':
                 table = 'servers';
@@ -71,7 +71,7 @@ module.exports = {
         }
 
         db.get(table, id).then(target => {
-            if(!target || target === undefined) {
+            if (!target || target === undefined) {
                 interaction.reply(`${subcommand} ${id} does not exist`);
                 return;
             }
@@ -79,7 +79,11 @@ module.exports = {
             let content = '';
 
             for (let key in target) {
-                content += `${key} : ${target[key]} \n`;
+                if (key == 'messageId') {
+                    content += `${key} : https://discord.com/channels/1079206786021732412/${getChannelId(subcommand)}/${target[key]}`
+                } else {
+                    content += `${key} : ${target[key]} \n`;
+                }
             }
 
             interaction.reply(content);
@@ -87,5 +91,19 @@ module.exports = {
 
 
         //interaction.reply(`Type: ${subcommand}\nReason: ${reason}\nID: ${offender}`);
+    }
+}
+
+function getChannelId(subcommand) {
+
+    switch (subcommand) {
+        case 'dare':
+            return my.dares_log
+        case 'truth':
+            return my.truths_log
+        case 'server':
+            return my.servers_log
+        case 'report':
+            throw new Error("Not Implemented Yet: View Report Message ID");
     }
 }

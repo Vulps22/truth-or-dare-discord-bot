@@ -1,6 +1,5 @@
-const Database = require("./database");
-const { Entity, EntityType } = require("./entity");
-const Question = require("./question");
+const Database = require("objects/database");
+const Question = require("objects/question");
 
 class Report {
 	type; //truth, dare, guild TODO: make Enum

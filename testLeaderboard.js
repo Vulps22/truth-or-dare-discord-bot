@@ -1,4 +1,4 @@
-const Leaderboard = require('./objects/leaderboard.js');
+const Leaderboard = require('objects/leaderboard.js');
 
 async function testPlayers(){
 const leaderboard = new Leaderboard({}, {});

@@ -1,6 +1,6 @@
 require('dotenv').config();
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, PermissionsBitField, SlashCommandNumberOption } = require("discord.js");
-const Database = require("../../objects/database")
+const Database = require("objects/database")
 
 module.exports = {
     data:/* new SlashCommandBuilder()

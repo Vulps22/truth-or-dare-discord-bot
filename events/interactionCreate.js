@@ -1,11 +1,11 @@
 const { Events, Interaction } = require("discord.js");
-const UserHandler = require("../handlers/userHandler");
-const Database = require("../objects/database");
-const Server = require("../objects/server");
-const User = require("../objects/user");
-const ButtonEventHandler = require("../handlers/buttonEventHandler");
-const logger = require("../objects/logger");
-const BanHandler = require("../handlers/banHandler");
+const UserHandler = require("handlers/userHandler");
+const Database = require("objects/database");
+const Server = require("objects/server");
+const User = require("objects/user");
+const ButtonEventHandler = require("handlers/buttonEventHandler");
+const logger = require("objects/logger");
+const BanHandler = require("handlers/banHandler");
 
 let logInteraction = '';
 
@@ -19,6 +19,10 @@ module.exports = {
     async execute(interaction) {
 
         const didBan = await registerServer(interaction);
+        if (didBan === -1) {
+            interaction.reply("Opps! Brain Fart! Please Try again. If this problem continues please reach out for support on our official discord server. Use /help to find the invite to this server")
+            logger.error("Failed to register server! Function returned -1. Check the logs for Guild Details")
+        }
         if (didBan) {
             interaction.reply({ content: "You have been banned from using this bot", ephemeral: true });
             return;
@@ -27,7 +31,7 @@ module.exports = {
 
         let user;
         try {
-            user = await new UserHandler().getUser(interaction.user.id, interaction.user.username);
+            user = await new User(interaction.user.id, interaction.user.username).get();
         } catch (error) {
             console.error('Error getting user:', error);
             return;
@@ -43,11 +47,19 @@ module.exports = {
             return;
         }
 
+        if(user.username !== interaction.user.username) {
+            user.username = interaction.user.username;
+            await user.save();
+        }
+
         if (isMaintenance() && interaction.guildId !== my.guildId) {
             logger.log("Interaction Aborted: Maintenance Mode.");
             interaction.reply('Truth Or Dare Online 18+ has been disabled globally for essential maintenance: ' + my.maintenance_reason);
             return;
         }
+
+        const server = new Server(interaction.guildId);
+        await server.load();
 
         if (interaction.isAutocomplete()) {
             await handleAutoComplete(interaction);
@@ -55,6 +67,9 @@ module.exports = {
         }
 
         if (interaction.isButton()) {
+            logInteraction = `**Button**: ${interaction.customId} | **Server**: ${server.name} - ${server.id} | **User**: ${interaction.user.username} - ${interaction.user.id} ||`
+            interaction.logInteraction = logInteraction;
+            interaction.logMessage = await logger.log(`${logInteraction} Executing Button Press`);
             await new ButtonEventHandler(interaction).execute();
             return;
         }
@@ -127,17 +142,19 @@ async function runCommand(interaction) {
             server = { id: interaction.guildId, name: interaction.guild.name, hasAccepted: 0, isBanned: 0 };
             await db.set('servers', server);
         }
-        logInteraction = `**Command**: ${interaction.commandName} | **Server**: ${server.name} - ${server.id} | **User**: ${interaction.user.username} - ${interaction.user.id}`
+        logInteraction = `**Command**: ${interaction.commandName} | **Server**: ${server.name} - ${server.id} | **User**: ${interaction.user.username} - ${interaction.user.id} ||`
+        interaction.logInteraction = logInteraction;
+        
+        interaction.logMessage = await logger.log(logInteraction);
 
         if (server.isBanned && interaction.commandName !== "help") {
-            logger.log(`${logInteraction} || Interaction aborted: Server is Banned`);
+            logger.editLog(interaction.logMessage.id, `${logInteraction} Interaction aborted: Server is Banned`);
             interaction.reply('Your Community has been banned for violating the bot\'s Terms of Use');
-            logger.log
             return;
         }
 
         if (shouldExecute(interaction, command, server)) {
-            logger.log(`${logInteraction} || Executing Command`);
+            logger.editLog(interaction.logMessage.id, `${logInteraction} Executing Command`);
             await command.execute(interaction);
         }
     } catch (error) {
@@ -167,7 +184,6 @@ function shouldExecute(interaction, command, server) {
 
     // Ensure server setup for commands that do not ignore setup requirements
     if (!command.ignoreSetup) {
-        console.log("server", server);
         if (!server || !server.hasAccepted) {
             logger.log(`${logInteraction} || Interaction Aborted: Not Set Up`);
             interaction.reply("A community Administrator must first run the /setup command to completion before you can use me.");
@@ -209,7 +225,7 @@ function isMaintenance() {
  */
 async function registerServer(interaction) {
 
-    console.log("Registering server");
+    if (!interaction.guild) return -1;
 
     const server = new Server(interaction.guildId);
     const user = new User(interaction.guild.ownerId); //server owner
@@ -228,21 +244,24 @@ async function registerServer(interaction) {
         await server.save();
     } else {
         //ensure the server details are up to date
-        if (server.name !== interaction.guild.name) server.name = interaction.guild.name;
-        if (server.owner !== interaction.guild.ownerId) server.owner = interaction.guild.ownerId;
-        await server.save();
+        if (server.name !== interaction.guild.name || server.owner !== interaction.guild.ownerId) {
+            server.name = interaction.guild.name;
+            server.owner = interaction.guild.ownerId;
+            await server.save();
+        }
+            
     }
 
     if (!server.isBanned) {
         if (user.isBanned) {
             new BanHandler().banServer(interaction.guild.id, "Server owner has been banned", interaction, true, true);
-            return true;
+            return 1;
         }
     }
 
     if (!server.message_id) logger.newServer(server);
 
-    return false;
+    return 0;
 }
 
 async function registerServerUser(interaction) {
@@ -253,7 +272,7 @@ async function registerServerUser(interaction) {
     if (!didLoad) await user.save()
     await user.loadServerUser(interaction.guildId);
 
-    if (!user.serverUserLoaded) await user.saveServerUser();
+    if (!user._serverUserLoaded) await user.saveServerUser();
 
     return user;
 }

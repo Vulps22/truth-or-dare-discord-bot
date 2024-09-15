@@ -1,8 +1,8 @@
 const { SlashCommandStringOption, SlashCommandBuilder, SlashCommandBooleanOption, SlashCommandSubcommandBuilder } = require("discord.js");
-const Database = require("../../objects/database");
-const Truth = require("../../objects/truth");
-const Dare = require("../../objects/dare"); // Assuming you have a Dare class similar to Truth
-const logger = require("../../objects/logger");
+const Database = require("objects/database");
+const Truth = require("objects/truth");
+const Dare = require("objects/dare"); // Assuming you have a Dare class similar to Truth
+const logger = require("objects/logger");
 
 module.exports = {
     data: new SlashCommandBuilder()

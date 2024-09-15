@@ -1,6 +1,8 @@
 const { SlashCommandBuilder } = require("discord.js");
-const embedder = require("../../embedder");
-const Database = require("../../objects/database");
+const embedder = require("embedder");
+const Database = require("objects/database");
+const Server = require("objects/server");
+
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -9,10 +11,18 @@ module.exports = {
 	nsfw: false,
 	administrator: false,
 	ignoreSetup: true,
+	/**
+	 * 
+	 * @param {import("discord.js").Interaction} interaction 
+	 */
 	async execute(interaction) {
 		db = new Database();
-		const isSetup = db.get('servers', interaction.guildId)
-		interaction.reply({ embeds: [embedder.help(isSetup ? false : true)] });
+		const server = new Server(interaction.guildId);
+		await server.load();
+
+		isSetup = server.hasAccepted;
+	
+		interaction.reply({ embeds: [embedder.help(isSetup)] });
 	}
 
 }

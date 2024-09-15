@@ -1,5 +1,5 @@
-const RankCard = require('./objects/rankCard'); // Adjust the path as necessary
-const User = require('./objects/user');
+const RankCard = require('objects/rankCard'); // Adjust the path as necessary
+const User = require('objects/user');
 
 // Mock user object with necessary fields and methods
 const user = {

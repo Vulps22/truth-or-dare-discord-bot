@@ -1,8 +1,8 @@
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandNumberOption, SlashCommandStringOption, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, Message } = require("discord.js");
-const Database = require("../../objects/database")
+const Database = require("objects/database")
 const { env } = require("process");
-const Dare = require("../../objects/dare");
-const BanHandler = require("../../handlers/banHandler");
+const Dare = require("objects/dare");
+const BanHandler = require("handlers/banHandler");
 
 banReasonList = [
 	{ name: "1 - Breaches Discord T&C or Community Guidelines", value: "Breaches Discord T&C or Community Guidelines" },
@@ -136,7 +136,6 @@ module.exports = {
 		if (focusedOption.name === 'reason') {
 			choices = banReasonList;
 		}
-		console.log(choices);
 		interaction.respond(choices);
 	},
 

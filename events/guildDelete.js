@@ -1,17 +1,17 @@
 const { Events } = require("discord.js");
-const Database = require("../objects/database");
-const logger = require("../objects/logger");
-const Server = require("../objects/server");
+const Server = require("objects/server");
+const logger = require("objects/logger");
+const User = require("objects/user");
 
 module.exports = {
     name: Events.GuildDelete,
     async execute(guild) {
-        try {
-            logger.log(`Removing a server: ${guild.name} with ID: ${guild.id}`)
-            const db = new Database();
+        if (guild.id == '1190356693691928606') return;
 
-            let server = new Server(guild.id);
-            await server.load();
+        try {
+            logger.log(`Removing a server: ${guild.name} with ID: ${guild.id}`);
+
+            const server = await new Server(guild.id).load();
 
             if (!server._loaded) {
                 logger.error("Tried to delete a server that never existed:", guild.id);
@@ -23,9 +23,18 @@ module.exports = {
                 return;
             }
 
-            await db.delete('servers', server.id);
-            await logger.deleteServer(server.message_id);
-            logger.log("Deleted server:", guild.id);
+            // Fetch users linked to the server
+            /** @type {User[]} */
+            const users = await server.getUsers();
+
+            users.forEach(user => {
+                user.deleteServerUser();
+            });
+
+            // Delete the server and its server-user relationships
+            await server.deleteServer();
+
+            logger.log(`Deleted server: ${guild.id}`);
         } catch (error) {
             console.error("Error during guildDelete event:", error);
         }

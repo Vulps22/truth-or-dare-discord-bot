@@ -48,9 +48,11 @@ class Database {
 						resolve(results);
 					}
 				});
+			}).finally(() => {
+				this.connection.end()
 			});
-		} finally {
-			this.connection.end()
+		} catch(error) {
+			throw new Error("Unexpected Error in database query: ", sql, "\n\n", error);
 		}
 	}
 
@@ -67,7 +69,7 @@ class Database {
 	 * @returns {number} the ID of the inserted row
 	 */
 	async set(table, valueObject, idField = 'id') {
-
+		console.log("YOU ARENT MOCKING IT YOU FUCKING IDIOT");
 		const fields = Object.keys(valueObject);
 		const hasId = fields.includes(idField);
 
@@ -119,10 +121,18 @@ class Database {
 		return this.query(query);
 	}
 
+	/**
+	 * 
+	 * @param {string} table The database Table to search
+	 * @param {string} where Any filter to be applied to the query
+	 * @param {number} limit A whole number to limit the number of records returned
+	 * @param {"ASC" | "DESC"} order 
+	 * @param {number} page 
+	 * @returns 
+	 */
+	list(table, where = '', limit = 0, order = 'ASC', page) {
 
-	list(table, limit = 0, order = 'ASC', page) {
-
-		return this.query(`SELECT * FROM ${table} ORDER BY id ${order} ${limit > 0 ? 'LIMIT ' + limit + " OFFSET " + (limit * page) : ''}`);
+		return this.query(`SELECT * FROM ${table} ${where ? 'WHERE ' + where : ''} ORDER BY id ${order} ${limit > 0 ? 'LIMIT ' + limit + " OFFSET " + (limit * page) : ''}`);
 	}
 
 	like(table, field, pattern, limit = 0, order = 'ASC', excludeBanned = true) {

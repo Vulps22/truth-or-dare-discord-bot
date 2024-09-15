@@ -1,11 +1,11 @@
 const { EmbedBuilder, Embed } = require('discord.js');
 module.exports = {
-	help(setup = false) {
+	help(isSetup = true) {
 		let embed = new EmbedBuilder()
 			.setTitle('Truth or Dare Bot Help')
 			.setDescription('Here are the commands you can use with the bot:');
 
-		if (setup) embed.addFields(
+		if (!isSetup) embed.addFields(
 			{ name: 'Getting Started', value: "You must first read and accept our Terms of Use before using the bot" },
 			{
 				name: ' ', value:
@@ -34,7 +34,8 @@ module.exports = {
 				name: '**Challenge Commands**',
 				value:
 					'- `/give dare` - Challenge someone to a dare\n' +
-					'- `/give truth` - Challenge someone to a truth'
+					'- `/give truth` - Challenge someone to a truth\n' + 
+					'- `NEW` Incentivise targeted player by wagering your own XP'
 			},
 			{
 				name: '**Report Commands**',
@@ -47,12 +48,12 @@ module.exports = {
 				name: '**Utility Commands**',
 				value:
 					'- `/vote` - See a list of Bot lists where you can vote to support our bot and help it grow faster!\n' +
-					'- `terms` - View the Terms of Use this server has agreed to follow.\n\t\tUse `/report server` if this server has broken those Terms\n' +
+					'- `/terms` - View the Terms of Use this server has agreed to follow.\n\t\tUse `/report server` if this server has broken those Terms\n' +
 					'- `/help` - See a list of available commands\n\n'
 			}
 		)
 
-		if (!setup) embed.addFields(
+		if (isSetup) embed.addFields(
 			{ name: 'Creating Truths or Dares', value: "Everybody worldwide is welcome to create as many truths or dares as they can imagine. In fact it is encouraged! \nThe more we all create, the more variety when we play 😁" },
 			{ name: ' ', value: '\n\n' },
 		);
@@ -81,59 +82,47 @@ module.exports = {
 				{ name: 'Got your own community?', value: `[Add The Bot](${process.env.BOT_INVITE_URL})\n\n`, inline: true },
 			)
 	},
+	rules() {
+        const embed = new EmbedBuilder()
+            .setTitle('Avoiding Bans')
+            .setDescription('Here are some tips to avoid your truths/dares being banned:')
+            .addFields(
+				{name: 'Your submissions are ***global***', value: "- We moderate and approve/ban every submission.\n- Everything you submit with /create that gets approved could show up on any server.\n\n These rules are the guidance we use to decide whether to approve or ban your submissions"},
+                { name: 'No Dangerous Or Illegal Content', value: '- Keep it safe and legal' },
+                { name: 'No Targeting Specific People', value: '- Truths/dares are global and should work for everyone' },
+                { name: 'No Mentions Of "The Giver"', value: '- Use /give for those types of dares' },
+                { name: 'Follow Discord Guidelines', value: '- No Racism, Underage references etc.' },
+                { name: 'Use English', value: '- For bot language support' },
+                { name: 'No Nonsense Content', value: '- Avoid keyboard smashing, single letters etc' },
+                { name: 'No Childish Content', value: '- Could be written by a child/teen, or likely to be ignored' },
+                { name: 'No Shoutouts', value: '- Using names, "I am awesome!"' },
+                { name: 'No Dares That Require More Than One Person', value: '- This is an **online** bot!' },
+                { name: 'Check Spelling And Grammar', value: '- Low-Effort content will not be accepted' },
+                { name: '\n', value: '\n' },
+                { name: 'Important Notes', value: '- **You could be banned from using the bot** if we have to repeatedly ban your dares!\n- This is not a limit to the reasons why we may ban your submissions.\n- Moderators reserve the right to ban your submissions for any reason they deem appropriate.\n- You are free to appeal any ban if you feel it is unjust or unfair.' },
+            );
+        return embed;
+    },
 	accepted() {
 		//"Setup complete. You can now use /dare or /truth"
 		return new EmbedBuilder()
 			.setTitle("Terms Accepted")
 			.setDescription("We hope you enjoy playing Truth or Dare with our massive global database of dares! 🙂");
 	},
-	v5() {
+	vote() {
 		return new EmbedBuilder()
-			.setTitle('🎉 Introducing Version 5.0.0 of Truth Or Dare Online 18+ 🎉')
-			.setDescription('Hello amazing users! I\'m beyond excited to share this massive update with you. From just a few bored and horny strangers, to 1400 servers—what a journey it\'s been! 🌟')
-			.setColor(10181046)
+			.setTitle("Upvote the bot for special privileges")
+			.setDescription("[You can vote for Truth Or Dare Online 18+ here](https://top.gg/bot/1079207025315164331/vote).\n\nVoting helps the bot raise higher in the search results on top.gg, and encourages more servers to install the bot :)\nmore servers = more dares!")
 			.addFields(
 				{
-					name: 'A Personal Thank You',
-					value: 'Starting this was all about creating something fun for communities I cared about. Now, seeing it grow to this scale is unbelievable. I can\'t thank you enough for installing, playing, and sharing this bot with me!'
+					name: "Earn Skips for every vote!",
+					value: "- Skips allow you to ignore a dare without having a negative effect on your ranking or level!\n- You can have 10 skips stored up\n- Every vote gives you another skip you can use\n- Voting on a weekend gives you 2 skips!!"
 				},
 				{
-					name: 'Major Changes & Why They Matter',
-					value: '🔹 **Announcements Feature** - For only the most crucial updates and notifications, keeping spam minimal.\n🔹 **Overhauled Truths & Dares** - With community voting to ensure everyone\'s held accountable, making the game more engaging.'
-				},
-				{
-					name: 'Competition & Community',
-					value: '🔹 **New Leaderboards & Ranks** - See top players worldwide or check your status with `/leaderboard` and `/rank`.\n🔹 **Proof of Dare** - The new voting system offers incentive to actually _do_ the dares ;)'
-				},
-				{
-					name: 'Simplified Interactions',
-					value: '🔹 **Improved Setup Process** - More intuitive with buttons and dropdowns, making it easier than ever to get started.\n🔹 **Streamlined Commands** - No more clunky `/accept-terms`, just smooth sailing.'
-				},
-				{
-					name: 'Future-Proofing with Premium',
-					value: 'Due to the astounding popularity of the bot, Some of the new features are now paywalled behind a premium subscription. Rest assured, all previous features remain free!\n Every subscription helps make this bot better. It tells me I\'m doing something you enjoy! It tells me I should work harder to give you _even more_ features, games and improvements! :D (and it would let me pay the moderators who really do a ton of work behind the scenes)'
-				},
-				{
-					name: 'New Premium Features',
-					value: '🔹 **Server-Specific Leaderboards and Levels** - Unique to each premium server.\n🔹 **Role Assignments by Level** - Automatic role updates as you level up in the server.'
-				},
-				{
-					name: 'Admin Tools and Server Customization',
-					value: '🔹 **Custom XP Values** - Server admins can now set XP values for activities to fine-tune the game balance.\n🔹 **Server-Only Truth/Dare Pools** - Premium servers can have their own Truth/Dare content, independent of the global pool.'
-				},
-				{
-					name: 'Operation Moderation!',
-					value: 'The day before we released v5.0.0, the moderators and I undertook the immense task of re-moderating the _entire_ database. We banned and reviewed EVERY SINGLE Truth/Dare in the database. No more \'Giver Dares\' or strange-ass truths asking which parent you\'d rather fuck (you know who you are! 🤣).\nFrom now on, every global truth or dare must be approved or banned by a moderator before anybody sees it :)'
-				},
-				{
-					name: 'Quality of Life Improvements',
-					value: 'We\'ve not only moderated existing truths and dares but also introduced a host of interface and usability enhancements. And there’s more on the way!'
-				},
-				{
-					name: 'Let\'s Make It Better Together!',
-					value: 'Your feedback is invaluable. If you have ideas or suggestions, please share them in our official server. Your input directly influences future updates!'
+					name: "More to come!",
+					value: "We're just getting started on Votes!\nOver time we're going to add more and more benefits for every vote to really enhance your time using the bot :D"
 				}
 			)
-			.setFooter({ text: 'Looking forward to hearing your thoughts and seeing how you enjoy the new features! Stay tuned for v5.1.0 with full premium launch!' });
+			.setFooter({ text: "Thank you for voting :)" });
 	}
 }

@@ -1,9 +1,9 @@
-const Server = require("../objects/server");
-const Handler = require("./handler");
-const embedder = require('../embedder.js');
+const Server = require("objects/server");
+const Handler = require("handlers/handler");
+const embedder = require('embedder.js');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelSelectMenuBuilder, ChannelType, ComponentType } = require("discord.js");
 const { Console } = require("console");
-const logger = require("../objects/logger.js");
+const logger = require("objects/logger.js");
 
 class SetupHandler extends Handler {
     constructor() {
@@ -94,7 +94,6 @@ class SetupHandler extends Handler {
         let server = new Server(interaction.guildId);
         await server.load();
         let channelId = interaction.values[0];
-        console.log(channelId);
         if (!hasPermission(interaction.guildId, channelId)) {
             interaction.reply('I need permission to view, send messages, embed links, and attach files in that channel');
             return;
@@ -106,7 +105,7 @@ class SetupHandler extends Handler {
         //SEND A MESSAGE TO THE CHANNEL
         const guild = global.client.guilds.cache.get(interaction.guildId);
         const channel = guild.channels.cache.get(channelId);
-        channel.send({ embeds: [embedder.v5()] })
+        //channel.send({ embeds: [embedder.v5()] })
 
         await interaction.reply(`Announcement channel set to ${channel}`);
 

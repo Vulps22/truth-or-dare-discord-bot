@@ -1,11 +1,13 @@
 require('dotenv').config();
 const { EmbedBuilder, Embed } = require('discord.js');
-const User = require('../objects/user.js');
-const Handler = require('./handler.js');
-const Question = require('../objects/question.js');
-const Database = require('../objects/database.js');
-const embedder = require('../embedder.js');
-const Server = require('../objects/server.js'); // Import the Server class
+const User = require('objects/user.js');
+const Handler = require('handlers/handler.js');
+const Question = require('objects/question.js');
+const Database = require('objects/database');
+const embedder = require('embedder.js');
+const Server = require('objects/server.js'); // Import the Server class
+const logger = require('objects/logger.js');
+
 
 class UserHandler extends Handler {
     db;
@@ -62,6 +64,43 @@ class UserHandler extends Handler {
     async banUser(interaction, user) {
         this.getBanReason(interaction, user.id);
     }
+
+    async cleanUp() {
+        const today = new Date().toISOString().split('T')[0]; // Format today's date as YYYY-MM-DD
+
+        // Query to find users with deleteDate <= today
+        const usersToDelete = await this.db.query(`
+            SELECT * 
+            FROM users 
+            WHERE deleteDate IS NOT NULL AND deleteDate <= '${today}'
+        `);
+
+        // If no users to delete, log and exit
+        if (usersToDelete.length === 0) {
+            console.log('No users to delete.');
+            return;
+        }
+
+        let deletedUsers = 0;
+        // Loop through and delete each user
+        for (const userRecord of usersToDelete) {
+            const user = User.fromObject(userRecord); // Create a User instance using fromObject
+            const servers = user.getServerList();
+            if(servers > 0) {
+                user.deleteDate = null;
+                user.save();
+                continue;
+            }
+            console.log(`Deleting user with ID: ${user.id}`);
+
+            // Delete the user from the database
+            this.db.query(`DELETE FROM users WHERE id = '${user.id}'`);
+            deletedUsers++;
+        }
+
+        logger.log(`**Daily Cleanup** | Deleted ${deletedUsers} users in daily cleanup`);
+    }
+
 }
 
 module.exports = UserHandler;

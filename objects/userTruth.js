@@ -1,5 +1,5 @@
-const Database = require("./database");
-const UserQuestion = require("./userQuestion");
+const Database = require("objects/database");
+const UserQuestion = require("objects/userQuestion");
 
 class UserTruth extends UserQuestion {
 

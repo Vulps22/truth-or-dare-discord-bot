@@ -1,6 +1,6 @@
-const User = require("./user");
-const Database = require("./database");
-const Question = require("./question");
+const User = require("objects/user");
+const Database = require("objects/database");
+const Question = require("objects/question");
 
 class UserQuestion {
    id; // message_id
@@ -31,37 +31,56 @@ class UserQuestion {
       return this.userId;
    }
 
+   /**
+    * 
+    * @returns {Promise<User>}
+    */
    async getUser() {
       const user = await new User(this.userId).get();
       return user;
    }
 
+   /**
+    * @returns {String}
+    */
    getUsername() {
       return this.username;
    }
 
+   /**
+    * @returns {String}
+    */
    getQuestionId() {
       return this.questionId;
    }
 
+   /**
+    * @returns {String}
+    */
    getServerId() {
       return this.serverId;
    }
 
    async getQuestion() {
       const db = new Database();
-      return await db.get(this.getQuestionTable(), this.questionId)
+      return await db.get('questions', this.questionId)
 
    }
-
+   /**
+ * @returns {String}
+ */
    getImage() {
       return this.image;
    }
-
+   /**
+    * @returns {number}
+    */
    getDoneCount() {
       return this.doneCount;
    }
-
+   /**
+    * @returns {number}
+    */
    getFailedCount() {
       return this.failedCount;
    }
@@ -74,6 +93,12 @@ class UserQuestion {
       this.failedCount++;
    }
 
+   /**
+    * 
+    * @param {string} userID 
+    * @param {"done" | "fail"} vote 
+    * @returns 
+    */
    async vote(userID, vote) {
       const db = new Database();
       const existingVote = await db.query(`SELECT * FROM user_vote WHERE user_id = ${userID} AND message_id = ${this.id}`);
@@ -91,7 +116,10 @@ class UserQuestion {
       this.save();
       return { done: this.doneCount, failed: this.failedCount };
    }
-
+   /**
+    * @deprecated use "user_questions" table instead
+    * @returns "user_truths" | "user_dares"
+    */
    getTable() {
       switch (this.type) {
          case "dare":
@@ -103,6 +131,10 @@ class UserQuestion {
       }
    }
 
+   /**
+    * @deprecated Use 'questions' table instead
+    * @returns "dares" | "truths"
+    */
    getQuestionTable() {
       switch (this.type) {
          case "dare":
@@ -117,38 +149,39 @@ class UserQuestion {
    save() {
       const db = new Database();
       let tableSafe = {
-         message_id: this.id,
-         user_id: this.userId,
-         server_id: this.serverId,
-         question_id: this.questionId,
+         messageId: this.id,
+         userId: this.userId,
+         serverId: this.serverId,
+         questionId: this.questionId,
          username: this.username,
-         image_url: this.image ?? '',
-         done_count: this.doneCount,
-         failed_count: this.failedCount
+         imageUrl: this.image ?? '',
+         doneCount: this.doneCount ?? 0,
+         failedCount: this.failedCount ?? 0,
+         type: this.type,
       };
 
-      db.set(this.getTable(), tableSafe, "message_id");
+      db.set('user_questions', tableSafe, "messageId");
    }
 
    /**
      * Use the message ID as the primary key for the UserDare object
      * It will be ID in the UserQuestion class and on the table
-     * @param {*} messageId 
+     * @param {string} messageId 
+     * @param {"truth" | "dare"} type 
      */
    async load(messageId, type) {
       const db = new Database();
       if (!type) throw new Error("Type must be provided for UserQuestion load");
       this.type = type;
-      let question = await db.get(this.getTable(), messageId, "message_id");
-
-      this.id = question.message_id;
-      this.userId = question.user_id;
-      this.questionId = question.question_id;
-      this.serverId = question.server_id;
+      let question = await db.get('user_questions', messageId, "messageId");
+      this.id = question.messageId;
+      this.userId = question.userId;
+      this.questionId = question.questionId;
+      this.serverId = question.serverId;
       this.username = question.username;
-      this.image = question.image_url;
-      this.doneCount = question.done_count;
-      this.failedCount = question.failed_count;
+      this.image = question.imageUrl;
+      this.doneCount = question.doneCount;
+      this.failedCount = question.failedCount;
 
 
       return this;

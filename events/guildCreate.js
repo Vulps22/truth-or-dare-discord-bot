@@ -1,6 +1,6 @@
 const { Events, Guild } = require("discord.js")
-const Server = require("../objects/server");
-const logger = require("../objects/logger");
+const Server = require("objects/server");
+const logger = require("objects/logger");
 
 module.exports = {
 	name: Events.GuildCreate,
@@ -15,10 +15,8 @@ module.exports = {
 		if(!newServer._loaded){
 			newServer.name = server.name;
 			newServer.owner = server.ownerId;
-			await newServer.save();
-			await newServer.load();
+			newServer.save();
 		}
-		console.log("Got here!")
 		await logger.newServer(newServer);
 	}
 }

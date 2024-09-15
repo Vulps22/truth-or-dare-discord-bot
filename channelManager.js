@@ -1,5 +1,5 @@
-const Database = require("./objects/database");
-const { updateServerCount } = require("./handlers/userHandler");
+const Database = require("objects/database");
+const { updateServerCount } = require("handlers/userHandler");
 const { config } = require('dotenv');
 
 module.exports = class ChannelManager {
@@ -32,7 +32,7 @@ module.exports = class ChannelManager {
 	}
 
 	updateServerCount() {
-		if (process.env.ALPHA) {
+		if (my.environment == 'dev') {
 			console.log("ALPHA MODE: Skipping Channel Update")
 			return;
 		}		// Get the status channel
@@ -44,14 +44,18 @@ module.exports = class ChannelManager {
 		console.log(`Connected Servers: ${this.client.guilds.cache.size}`);
 	}
 
+	/**
+	 * 
+	 * @returns 
+	 */
 	updateDareCount() {
-		if (process.env.ALPHA) {
+		if (my.environment == 'dev') {
 			console.log("ALPHA MODE: Skipping Channel Update")
 			return;
 		}		// Get the status channel
-		const statusChannel = this.client.channels.cache.get(process.env.DARE_CHANNEL_ID);
-		new Database().list('dares').then((dares) => {
-			const nonBannedDares = dares.filter(dare => !dare.isBanned);
+		const statusChannel = this.client.channels.cache.get(my.status_dares);
+		new Database().list('questions').then((dares) => {
+			const nonBannedDares = dares.filter(dare => !dare.isBanned && dare.type == 'dare');
 
 			const count = nonBannedDares.length;
 
@@ -60,26 +64,24 @@ module.exports = class ChannelManager {
 			console.log('Total Dares:', count);
 		})
 
-
-
 	}
 
 	updateTruthCount() {
-		if (process.env.ALPHA) {
+		if (my.environment == 'dev') {
 			console.log("ALPHA MODE: Skipping Channel Update")
 			return;
 		}
 		// Get the status channel
 		const statusChannel = this.client.channels.cache.get(process.env.TRUTH_CHANNEL_ID);
-		new Database().list('truths').then((truths) => {
-			const count = truths.length
+		new Database().list('questions').then((truths) => {
+			const nonBannedTruths = truths.filter(truth => !truth.isBanned && truth.type == 'truth');
+
+			const count = nonBannedTruths.length;
 
 			statusChannel.setName(`Total Truths: ${count}`);
 
 			console.log('Total Truths:', count);
 		})
-
-
 
 	}
 

@@ -1,8 +1,8 @@
 const { Client, TextChannel, GuildMember } = require("discord.js");
-const Events = require("./Events");
-const User = require("../objects/user");
-const Server = require("../objects/server");
-const logger = require("../objects/logger");
+const Events = require("events/Events");
+const User = require("objects/user");
+const Server = require("objects/server");
+const logger = require("objects/logger");
 
 module.exports = {
         name: Events.LevelUp,
@@ -15,7 +15,7 @@ module.exports = {
         async execute(user, type) {
                 logger.log(`Handling level up for user: ${user.username} with ID: ${user.id}`);
                 const client = global.client;
-                if (!user.serverUserLoaded) await user.loadServerUser();
+                if (!user._serverUserLoaded) await user.loadServerUser();
 
                 if (!user.serverId) throw new Error("Level up was triggered but no server ID was present to notify the user");
 
@@ -29,7 +29,7 @@ module.exports = {
 
                 // Send level-up message
                 if (type === "server") {
-                        channel.send(`Congratulations <@${user.id}>! You have leveled up to level ${user.serverLevel}! Use \`/rank\` to check your rank!`);
+                        channel.send(`Congratulations <@${user.id}>! You have leveled up to level ${user._serverLevel}! Use \`/rank\` to check your rank!`);
                 } else if (type === "global") {
                         channel.send(`Congratulations <@${user.id}>! You have leveled up globally to level ${user.globalLevel}! Use \`/rank\` to check your rank!`);
                 }
@@ -37,7 +37,7 @@ module.exports = {
                 // For server leveling, assign role if applicable
                 if (type !== 'server') return;
 
-                const role = await server.getLevelRole(user.serverLevel);
+                const role = await server.getLevelRole(user._serverLevel);
                 if (!role) return;
 
                 const member = await channel.guild.members.fetch(user.id);
@@ -50,12 +50,16 @@ module.exports = {
 
                 // Check if the member already has the role
                 if (member.roles.cache.has(role)) {
-                        logger.log(`User ${user.username} already has the role for level ${user.serverLevel}. No need to add.`);
+                        logger.log(`User ${user.username} already has the role for level ${user._serverLevel}. No need to add.`);
                         return;
                 }
 
-                // Add the role to the user
-                member.roles.add(role);
+                try {
+                        // Add the role to the user
+                        await member.roles.add(role);
+                } catch (error) {
+                        channel.send("Unable to apply the new role. This is usually because my role is lower than the role i am trying to assign.")
+                }
         }
 
 }
