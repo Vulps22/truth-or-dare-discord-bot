@@ -1,7 +1,7 @@
 const command = require('commands/global/setup'); // Adjust the path to your help command file
 const SetupHandler = require('handlers/setupHandler');
 
-jest.mock('handlers/SetupHandler');
+jest.mock('handlers/setupHandler');
 
 const startSetupMock = jest.fn();
 
