@@ -1,7 +1,6 @@
 const Database = require("objects/database");
 const Server = require("objects/server");
 const User = require("objects/user");
-const { exit } = require("process");
 
 
 
