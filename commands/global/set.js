@@ -199,8 +199,6 @@ async function setLevelForRole(interaction) {
 
     const hasPermission = interaction.guild.members.me.permissions.has('ManageRoles');
 
-    console.log("Has manage roles permission: ", hasPermission);
-
     if (!hasPermission) {
         interaction.reply("Unable to set the role to the level. I require the Manage Roles permission to give and take roles when players level up")
     }
