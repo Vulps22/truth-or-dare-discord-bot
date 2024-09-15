@@ -7,6 +7,7 @@ const User = require("objects/user");
 const logger = require("objects/logger");
 const { applyGlobals } = require("tests/setuptest");
 
+jest.mock("objects/user");
 jest.mock("handlers/dareHandler");
 jest.mock("handlers/truthHandler");
 jest.mock("objects/database", () => {
@@ -15,7 +16,16 @@ jest.mock("objects/database", () => {
     }))
 });
 jest.mock("objects/logger");
-jest.mock("objects/user");
+
+const mockGet = jest.fn().mockResolvedValue();
+const mockCanCreate = jest.fn().mockResolvedValue(false);
+
+User.mockImplementation(() => ({
+    get: mockGet,
+    canCreate: mockCanCreate,
+}));
+
+
 describe('Create Truth or Dare Command', () => {
     let interaction;
 
@@ -41,6 +51,21 @@ describe('Create Truth or Dare Command', () => {
         User.mockClear();
         logger.error.mockClear();
     });
+
+    test('should abort creation if user has not accepted the rules', async () => {
+    
+        await command.execute(interaction);
+    
+        // Assertions
+        expect(User).toHaveBeenCalledWith(interaction.user.id);
+        expect(mockGet).toHaveBeenCalled();
+        expect(mockCanCreate).toHaveBeenCalled();
+        expect(interaction.reply).toHaveBeenCalledWith(expect.objectContaining({
+            content: "You must accept the rules before creating a Truth or Dare",
+        }));
+    });
+    
+    
 
     test('should execute dare subcommand successfully', async () => {
         interaction.options.getSubcommand.mockReturnValue('dare');
