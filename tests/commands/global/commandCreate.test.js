@@ -3,39 +3,53 @@ const command = require('commands/global/create'); // adjust the path to your fi
 const DareHandler = require("handlers/dareHandler");
 const TruthHandler = require("handlers/truthHandler");
 const Database = require("objects/database");
+const User = require("objects/user");
 const logger = require("objects/logger");
+const { applyGlobals } = require("tests/setuptest");
 
 jest.mock("handlers/dareHandler");
 jest.mock("handlers/truthHandler");
-jest.mock("objects/database");
+jest.mock("objects/database", () => {
+    return jest.fn().mockImplementation(() => ({
+        createdWithin: jest.fn().mockResolvedValue([]) // Create a mock function for canCreate
+    }))
+});
 jest.mock("objects/logger");
-
+jest.mock("objects/user");
 describe('Create Truth or Dare Command', () => {
     let interaction;
 
     beforeEach(() => {
+        applyGlobals();
         interaction = {
             options: {
                 getSubcommand: jest.fn(),
                 getString: jest.fn()
             },
-            user: { id: '123' },
+            user: { id: '123', canCreate: jest.fn() },
             client: {},
             reply: jest.fn(),
+            deferReply: jest.fn(),
+            logMessage: {
+                id: 'messageId'
+            }
         };
 
         Database.mockClear();
         DareHandler.mockClear();
         TruthHandler.mockClear();
+        User.mockClear();
         logger.error.mockClear();
     });
 
     test('should execute dare subcommand successfully', async () => {
         interaction.options.getSubcommand.mockReturnValue('dare');
         interaction.options.getString.mockReturnValue('Dare text');
-        
-        const mockDb = new Database();
-        mockDb.createdWithin.mockResolvedValue([]); // No previous dares or truths created within 2 minutes
+
+        User.mockImplementation(() => ({
+            get: jest.fn(),
+            canCreate: jest.fn().mockResolvedValue(true) // canCreate returns true
+        }));
 
         const dareHandlerInstance = { createDare: jest.fn() };
         DareHandler.mockImplementation(() => dareHandlerInstance);
@@ -51,7 +65,7 @@ describe('Create Truth or Dare Command', () => {
     test('should execute truth subcommand successfully', async () => {
         interaction.options.getSubcommand.mockReturnValue('truth');
         interaction.options.getString.mockReturnValue('Truth text');
-        
+
         const mockDb = new Database();
         mockDb.createdWithin.mockResolvedValue([]); // No previous dares or truths created within 2 minutes
 
@@ -68,9 +82,10 @@ describe('Create Truth or Dare Command', () => {
 
     test('should abort creation if a dare or truth was created within 2 minutes', async () => {
         interaction.options.getSubcommand.mockReturnValue('dare');
-        
-        const mockDb = new Database();
-        mockDb.createdWithin.mockResolvedValue([{}]); // Simulate previous creation within 2 minutes
+
+        Database.mockImplementation(() => ({
+            createdWithin: jest.fn().mockResolvedValue([{}])
+        }))
 
         await command.execute(interaction);
 
@@ -78,7 +93,7 @@ describe('Create Truth or Dare Command', () => {
             content: expect.stringContaining('Aborted creation: User attempted to create a Truth or Dare within 2 minutes'),
             ephemeral: true
         });
-        expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Aborted creation: User attempted to create a Truth or Dare within 2 minutes'));
+        expect(logger.error).toHaveBeenCalledWith("Aborted creation: User attempted to create a Truth or Dare within 2 minutes");
     });
 
     test('should log an error for invalid subcommand', async () => {

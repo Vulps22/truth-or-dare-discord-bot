@@ -45,7 +45,6 @@ class Server {
         const server = await this._db.query(`select id FROM servers WHERE message_id = ${messageId}`);
 		const serverId = server[0].id;
 		this.id = serverId;
-		console.log(this.id);
 		await this.load();
 		return this;
 }
@@ -81,19 +80,14 @@ class Server {
     }
 
     async save() {
-        // save server to database
-        const db = new Database();
-
         //create an object of every property that doesn't have an underscore
         let serverData = {};
         for (let key in this) {
             if (key.startsWith("_")) continue;
             serverData[key] = this[key];
             if (my.environment == 'dev' && key == 'isBanned') serverData[key] = 0;
-
         }
-        await db.set("servers", serverData);
-
+        await this._db.set("servers", serverData);
         this._loaded = true;
     }
 

@@ -21,8 +21,6 @@ module.exports = {
 		await server.load();
 
 		isSetup = server.hasAccepted;
-
-		console.log("isSetup", isSetup);
 	
 		interaction.reply({ embeds: [embedder.help(isSetup)] });
 	}

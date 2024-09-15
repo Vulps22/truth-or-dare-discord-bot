@@ -47,7 +47,10 @@ jest.mock('objects/database', () => {
                 entitlement_end_date: new Date(Date.now() + 10000),
                 message_id: 'MessageID'
             }),
-            set: jest.fn(),
+            set: jest.fn((table, data) => {
+                // Add your console.log here
+                return Promise.resolve(); // Simulate async behavior with a resolved promise
+            }),
             end: jest.fn()
         };
     });

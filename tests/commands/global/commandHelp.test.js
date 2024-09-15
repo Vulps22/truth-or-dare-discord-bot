@@ -58,8 +58,6 @@ describe('/help command', () => {
         expect(embedData.description).toBe('Here are the commands you can use with the bot:');
         expect(embedData.fields.length).toBe(11); // Fields should be present for setup
 
-        console.log(embedData.fields);
-
         // Check that the setup text is included
         const setupField = embedData.fields.find(field => field.name === 'Getting Started');
         expect(setupField).toBeDefined();

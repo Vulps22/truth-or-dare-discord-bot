@@ -55,22 +55,17 @@ module.exports = {
 		interaction.deferReply({ ephemeral: true });
 		//handle different subcommands
 		const subcommand = interaction.options.getSubcommand();
-		const db = new Database();
-		lastQuestion = await db.createdWithin('questions', 2, interaction.user.id);
-		if (lastQuestion.length > 0 && !my.environment === 'dev') {
-			interaction.reply({ content: `Aborted creation: User attempted to create a Truth or Dare within 2 minutes`, ephemeral: true });
-			logger.error(`Aborted creation: User attempted to create a Truth or Dare within 2 minutes`);
 
-			return;
-		}
 
 		switch (subcommand) {
 			case 'dare':
+				if(!await canCreate(interaction)) return;
 				// Handle the "dare" subcommand
 				new DareHandler(interaction.client).createDare(interaction);
 				break;
 
 			case 'truth':
+				if(!await canCreate(interaction)) return;
 				// Handle the "truth" subcommand
 				new TruthHandler(interaction.client).createTruth(interaction);
 				break;
@@ -80,4 +75,18 @@ module.exports = {
 				break;
 		}
 	}
+}
+
+async function canCreate(interaction) {
+	const db = new Database();
+	lastQuestion = await db.createdWithin('questions', 2, interaction.user.id);
+
+	if (lastQuestion.length > 0 && my.environment !== 'dev') {
+		interaction.reply({ content: `Aborted creation: User attempted to create a Truth or Dare within 2 minutes`, ephemeral: true });
+		logger.error(`Aborted creation: User attempted to create a Truth or Dare within 2 minutes`);
+
+		return;
+	}
+
+	return true;
 }
