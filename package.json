@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "cross-env NODE_PATH=./ jest --bail",
+    "coverage": "cross-env NODE_PATH=./ jest --coverage",
     "start": "cross-env NODE_PATH=./ node index.js"
   },
   "keywords": [],
