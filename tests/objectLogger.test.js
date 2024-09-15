@@ -57,7 +57,7 @@ describe('Module Tests', () => {
         await moduleToTest.log('Test message');
 
         expect(getChannelMock).toHaveBeenCalledWith('log_test'); // Adjust this if `my.logs` needs to be a variable
-        expect(sendMock).toHaveBeenCalledWith('Test message');
+        expect(sendMock).toHaveBeenCalledWith(expect.objectContaining({ content: 'Test message' }));
         expect(console.log).toHaveBeenCalledWith('Test message');
     });
 
@@ -80,7 +80,7 @@ describe('Module Tests', () => {
         expect(console.log).toHaveBeenCalledWith('Test error message');
     });
 
-    test.only('newDare should send a new dare message and save the dare', async () => {
+    test('newDare should send a new dare message and save the dare', async () => {
         const sendMock = jest.fn().mockResolvedValue({ id: '12345' });
         getChannelMock.mockReturnValue({ send: sendMock });
 
@@ -118,8 +118,8 @@ describe('Module Tests', () => {
     });
 
 
-//TODO: FINISH THIS BY CHECKING THE CONTENT SENT TO DISCORD
-    test.only('updateDare should update an existing dare message', async () => {
+    //TODO: FINISH THIS BY CHECKING THE CONTENT SENT TO DISCORD
+    test('updateDare should update an existing dare message', async () => {
         const editMock = jest.fn().mockImplementation((messageId, data) => {
             console.log('message.edit called with:', { messageId, data });
             return Promise.resolve({ id: messageId });

@@ -29,7 +29,7 @@ describe('Database', () => {
         jest.clearAllMocks();
     });
 
-    test.only('connects successfully', async () => {
+    test('connects successfully', async () => {
         const mConnection = createConnection();
 
         await db.connect();

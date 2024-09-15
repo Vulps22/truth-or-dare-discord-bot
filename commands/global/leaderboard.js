@@ -30,9 +30,9 @@ module.exports = {
 				let server = await new Server(interaction.guildId).load();
 				if (!server) {
 					logger.error("Server was undefined while handling premium checks");
+					return;
 				}
 				const premium = await server.hasPremium();
-
 				if (!premium) {
 					interaction.reply({ content: "This is a premium command. Premium is not quite ready yet, But I'm working hard to make these commands available for everyone :)", ephemeral: true });
 
@@ -42,10 +42,8 @@ module.exports = {
 			}
 
 			interaction.deferReply();
-
 			let leaderboard = new Leaderboard(interaction, interaction.client);
 			let card = await leaderboard.generateLeaderboard(command == 'global');
-
 			interaction.editReply({ files: [card] });
 
 		} catch (error) {

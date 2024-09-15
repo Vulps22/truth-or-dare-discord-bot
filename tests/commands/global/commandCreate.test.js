@@ -105,6 +105,22 @@ describe('Create Truth or Dare Command', () => {
         expect(interaction.reply).not.toHaveBeenCalledWith(expect.objectContaining({ content: expect.stringContaining('Aborted creation') }));
     });
 
+    test('should abort creation if a truth or truth was created within 2 minutes', async () => {
+        interaction.options.getSubcommand.mockReturnValue('truth');
+
+        Database.mockImplementation(() => ({
+            createdWithin: jest.fn().mockResolvedValue([{}])
+        }))
+
+        await command.execute(interaction);
+
+        expect(interaction.reply).toHaveBeenCalledWith({
+            content: expect.stringContaining('Aborted creation: User attempted to create a Truth or Dare within 2 minutes'),
+            ephemeral: true
+        });
+        expect(logger.error).toHaveBeenCalledWith("Aborted creation: User attempted to create a Truth or Dare within 2 minutes");
+    });
+
     test('should abort creation if a dare or truth was created within 2 minutes', async () => {
         interaction.options.getSubcommand.mockReturnValue('dare');
 
