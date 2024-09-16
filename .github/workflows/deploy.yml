@@ -1,19 +1,23 @@
-# .github/workflows/deploy.yml
 name: Build and Deploy
 
 on:
-  workflow_run:
-    workflows: [test]
-    types: [completed]
-    branches: [ current-release ]
+  push:
+    branches: [current-release]  # Trigger when pushing to 'current-release'
 
 jobs:
-  on-success:
+  call-test-workflow:
+    uses: ./.github/workflows/test.yml  # Call the test workflow
+
+  deploy:
+    needs: call-test-workflow  # Deploy only if the 'test' workflow succeeds
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event_name == 'push'}}
+
     steps:
-      - run: echo "Running CI on Current Release"
-      
+      - run: echo "Running deployment"
+      - name: Deploy to production
+        run: echo "Deploying to production environment..."
+        # Add your deployment logic here
+  
     #  - uses: actions/checkout@v4
 
       # Step 1: Set up Docker
