@@ -1,26 +1,25 @@
-# .github/workflows/test.yml
 name: test
 
 on:
   push:
-    branches: ["main", "current-release"]
+    branches:
+      - main
   pull_request:
-    branches: ["main", "current-release"]
+    branches:
+      - main
+      - current-release
+  workflow_call:  # This allows it to be called by the deploy workflow
 
 jobs:
   test:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [20.x]
 
     steps:
       - uses: actions/checkout@v4
       - name: Use Node.js 20.x
         uses: actions/setup-node@v4
         with:
-          node-version: 20.x
+          node-version: "20.x"
           cache: "npm"
       - run: npm install
       - run: npm test
