@@ -1,0 +1,14 @@
+on:
+    push:
+        branches:
+          - current-release
+    pull_request:
+        branches:
+          - current-release
+
+jobs:
+    test:
+        uses: ./.github/workflows/test.yml
+    deploy:
+        needs: test
+        uses: ./.github/workflows/deploy.yml
