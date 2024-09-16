@@ -1,13 +1,6 @@
 name: test
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-      - current-release
   workflow_call:  # This allows it to be called by the deploy workflow
 
 jobs:
