@@ -2,9 +2,6 @@ on:
     push:
         branches:
           - current-release
-    pull_request:
-        branches:
-          - current-release
 
 jobs:
     test:
