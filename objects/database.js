@@ -60,7 +60,7 @@ class Database {
 		return this.query(`SELECT * FROM ${table} WHERE ${idField}='${id}'`)
 			.then(rows => rows[0]);
 	}
- 
+
 	/**
 	 * 
 	 * @param {string} table 
