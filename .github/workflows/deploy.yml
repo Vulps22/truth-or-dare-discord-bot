@@ -8,48 +8,45 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - run: echo "Running deployment"
-      - name: Deploy to production
-        run: echo "Deploying to production environment..."
         # Add your deployment logic here
   
-    #  - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       # Step 1: Set up Docker
-    #  - name: Set up Docker
-    #    uses: docker/setup-buildx-action@v2
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
 
       # Step 2: Read version from package.json
-     # - name: Get version from package.json
-      #  id: version
-      #  run: |
-       #   version=$(jq -r '.version' package.json)
-     #     echo "VERSION=$version" >> $GITHUB_ENV
+      - name: Get version from package.json
+        id: version
+        run: |
+          version=$(jq -r '.version' package.json)
+          echo "VERSION=$version" >> $GITHUB_ENV
 
       # Step 3: Log in to Docker Hub
-     # - name: Log in to Docker Hub
-     #   uses: docker/login-action@v2
-      #  with:
-     #     username: ${{ secrets.DOCKER_USERNAME }}
-      #    password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
       # Step 4: Check if the version tag already exists on Docker Hub
-     # - name: Check if Docker tag exists
-      #  run: |
-     #     if docker manifest inspect ${{ secrets.DOCKER_USERNAME }}/project-encourage:${{ env.VERSION }} > /dev/null 2>&1; then
-     #       echo "Version ${{ env.VERSION }} already exists on Docker Hub. Aborting build."
-     #       exit 1
-      #    else
-      #      echo "Version ${{ env.VERSION }} does not exist. Proceeding with build."
-      #    fi
+      - name: Check if Docker tag exists
+        run: |
+          if docker manifest inspect ${{ secrets.DOCKER_USERNAME }}/project-encourage:${{ env.VERSION }} > /dev/null 2>&1; then
+            echo "Version ${{ env.VERSION }} already exists on Docker Hub. Aborting build."
+            exit 1
+          else
+            echo "Version ${{ env.VERSION }} does not exist. Proceeding with build."
+          fi
 
-     # # Step 5: Build Docker image
-     # - name: Build Docker image
-     #   run: |
-      #    docker build -t ${{ secrets.DOCKER_USERNAME }}/project-encourage:latest -t ${{ secrets.DOCKER_USERNAME }}/project-encourage:${{ env.VERSION }} .
+      # Step 5: Build Docker image
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/project-encourage:latest -t ${{ secrets.DOCKER_USERNAME }}/project-encourage:${{ env.VERSION }} .
 
       # Step 6: Push Docker image to Docker Hub
-    #  - name: Push Docker image
-     #   run: |
-      #    docker push ${{ secrets.DOCKER_USERNAME }}/project-encourage:latest
-    #      docker push ${{ secrets.DOCKER_USERNAME }}/project-encourage:${{ env.VERSION }}
+      - name: Push Docker image
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/project-encourage:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/project-encourage:${{ env.VERSION }}
