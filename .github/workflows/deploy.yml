@@ -1,15 +1,10 @@
 name: Build and Deploy
 
 on:
-  push:
-    branches: [current-release]  # Trigger when pushing to 'current-release'
-
+  workflow_call
 jobs:
-  call-test-workflow:
-    uses: ./.github/workflows/test.yml  # Call the test workflow
 
   deploy:
-    needs: call-test-workflow  # Deploy only if the 'test' workflow succeeds
     runs-on: ubuntu-latest
 
     steps:
