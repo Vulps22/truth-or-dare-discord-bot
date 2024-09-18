@@ -1,4 +1,4 @@
-name: test
+name: Run Unit Tests
 
 on:
   workflow_call:  # This allows it to be called by the deploy workflow

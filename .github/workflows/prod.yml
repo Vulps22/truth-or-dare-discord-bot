@@ -1,3 +1,5 @@
+name: Test, Package, And Deploy
+
 on:
     push:
         branches:
