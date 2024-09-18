@@ -8,19 +8,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Add host to known_hosts
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ secrets.PRODUCTION_URL }} >> ~/.ssh/known_hosts
-          
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Run remote command via SSH
-        uses: D3rHase/ssh-command-action@latest
-        with:
-          host: ${{ secrets.PRODUCTION_URL }}
-          user: ${{ secrets.PRODUCTION_USER }}
-          private_key: ${{ secrets.CONTABO_PRIVATE_KEY }}
-          host_fingerprint: ${{ secrets.CONTABO_FINGERPRINT }}
-          command: echo 'Hello, World!'
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.CONTABO_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H your-server-ip >> ~/.ssh/known_hosts
+
+      - name: Deploy to server via SSH
+        run: |
+          ssh -i ~/.ssh/id_rsa ${{ secrets.PRODUCTION_USER }}@${{secrets.PRODUCTION_URL}}
+           "echo 'Hello, World!'"
