@@ -1,7 +1,8 @@
 on:
     push:
         branches:
-          - current-release
+        #  - current-release
+           - main
 
 jobs:
     #test:
