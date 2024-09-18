@@ -8,6 +8,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Add host to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.PRODUCTION_URL }} >> ~/.ssh/known_hosts
+          
       - name: Checkout code
         uses: actions/checkout@v4
 
