@@ -22,7 +22,7 @@ module.exports = {
         if (!user) return;
         await user.loadServerUser(message.guildId);
 
-        if (await user._server.isUsingMessageLevelling()) {
+        if (user._serverUserLoaded && await user._server.isUsingMessageLevelling()) {
             await user.addServerXP(user._server.message_xp);
         }
     }
