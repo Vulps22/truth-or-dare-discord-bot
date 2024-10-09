@@ -69,7 +69,6 @@ class Database {
 	 * @returns {number} the ID of the inserted row
 	 */
 	async set(table, valueObject, idField = 'id') {
-		console.log("YOU ARENT MOCKING IT YOU FUCKING IDIOT");
 		const fields = Object.keys(valueObject);
 		const hasId = fields.includes(idField);
 
