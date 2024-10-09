@@ -93,16 +93,24 @@ async function main() {
     // Start the bot
     client.login(my.secret);
 
-    //uptime Kuma Ping
-    const axios = require('axios'); // Ensure axios is required at the top
+    //Uptime-kuma ping
+    const axios = require('axios');
+    const retry = require('async-retry'); // You might need to install async-retry via npm
 
     setInterval(async () => {
         try {
-            const response = await axios.get('https://uptime.vulps.co.uk/api/push/EaJ73kd8Km?status=up&msg=OK&ping='); // Replace with your URL
+            await retry(async () => {
+                const response = await axios.get('https://uptime.vulps.co.uk/api/push/EaJ73kd8Km?status=up&msg=OK&ping=');
+            }, {
+                retries: 3, // Retry up to 3 times
+                minTimeout: 1000, // Wait 1 second between retries
+            });
+            console.log('Ping succeeded');
         } catch (error) {
-            console.error('Ping failed:', error.message);
+            console.error('Ping failed after retries:', error.message);
         }
-    }, 60000); // 60000 milliseconds = 60 seconds
+    }, 60000); // Ping every 60 seconds
+
 
     scheduleDailyCleanup();
 
