@@ -1,3 +1,4 @@
+const { Message, TextChannel } = require("discord.js");
 const Database = require("objects/database");
 
 class Server {
@@ -175,6 +176,10 @@ class Server {
     * Deletes the server and its related server_user relationships
     */
     async deleteServer() {
+
+        const message = await this.getMessage();
+        message.delete();
+
         const db = new Database();
 
         // Delete the server from the 'servers' table
@@ -206,7 +211,29 @@ class Server {
         return userRecords.map(userRecord => User.fromObject(userRecord));
     }
 
+    /**
+     * Get the message in the server log that was created when this server added the bot
+     * @returns {Message}
+     */ 
+    async getMessage() {
+        const channel = await getChannel(my.servers_log);
+        const message = await channel.messages.fetch(this.message_id);
+        return message;
+        
+    }
+
 
 }
+
+/**
+ * 
+ * @param {string} channelId 
+ * @returns {TextChannel}
+ */
+function getChannel(channelId) {
+    let client = global.client;
+    return client.channels.cache.get(channelId);
+}
+
 
 module.exports = Server;
