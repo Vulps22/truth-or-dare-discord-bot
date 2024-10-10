@@ -1,16 +1,25 @@
 const Server = require("objects/server");
-const BanHandler = require("handlers/banHandler");
 const Handler = require("handlers/handler");
+const { Interaction } = require('discord.js');
 
 class ServerHandler extends Handler {
     constructor() {
         super("server");
     }
 
+    /**
+     * 
+     * @param {Interaction} interaction 
+     */
     async banServer(interaction) {
         let server = await new Server().find(interaction.message.id);
-        this.getBanReason(interaction, server.id);
 
+        if (!server) {
+            interaction.reply({ content: 'This server does not exist and has likely kicked the bot', ephemeral: true });
+            interaction.message.delete();
+        }
+
+        this.getBanReason(interaction, server.id);
     }
 }
 
