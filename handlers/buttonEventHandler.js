@@ -40,8 +40,6 @@ class ButtonEventHandler {
                 components: [] // Remove the components (e.g., buttons, dropdowns, etc.)
             });
             this.interaction.reply("A recent Update has changed how I identify bots. I am unable to register any votes on messages created before <t:1725855060:F>")
-        } else {
-            console.log("Message was created after or at 05/09/24 05:11.");
         }
 
 

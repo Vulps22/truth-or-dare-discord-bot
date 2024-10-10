@@ -73,6 +73,8 @@ module.exports = {
 	administrator: false,
 /** @param {Interaction} interaction  */
 	async execute(interaction) {
+		if(!interaction.deferred) interaction.deferReply({ ephemeral: true });
+
 		const subcommand = interaction.options.getSubcommand();
 		const xpType = interaction.options.getString('type');
 		const wager = interaction.options.getInteger('wager');
@@ -100,7 +102,7 @@ module.exports = {
 async function hasEnoughXP(user, xpType, wager, interaction) {
 	if (xpType === XP_TYPES.GLOBAL) {
 		if (user.getTotalGlobalXP() < wager) {
-			await interaction.reply({ content: `You do not have ${wager} ${xpType} XP to wager`, ephemeral: true});
+			await interaction.editReply({ content: `You do not have ${wager} ${xpType} XP to wager`, ephemeral: true});
 			return false;
 		}
 		
@@ -109,14 +111,14 @@ async function hasEnoughXP(user, xpType, wager, interaction) {
 		await server.load();
 		const premium = await server.hasPremium();
 		if (!premium) {
-			await interaction.reply({
+			await interaction.editReply({
 				content: "Wagering Server XP is a premium feature. Premium is not quite ready yet, But I'm working hard to make these commands available for everyone :)",
 				ephemeral: true
 			});
 			return false;
 		}
 		if (user.getTotalServerXP() < wager) {
-			await interaction.reply({ content: `You do not have ${wager} ${xpType} XP to wager`, ephemeral: true });
+			await interaction.editReply({ content: `You do not have ${wager} ${xpType} XP to wager`, ephemeral: true });
 			return false;
 		}
 	}

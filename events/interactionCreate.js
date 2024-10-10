@@ -99,32 +99,6 @@ async function handleAutoComplete(interaction) {
     }
 }
 
-function hasPermission(interaction) {
-
-
-    const botPermissions = interaction.guild.members.me.permissionsIn(interaction.channel);
-
-    if (!botPermissions.has('ViewChannel')) {
-        interaction.reply('I do not have permission to view this channel. I require permission to `view channel` to function correctly');
-        logger.log("Interaction cancelled: Could not access channel");
-        return false;
-    }
-
-    if (!botPermissions.has('SendMessages')) {
-        logger.log("Interaction cancelled: Unable to send messages");
-        interaction.reply('I do not have permission to send messages in this channel. I require permission to `send messages` and `embed links` to function correctly');
-        return false;
-    }
-
-    if (!botPermissions.has('EmbedLinks')) {
-        logger.log("Interaction cancelled: Unable to embed messages");
-        interaction.reply('I do not have permission to embed links in this channel. I require permission to `send messages` and `embed links` to function correctly');
-        return false;
-    }
-
-    return true;
-}
-
 async function runCommand(interaction) {
     try {
         const command = interaction.client.commands.get(interaction.commandName);
@@ -288,15 +262,18 @@ function hasPermission(interaction) {
 
     if (!botPermissions.has('ViewChannel')) {
         interaction.reply('I do not have permission to view this channel. I require permission to `view channel` to function correctly');
+        logger.log("Interaction cancelled: Could not access channel");
         return false;
     }
 
     if (!botPermissions.has('SendMessages')) {
+        logger.log("Interaction cancelled: Unable to send messages");
         interaction.reply('I do not have permission to send messages in this channel. I require permission to `send messages` and `embed links` to function correctly');
         return false;
     }
 
     if (!botPermissions.has('EmbedLinks')) {
+        logger.log("Interaction cancelled: Unable to embed messages");
         interaction.reply('I do not have permission to embed links in this channel. I require permission to `send messages` and `embed links` to function correctly');
         return false;
     }

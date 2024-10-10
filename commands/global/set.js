@@ -62,8 +62,12 @@ module.exports = {
         ),
     nsfw: false,
     administrator: true,
+    /**
+     * 
+     * @param {Interaction} interaction 
+     */
     async execute(interaction) {
-        //Log the parameters that have reached this point
+        if(!interaction.deferred) interaction.deferReply({ ephemeral: true });
 
 
         const command = interaction.options.getSubcommand();
@@ -79,7 +83,7 @@ module.exports = {
                 await setLevelForRole(interaction);
                 break;
             default:
-                interaction.reply('Invalid subcommand');
+                interaction.editReply('Invalid subcommand');
                 break;
         }
     },
@@ -109,7 +113,7 @@ async function setXP(interaction) {
     const amount = interaction.options.getNumber('amount');
 
     if (amount < 0) {
-        interaction.reply('You cannot set negative XP');
+        interaction.editReply('You cannot set negative XP');
         return;
     }
 
@@ -119,14 +123,14 @@ async function setXP(interaction) {
     server.setXpRate(type, amount);
     await server.save();
 
-    interaction.reply(`Set ${type} XP to ${amount}`);
+    interaction.editReply(`Set ${type} XP to ${amount}`);
 }
 
 
 async function setAnnouncementChannel(channel, interaction) {
 
     if (!hasPermission(channel)) {
-        interaction.reply('I need permission to view, send messages, and attach files in that channel');
+        interaction.editReply('I need permission to view, send messages, and attach files in that channel');
         return;
     }
 
@@ -136,7 +140,7 @@ async function setAnnouncementChannel(channel, interaction) {
     await server.save();
 
     channel.send('Announcements will be sent here');
-    interaction.reply(`Announcements will be sent to <#${channel.id}>`);
+    interaction.editReply(`Announcements will be sent to <#${channel.id}>`);
 }
 
 /**
@@ -147,7 +151,7 @@ async function setAnnouncementChannel(channel, interaction) {
 async function setLevelUpChannel(channel, interaction) {
 
     if (!hasPermission(channel)) {
-        interaction.reply('I need permission to view, send messages, and attach files in that channel');
+        interaction.editReply('I need permission to view, send messages, and attach files in that channel');
         return;
     }
 
@@ -155,7 +159,7 @@ async function setLevelUpChannel(channel, interaction) {
     await server.load();
 
     if (!await server.hasPremium()) {
-        interaction.reply("This is a premium command. Premium is not quite ready yet, But I'm working hard to make these commands available for everyone :)")
+        interaction.editReply("This is a premium command. Premium is not quite ready yet, But I'm working hard to make these commands available for everyone :)")
 
         //interaction.sendPremiumRequired();
         return;
@@ -165,7 +169,7 @@ async function setLevelUpChannel(channel, interaction) {
     await server.save();
 
     channel.send('Level up notifications will be sent here');
-    interaction.reply(`Level up notifications will be sent to <#${channel.id}>`);
+    interaction.editReply(`Level up notifications will be sent to <#${channel.id}>`);
 }
 
 /**
@@ -179,7 +183,7 @@ async function setLevelForRole(interaction) {
     await server.load();
 
     if (!server.hasPremium()) {
-        interaction.reply("This is a premium command. Premium is not quite ready yet, But I'm working hard to make these commands available for everyone :)")
+        interaction.editReply("This is a premium command. Premium is not quite ready yet, But I'm working hard to make these commands available for everyone :)")
 
         //interaction.sendPremiumRequired();
         return;
@@ -200,7 +204,7 @@ async function setLevelForRole(interaction) {
     const hasPermission = interaction.guild.members.me.permissions.has('ManageRoles');
 
     if (!hasPermission) {
-        interaction.reply("Unable to set the role to the level. I require the Manage Roles permission to give and take roles when players level up")
+        interaction.editReply("Unable to set the role to the level. I require the Manage Roles permission to give and take roles when players level up")
     }
 
     const role = interaction.options.getRole('role');
@@ -209,7 +213,7 @@ async function setLevelForRole(interaction) {
     await server.setLevelRole(role.id, level);
     await server.save();
 
-    interaction.reply(`Set <@&${role.id}> to level ${level}`);
+    interaction.editReply(`Set <@&${role.id}> to level ${level}`);
 }
 
 function hasPermission(channel) {

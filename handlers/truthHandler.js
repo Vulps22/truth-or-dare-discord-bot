@@ -59,11 +59,12 @@ class TruthHandler extends Handler {
 	 * @returns 
 	 */
 	async truth(interaction) {
+		if(!interaction.deferred) interaction.deferReply();
 		try {
 			const truths = await Question.collect("truth");
-			if (!truths || truths.length === 0) { interaction.reply("Hmm, I can't find any truths. This might be a bug, try again later"); return; }
+			if (!truths || truths.length === 0) { interaction.editReply("Hmm, I can't find any truths. This might be a bug, try again later"); return; }
 			const unBannedQuestions = truths.filter(q => !q.isBanned && q.isApproved);
-			if (unBannedQuestions.length === 0) { interaction.reply("There are no approved truths to give."); return; }
+			if (unBannedQuestions.length === 0) { interaction.editReply("There are no approved truths to give."); return; }
 			const truth = this.selectRandomTruth(unBannedQuestions);
 			//truth = this.db.get()
 			const creator = this.getCreator(truth, this.client);
@@ -71,11 +72,11 @@ class TruthHandler extends Handler {
 			const embed = this.createTruthEmbed(truth, interaction, creator);
 			const row = this.createActionRow();
 
-			const message = await interaction.reply({ content: "Here's your Truth!", embeds: [embed], components: [row], fetchReply: true });
+			const message = await interaction.editReply({ content: "Here's your Truth!", embeds: [embed], components: [row], fetchReply: true });
 			await this.saveTruthMessageId(message.id, interaction.user.id, truth.id, interaction.guildId, interaction.user.username, interaction.user.displayAvatarURL());
 		} catch (error) {
 			console.error('Error in truth function:', error);
-			interaction.reply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:");
+			interaction.editReply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:");
 			logger.error(`Brain Fart: Error in truth function: ${error}`);
 		}
 	}
@@ -86,6 +87,7 @@ class TruthHandler extends Handler {
 	 * @returns 
 	 */
 	async giveTruth(interaction) {
+		if(!interaction.deferred) interaction.deferReply({ ephemeral: true })
 		const target = interaction.options.getUser('user');
 		const question = interaction.options.getString('truth');
 		const wager = interaction.options.getInteger('wager');
@@ -93,22 +95,22 @@ class TruthHandler extends Handler {
 
 		// Send an error message if no user was mentioned
 		if (!target) {
-			interaction.reply('Please mention a user to give a truth to!');
+			interaction.editReply('Please mention a user to give a truth to!');
 			return;
 		}
 
 		// Send an error message if no dare was provided
 		if (!question) {
-			interaction.reply('Please provide a question!');
+			interaction.editReply('Please provide a question!');
 			return;
 		}
 
 		if (wager < 1) {
-			interaction.reply('You must offer a wager');
+			interaction.editReply('You must offer a wager');
 			return;
 		}
 		const given = GivenQuestion.create(interaction, question, interaction.user.id, target.id, interaction.guildId, wager, xpType, "truth");
-		interaction.reply({ content: "Your truth has been sent", ephemeral: true });
+		interaction.editReply({ content: "Your truth has been sent", ephemeral: true });
 	}
 
 	/**
@@ -142,13 +144,14 @@ class TruthHandler extends Handler {
 	 * @returns 
 	 */
 	ban(interaction) {
+		if(!interaction.deferred) interaction.deferReply({ ephemeral: true });
 		let id = interaction.options.getInteger("id");
 		let truth = this.db.get("truths", id);
-		if (!truth) { interaction.reply("Truth not found"); return; }
+		if (!truth) { interaction.editReply("Truth not found"); return; }
 
 		truth.isBanned = 1;
 		this.db.set('truths', Truth);
-		interaction.reply("Truth " + id + " has been banned!");
+		interaction.editReply("Truth " + id + " has been banned!");
 	}
 
 	/**
@@ -280,7 +283,7 @@ class TruthHandler extends Handler {
 		const userTruth = await new UserTruth().load(interaction.message.id, 'truth');
 
 		if (!userTruth) {
-			await interaction.reply("I'm sorry, I couldn't find the truth to track votes. This is a brain fart. Please reach out for support on the official server.");
+			await interaction.editReply("I'm sorry, I couldn't find the truth to track votes. This is a brain fart. Please reach out for support on the official server.");
 			logger.error(`Brain Fart: Couldn't find truth to track votes. Message ID missing`);
 			return;
 		}

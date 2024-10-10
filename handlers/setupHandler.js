@@ -1,8 +1,7 @@
 const Server = require("objects/server");
 const Handler = require("handlers/handler");
 const embedder = require('embedder.js');
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelSelectMenuBuilder, ChannelType, ComponentType } = require("discord.js");
-const { Console } = require("console");
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelSelectMenuBuilder, ChannelType, ComponentType, Interaction } = require("discord.js");
 const logger = require("objects/logger.js");
 
 class SetupHandler extends Handler {
@@ -10,7 +9,12 @@ class SetupHandler extends Handler {
         super("setup");
     }
 
+    /**
+     * 
+     * @param {Interaction} interaction 
+     */
     async startSetup(interaction) {
+        if(!interaction.deferred) interaction.deferReply();
         let server = new Server(interaction.guildId);
         await server.load();
         if (!server.exists) {  // Assuming there is a property to check if the server is loaded
@@ -29,9 +33,12 @@ class SetupHandler extends Handler {
                     .setStyle(ButtonStyle.Danger)
             );
 
-        await interaction.reply({ embeds: [embedder.terms()], components: [actionRow] });
+        await interaction.editReply({ embeds: [embedder.terms()], components: [actionRow] });
     }
-
+/**
+ * 
+ * @param {Interaction} interaction 
+ */
     async action_1(interaction) {
         let server = new Server(interaction.guildId);
         await server.load();
@@ -62,7 +69,7 @@ class SetupHandler extends Handler {
             const actionRow2 = new ActionRowBuilder()
                 .addComponents(channelMenu);
 
-            await interaction.update({ components: [actionRow] });
+            await interaction.message.edit({ components: [actionRow] });
             const step2 = await interaction.followUp({ content: "Accepted. Please provide the announcement channel.", components: [actionRow2] });
 
             const collector = step2.createMessageComponentCollector({

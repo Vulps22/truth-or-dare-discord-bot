@@ -62,14 +62,15 @@ class DareHandler extends Handler {
 	 */
 
 	async dare(interaction) {
+		if(!interaction.deferred) interaction.deferReply();
 		try {
 			const dares = await Question.collect('dare');
 			if (!dares || dares.length === 0) {
-				return interaction.reply("Hmm, I can't find any dares. This might be a bug, try again later");
+				return interaction.editReply("Hmm, I can't find any dares. This might be a bug, try again later");
 			}
 
 			const unBannedQuestions = dares.filter(q => !q.isBanned && q.isApproved);
-			if (unBannedQuestions.length === 0) { interaction.reply("There are no approved truths to give"); return; }
+			if (unBannedQuestions.length === 0) { interaction.editReply("There are no approved truths to give"); return; }
 			const dare = this.selectRandomDare(unBannedQuestions);
 
 			const creator = await this.getCreator(dare, interaction);
@@ -78,11 +79,11 @@ class DareHandler extends Handler {
 			const embed = this.createDareEmbed(dare, interaction, username);
 			const row = this.createActionRow();
 
-			const message = await interaction.reply({ content: "Here's your Dare!", embeds: [embed], components: [row], fetchReply: true });
+			const message = await interaction.editReply({ content: "Here's your Dare!", embeds: [embed], components: [row], fetchReply: true });
 			await this.saveDareMessageId(message.id, interaction.user.id, dare.id, interaction.guildId, interaction.user.username, interaction.user.displayAvatarURL());
 		} catch (error) {
 			console.error('Error in dare function:', error);
-			interaction.reply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:");
+			interaction.editReply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:");
 			logger.error(`Brain Fart: Error in dare function: ${error}`);
 		}
 	}
@@ -92,6 +93,7 @@ class DareHandler extends Handler {
 	 * @returns 
 	 */
 	async giveDare(interaction) {
+		if(!interaction.deferred) interaction.deferReply();
 		const target = interaction.options.getUser('user');
 		const question = interaction.options.getString('dare');
 		const wager = interaction.options.getInteger('wager');
@@ -99,22 +101,22 @@ class DareHandler extends Handler {
 
 		// Send an error message if no user was mentioned
 		if (!target) {
-			interaction.reply('Please mention a user to give a dare to!');
+			interaction.editReply('Please mention a user to give a dare to!');
 			return;
 		}
 
 		// Send an error message if no dare was provided
 		if (!question) {
-			interaction.reply('Please provide a dare!');
+			interaction.editReply('Please provide a dare!');
 			return;
 		}
 
 		if (wager < 1) {
-			interaction.reply('You must offer a wager');
+			interaction.editReply('You must offer a wager');
 			return;
 		}
 		const given = GivenQuestion.create(interaction, question, interaction.user.id, target.id, interaction.guildId, wager, xpType, "dare");
-		interaction.reply({ content: "Your dare has been sent", ephemeral: true });
+		interaction.editReply({ content: "Your dare has been sent", ephemeral: true });
 	}
 
 	async listAll(interaction) {
