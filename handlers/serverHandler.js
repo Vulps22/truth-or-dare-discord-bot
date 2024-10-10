@@ -17,6 +17,7 @@ class ServerHandler extends Handler {
         if (!server) {
             interaction.reply({ content: 'This server does not exist and has likely kicked the bot', ephemeral: true });
             interaction.message.delete();
+            return;
         }
 
         this.getBanReason(interaction, server.id);
