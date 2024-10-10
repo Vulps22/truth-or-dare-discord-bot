@@ -36,7 +36,7 @@ module.exports = {
 	 * @returns 
 	 */
 	async execute(interaction) {
-
+		if(!interaction.deferred) interaction.deferReply({ ephemeral: true });
 		const user = new User(interaction.user.id);
 		await user.get();
 		if (!await user.canCreate()) {
@@ -47,12 +47,11 @@ module.exports = {
 						.setLabel('Accept Rules')
 						.setStyle(ButtonStyle.Success),
 				);
-			interaction.reply({ content: "You must accept the rules before creating a Truth or Dare", embeds: [embedder.rules()], components: [row], ephemeral: true });
+			interaction.editReply({ content: "You must accept the rules before creating a Truth or Dare", embeds: [embedder.rules()], components: [row], ephemeral: true });
 			logger.editLog(interaction.logMessage.id, `${interaction.logInteraction} Aborted: User has not accepted the rules`);
 			return;
 		}
 
-		interaction.deferReply({ ephemeral: true });
 		//handle different subcommands
 		const subcommand = interaction.options.getSubcommand();
 
@@ -82,7 +81,7 @@ async function canCreate(interaction) {
 	lastQuestion = await db.createdWithin('questions', 2, interaction.user.id);
 
 	if (lastQuestion.length > 0 && my.environment !== 'dev') {
-		interaction.reply({ content: `Aborted creation: User attempted to create a Truth or Dare within 2 minutes`, ephemeral: true });
+		interaction.editReply({ content: `Aborted creation: User attempted to create a Truth or Dare within 2 minutes`, ephemeral: true });
 		logger.error(`Aborted creation: User attempted to create a Truth or Dare within 2 minutes`);
 
 		return;

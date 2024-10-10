@@ -1,8 +1,41 @@
 // Import the module you're testing
+const { Client } = require('discord.js');
+const fs = require('fs');
+const path = require('path');
 const Database = require('objects/database');
 
 // Mock the Database class
 jest.mock('objects/database');
+jest.mock('fs');
+
+jest.mock('discord.js', () => {
+    return {
+        Client: jest.fn().mockImplementation(() => ({
+            login: jest.fn(),
+            on: jest.fn(),
+            emit: jest.fn(),
+            destroy: jest.fn(),
+            user: {
+                setActivity: jest.fn(),
+            },
+            guilds: {
+                cache: new Map(),
+            },
+            channels: {
+                fetch: jest.fn(),
+            },
+        })),
+        GatewayIntentBits: {
+            Guilds: 1,
+            GuildMessages: 2,
+        },
+        Collection: jest.fn(() => ({
+            set: jest.fn(),
+            get: jest.fn(),
+        })),
+    };
+});
+
 
 describe('Main bot initialization', () => {
     let dbGetMock;
@@ -27,6 +60,11 @@ describe('Main bot initialization', () => {
             get: dbGetMock,
             list: jest.fn().mockResolvedValue([]),  // Mock any other methods needed for testing
         }));
+
+        fs.mockImplementation(() => ({
+            readdirSync: jest.fn.mockReturnValue([])
+        }))
+
     });
 
     test('should call db.get with config and 3', async () => {

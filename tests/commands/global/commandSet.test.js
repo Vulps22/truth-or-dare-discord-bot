@@ -2,6 +2,7 @@
 const setCommand = require('commands/global/set');
 const Server = require('objects/server');
 const { PermissionsBitField } = require('discord.js');
+const exp = require('constants');
 
 jest.mock('objects/server');
 
@@ -40,7 +41,10 @@ describe('set command', () => {
                 getRole: jest.fn(),
             },
             guildId: 'test-guild-id',
+            deferred: false,
+            deferReply: jest.fn(),
             reply: jest.fn(),
+            editReply: jest.fn(),
             guild: {
                 members: {
                     me: {
@@ -53,6 +57,12 @@ describe('set command', () => {
             },
         };
         clearMocks(); // Clear mocks before each test
+    });
+
+    test('Interaction is deferred', async () => {
+        await setCommand.execute(interaction);
+
+        expect(interaction.deferReply).toHaveBeenCalledWith({ ephemeral: true });
     });
 
     describe('execute function', () => {
@@ -77,7 +87,8 @@ describe('set command', () => {
             expect(serverLoadMock).toHaveBeenCalled();
             expect(serverSetXpRateMock).toHaveBeenCalledWith('dare_success', 50);
             expect(serverSaveMock).toHaveBeenCalled();
-            expect(interaction.reply).toHaveBeenCalledWith('Set dare_success XP to 50');
+
+            expect(interaction.editReply).toHaveBeenCalledWith('Set dare_success XP to 50');
         });
 
         test('should call setLevelForRole when subcommand is "level-for-role"', async () => {
@@ -107,7 +118,7 @@ describe('set command', () => {
 
             await setCommand.execute(interaction);
 
-            expect(interaction.reply).toHaveBeenCalledWith('Invalid subcommand');
+            expect(interaction.editReply).toHaveBeenCalledWith('Invalid subcommand');
         });
     });
 
@@ -147,7 +158,7 @@ describe('set command', () => {
             expect(serverLoadMock).toHaveBeenCalled();
             expect(serverSaveMock).toHaveBeenCalled();
             expect(mockChannel.send).toHaveBeenCalledWith('Announcements will be sent here');
-            expect(interaction.reply).toHaveBeenCalledWith('Announcements will be sent to <#channel-id>');
+            expect(interaction.editReply).toHaveBeenCalledWith('Announcements will be sent to <#channel-id>');
         });
 
         test('should reply with premium message when setting level-up channel without premium', async () => {
@@ -181,7 +192,7 @@ describe('set command', () => {
             await setCommand.execute(interaction);
 
             expect(serverHasPremiumFalseMock).toHaveBeenCalled();
-            expect(interaction.reply).toHaveBeenCalledWith(
+            expect(interaction.editReply).toHaveBeenCalledWith(
                 'This is a premium command. Premium is not quite ready yet, But I\'m working hard to make these commands available for everyone :)'
             );
         });
@@ -209,7 +220,7 @@ describe('set command', () => {
             expect(serverLoadMock).toHaveBeenCalled();
             expect(serverSetXpRateMock).toHaveBeenCalledWith('dare_success', 50);
             expect(serverSaveMock).toHaveBeenCalled();
-            expect(interaction.reply).toHaveBeenCalledWith('Set dare_success XP to 50');
+            expect(interaction.editReply).toHaveBeenCalledWith('Set dare_success XP to 50');
         });
 
         test('should reply with error when XP value is negative', async () => {
@@ -218,7 +229,7 @@ describe('set command', () => {
 
             await setCommand.execute(interaction);
 
-            expect(interaction.reply).toHaveBeenCalledWith('You cannot set negative XP');
+            expect(interaction.editReply).toHaveBeenCalledWith('You cannot set negative XP');
         });
     });
 });

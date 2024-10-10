@@ -24,12 +24,19 @@ describe('Give Command', () => {
             guildId: 'guild123',
             reply: jest.fn(),
             deferReply: jest.fn(),
+            editReply: jest.fn(),
         };
 
         User.mockClear();
         Server.mockClear();
         TruthHandler.mockClear();
         DareHandler.mockClear();
+    });
+
+    test('should defer reply', async () => {
+        await command.execute(interaction);
+
+        expect(interaction.deferReply).toHaveBeenCalledWith({ ephemeral: true });
     });
 
     test('should execute truth subcommand successfully', async () => {
@@ -52,7 +59,7 @@ describe('Give Command', () => {
 
         expect(TruthHandler).toHaveBeenCalledWith(interaction.client);
         expect(truthHandlerInstance.giveTruth).toHaveBeenCalledWith(interaction);
-        expect(interaction.reply).not.toHaveBeenCalledWith(expect.objectContaining({
+        expect(interaction.editReply).not.toHaveBeenCalledWith(expect.objectContaining({
             content: expect.stringContaining('You do not have'),
         }));
     });
@@ -75,7 +82,7 @@ describe('Give Command', () => {
 
         expect(DareHandler).toHaveBeenCalledWith(interaction.client);
         expect(dareHandlerInstance.giveDare).toHaveBeenCalledWith(interaction);
-        expect(interaction.reply).not.toHaveBeenCalledWith(expect.objectContaining({
+        expect(interaction.editReply).not.toHaveBeenCalledWith(expect.objectContaining({
             content: expect.stringContaining('You do not have'),
         }));
     });
@@ -93,7 +100,7 @@ describe('Give Command', () => {
 
         await command.execute(interaction);
 
-        expect(interaction.reply).toHaveBeenCalledWith({
+        expect(interaction.editReply).toHaveBeenCalledWith({
             content: 'You do not have 100 global XP to wager',
             ephemeral: true,
         });
@@ -119,7 +126,7 @@ describe('Give Command', () => {
 
         await command.execute(interaction);
 
-        expect(interaction.reply).toHaveBeenCalledWith({
+        expect(interaction.editReply).toHaveBeenCalledWith({
             content: expect.stringContaining('Wagering Server XP is a premium feature'),
             ephemeral: true,
         });
@@ -145,7 +152,7 @@ describe('Give Command', () => {
 
         await command.execute(interaction);
 
-        expect(interaction.reply).toHaveBeenCalledWith({
+        expect(interaction.editReply).toHaveBeenCalledWith({
             content: 'You do not have 100 server XP to wager',
             ephemeral: true,
         });
