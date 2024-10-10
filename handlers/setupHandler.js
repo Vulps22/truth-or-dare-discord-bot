@@ -14,7 +14,7 @@ class SetupHandler extends Handler {
      * @param {Interaction} interaction 
      */
     async startSetup(interaction) {
-        if(!interaction.deferred) interaction.deferReply();
+        if(!interaction.deferred) await interaction.deferReply();
         let server = new Server(interaction.guildId);
         await server.load();
         if (!server.exists) {  // Assuming there is a property to check if the server is loaded

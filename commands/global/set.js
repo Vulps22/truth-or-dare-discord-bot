@@ -67,7 +67,7 @@ module.exports = {
      * @param {Interaction} interaction 
      */
     async execute(interaction) {
-        if(!interaction.deferred) interaction.deferReply({ ephemeral: true });
+        if(!interaction.deferred) await interaction.deferReply({ ephemeral: true });
 
 
         const command = interaction.options.getSubcommand();

@@ -62,7 +62,7 @@ class DareHandler extends Handler {
 	 */
 
 	async dare(interaction) {
-		if(!interaction.deferred) interaction.deferReply();
+		if(!interaction.deferred) await interaction.deferReply();
 		try {
 			const dares = await Question.collect('dare');
 			if (!dares || dares.length === 0) {
@@ -93,7 +93,7 @@ class DareHandler extends Handler {
 	 * @returns 
 	 */
 	async giveDare(interaction) {
-		if(!interaction.deferred) interaction.deferReply();
+		if(!interaction.deferred) await interaction.deferReply();
 		const target = interaction.options.getUser('user');
 		const question = interaction.options.getString('dare');
 		const wager = interaction.options.getInteger('wager');
@@ -273,7 +273,7 @@ class DareHandler extends Handler {
 	 * @returns 
 	 */
 	async vote(interaction) {
-		if(!interaction.deferred) interaction.deferReply({ content: "Registering your vote", ephemeral: true })
+		if(!interaction.deferred) await interaction.deferReply({ content: "Registering your vote", ephemeral: true })
 		const userDare = await new UserDare().load(interaction.message.id, 'dare');
 
 		if (!userDare) {
@@ -375,7 +375,7 @@ class DareHandler extends Handler {
 	 * @param {string<"ban"|"approve"} decision 
 	 */
 	async setDare(interaction, decision) {
-		if(!interaction.deferred) interaction.deferReply({ ephemeral: true })
+		if(!interaction.deferred) await interaction.deferReply({ ephemeral: true })
 		let dare = await new Dare().find(interaction.message.id);
 		switch (decision) {
 			case "ban":
