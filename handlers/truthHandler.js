@@ -59,7 +59,8 @@ class TruthHandler extends Handler {
 	 * @returns 
 	 */
 	async truth(interaction) {
-		if(!interaction.deferred) interaction.deferReply();
+		console.log(interaction.deferred);
+		if(!interaction.deferred) await interaction.deferReply();
 		try {
 			const truths = await Question.collect("truth");
 			if (!truths || truths.length === 0) { interaction.editReply("Hmm, I can't find any truths. This might be a bug, try again later"); return; }
@@ -87,7 +88,7 @@ class TruthHandler extends Handler {
 	 * @returns 
 	 */
 	async giveTruth(interaction) {
-		if(!interaction.deferred) interaction.deferReply({ ephemeral: true })
+		if(!interaction.deferred) await interaction.deferReply({ ephemeral: true })
 		const target = interaction.options.getUser('user');
 		const question = interaction.options.getString('truth');
 		const wager = interaction.options.getInteger('wager');
@@ -143,8 +144,8 @@ class TruthHandler extends Handler {
 	 * @param {Interaction} interaction 
 	 * @returns 
 	 */
-	ban(interaction) {
-		if(!interaction.deferred) interaction.deferReply({ ephemeral: true });
+	async ban(interaction) {
+		if(!interaction.deferred) await interaction.deferReply({ ephemeral: true });
 		let id = interaction.options.getInteger("id");
 		let truth = this.db.get("truths", id);
 		if (!truth) { interaction.editReply("Truth not found"); return; }
@@ -279,7 +280,7 @@ class TruthHandler extends Handler {
 	 * @returns 
 	 */
 	async vote(interaction) {
-		if(!interaction.deferred) interaction.deferReply({ ephemeral: true });
+		if(!interaction.deferred) await interaction.deferReply({ ephemeral: true });
 		const userTruth = await new UserTruth().load(interaction.message.id, 'truth');
 
 		if (!userTruth) {
@@ -382,7 +383,7 @@ class TruthHandler extends Handler {
  * @param {string<"ban"|"approve">} decision 
  */
 	async setTruth(interaction, decision) {
-		if(!interaction.deferred) interaction.deferReply({ ephemeral: true });
+		if(!interaction.deferred) await interaction.deferReply({ ephemeral: true });
 		let truth = await new Truth().find(interaction.message.id);
 		switch (decision) {
 			case "ban":

@@ -36,7 +36,7 @@ module.exports = {
 	 * @returns 
 	 */
 	async execute(interaction) {
-		if(!interaction.deferred) interaction.deferReply({ ephemeral: true });
+		if(!interaction.deferred) await interaction.deferReply({ ephemeral: true });
 		const user = new User(interaction.user.id);
 		await user.get();
 		if (!await user.canCreate()) {

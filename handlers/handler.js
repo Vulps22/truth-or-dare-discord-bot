@@ -161,7 +161,7 @@ class Handler {
    * @param {Question} question 
    */
   async approve(interaction, question) {
-    if(!interaction.deferred) interaction.deferReply({ephemeral: true});
+    if(!interaction.deferred) await interaction.deferReply({ephemeral: true});
     await question.load();
     await question.approve();
     const message = interaction.message;
