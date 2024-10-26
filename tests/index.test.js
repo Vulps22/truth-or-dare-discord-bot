@@ -1,81 +1,71 @@
-// Import the module you're testing
-const { Client } = require('discord.js');
-const fs = require('fs');
-const path = require('path');
+// main.test.js
+const { ShardingManager } = require('discord.js');
 const Database = require('objects/database');
 
-// Mock the Database class
 jest.mock('objects/database');
+jest.mock('discord.js', () => ({
+    ShardingManager: jest.fn().mockImplementation(() => ({
+        on: jest.fn(),
+        spawn: jest.fn(),
+    })),
+}));
 
-jest.mock('fs', () => {
-    return {
-        readdirSync: jest.fn().mockReturnValue([]),
-    }
-});
-
-jest.mock('discord.js', () => {
-    return {
-        Client: jest.fn().mockImplementation(() => ({
-            login: jest.fn(),
-            on: jest.fn(),
-            emit: jest.fn(),
-            destroy: jest.fn(),
-            user: {
-                setActivity: jest.fn(),
-            },
-            guilds: {
-                cache: new Map(),
-            },
-            channels: {
-                fetch: jest.fn(),
-            },
-        })),
-        GatewayIntentBits: {
-            Guilds: 1,
-            GuildMessages: 2,
-        },
-        Collection: jest.fn(() => ({
-            set: jest.fn(),
-            get: jest.fn(),
-        })),
-    };
-});
-
-
-describe.skip('Main bot initialization', () => {
-    let dbGetMock;
+describe.skip('Main Bot Initialization', () => {
+    let mockDb;
 
     beforeEach(() => {
-        // Reset the mock
-        Database.mockClear();
-
-        // Create a mock for the 'get' method
-        dbGetMock = jest.fn().mockResolvedValue({
-            maintenance_mode: false,
-            token: 'mock-token',
-            dares_log: 'mock-dares-log',
-            truths_log: 'mock-truths-log',
-            servers_log: 'mock-servers-log',
-            required_votes: 3,
-            environment: 'prod'
-        });
-
-        // Ensure that the Database class uses the mock for 'get'
-        Database.mockImplementation(() => ({
-            get: dbGetMock,
-            list: jest.fn().mockResolvedValue([]),  // Mock any other methods needed for testing
-        }));
-
+        mockDb = new Database();
     });
 
-    test('should call db.get with config and 3', async () => {
-        // Import the main file (this runs the main() function)
-        require('index'); // Adjust the path as necessary
+    afterEach(() => {
+        jest.clearAllMocks();
+    });
 
-        // Wait for async calls to finish
-        await new Promise(setImmediate);
+    it('loads configuration from database and sets global config', async () => {
+        const mockConfig = {
+            maintenance_mode: true,
+            secret: 'supersecrettoken',
+            dares_log: '12345',
+            truths_log: '67890',
+            servers_log: '111213',
+            required_votes: 5,
+            environment: 'prod',
+        };
+        mockDb.get.mockResolvedValueOnce(mockConfig);
 
-        // Check if db.get was called with the correct table and ID (3 for production config)
-        expect(dbGetMock).toHaveBeenCalledWith('config', 3);
+        require('index');
+
+        expect(global.my).toEqual(mockConfig);
+    });
+
+    it('logs an error and exits if loading config from database fails', async () => {
+        const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+        mockDb.get.mockRejectedValueOnce(new Error('Database error'));
+
+        await main();
+
+        expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Error loading config from database:'));
+        expect(ShardingManager).not.toHaveBeenCalled();
+
+        consoleSpy.mockRestore();
+    });
+
+    it('initializes ShardingManager and spawns shards', async () => {
+        const mockConfig = {
+            maintenance_mode: false,
+            secret: 'supersecrettoken',
+            dares_log: '12345',
+            truths_log: '67890',
+            servers_log: '111213',
+            required_votes: 5,
+            environment: 'prod',
+        };
+        mockDb.get.mockResolvedValueOnce(mockConfig);
+
+        const managerInstance = new ShardingManager();
+        require('index');
+
+        expect(managerInstance.on).toHaveBeenCalledWith('shardCreate', expect.any(Function));
+        expect(managerInstance.spawn).toHaveBeenCalled();
     });
 });
