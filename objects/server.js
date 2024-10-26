@@ -44,7 +44,8 @@ class Server {
     async find(messageId) {
 
         const server = await this._db.query(`select id FROM servers WHERE message_id = ${messageId}`);
-		const serverId = server[0].id;
+		if(server.length === 0) return false;
+        const serverId = server[0].id;
 		this.id = serverId;
 		await this.load();
 		return this;

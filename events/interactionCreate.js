@@ -6,6 +6,7 @@ const User = require("objects/user");
 const ButtonEventHandler = require("handlers/buttonEventHandler");
 const logger = require("objects/logger");
 const BanHandler = require("handlers/banHandler");
+const embedder = require("embedder");
 
 let logInteraction = '';
 
@@ -20,8 +21,8 @@ module.exports = {
 
         const didBan = await registerServer(interaction);
         if (didBan === -1) {
-            interaction.reply("Opps! Brain Fart! Please Try again. If this problem continues please reach out for support on our official discord server. Use /help to find the invite to this server")
-            logger.error("Failed to register server! Function returned -1. Check the logs for Guild Details")
+            interaction.reply({content: "Oops! It looks like you tried to give me a command in DM. I don't currently support this. But if you join my support server and ask for it, my developer can look into it.", embeds: [embedder.help(false)]})
+            return;
         }
         if (didBan) {
             interaction.reply({ content: "You have been banned from using this bot", ephemeral: true });
@@ -199,7 +200,7 @@ function isMaintenance() {
  */
 async function registerServer(interaction) {
 
-    if (!interaction.guild) return -1;
+    if (!interaction.guild) return -1; //turns out this means the command is being performed in DM 👀
 
     const server = new Server(interaction.guildId);
     const user = new User(interaction.guild.ownerId); //server owner
