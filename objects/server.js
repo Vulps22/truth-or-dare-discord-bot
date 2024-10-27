@@ -44,19 +44,23 @@ class Server {
     async find(messageId) {
 
         const server = await this._db.query(`select id FROM servers WHERE message_id = ${messageId}`);
-		if(server.length === 0) return false;
+        if (server.length === 0) return false;
         const serverId = server[0].id;
-		this.id = serverId;
-		await this.load();
-		return this;
-}
+        this.id = serverId;
+        await this.load();
+        return this;
+    }
 
     async load() {
         // load server from database
-    
+
         let serverData = await this._db.get("servers", this.id);
 
-        if (!serverData) return;
+        if (!serverData) {
+            this.name = 'Server Data No Longer Exists';
+            this._loaded = true;
+            return;
+        };
 
         this.name = serverData.name;
         this.owner = serverData.owner;
@@ -79,6 +83,38 @@ class Server {
         this._loaded = true;
 
         return this;
+    }
+
+    /**
+     * Loads and returns an array of Server instances populated from input data.
+     * @param {Array<Object>} serverDataArray - Array of objects containing server data.
+     * @returns {Server[]} - Array of populated Server instances.
+     */
+    loadMany(serverDataArray) {
+        return serverDataArray.map(data => {
+            const server = new Server(data.id, data.name);  // Create new Server instance with id and name
+
+            // Directly assign provided data to the server instance, avoiding any database calls
+            server.owner = data.owner || null;
+            server.hasAccepted = data.hasAccepted || 0;
+            server.isBanned = data.isBanned || 0;
+            server.banReason = data.banReason || null;
+            server.level_up_channel = data.level_up_channel || null;
+            server.announcement_channel = data.announcement_channel || null;
+            server.message_id = data.message_id || null;
+            server._date_created = data.date_created || null;
+            server._date_updated = data.date_updated || null;
+            server.dare_success_xp = data.dare_success_xp || 50;
+            server.dare_fail_xp = data.dare_fail_xp || 25;
+            server.message_xp = data.message_xp || 0;
+            server.truth_success_xp = data.truth_success_xp || 40;
+            server.truth_fail_xp = data.truth_fail_xp || 40;
+            server.is_entitled = data.is_entitled || false;
+            server.entitlement_end_date = data.entitlement_end_date || null;
+            server._loaded = true;  // Mark as loaded since we're assigning values directly
+
+            return server;  // Add to the array of servers
+        });
     }
 
     async save() {
@@ -203,7 +239,7 @@ class Server {
             WHERE server_users.server_id = '${this.id}'
         `);
 
-        if(!userRecords.length > 0) {
+        if (!userRecords.length > 0) {
             console.log("No server_users found.")
             return [];
         }
@@ -215,12 +251,12 @@ class Server {
     /**
      * Get the message in the server log that was created when this server added the bot
      * @returns {Message}
-     */ 
+     */
     async getMessage() {
         const channel = await getChannel(my.servers_log);
         const message = await channel.messages.fetch(this.message_id);
         return message;
-        
+
     }
 
 
