@@ -1,7 +1,7 @@
 
-const { SelectMenuBuilder, ModalBuilder, ActionRowBuilder } = require('@discordjs/builders');
+const { SelectMenuBuilder, ModalBuilder, ActionRowBuilder, TextInputBuilder } = require('@discordjs/builders');
 const Database = require('objects/database.js');
-const { Interaction, StringSelectMenuOptionBuilder, StringSelectMenuBuilder, ComponentType, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { Interaction, StringSelectMenuOptionBuilder, StringSelectMenuBuilder, ComponentType, ButtonBuilder, ButtonStyle, TextInputStyle } = require('discord.js');
 const BanHandler = require('handlers/banHandler.js');
 const logger = require('objects/logger.js');
 const Question = require('objects/question.js');
@@ -98,19 +98,60 @@ class Handler {
     })
 
 
-    collector.on('collect', (i) => {
+    collector.on('collect', async (i) => {
       console.log(i.values);
 
       const [reason, id] = i.values[0].split('_');
-      this.doBan(i, id, reason);
+
+      if (reason === 'other') {
+        await this.useCustomBanModal(i, id);  // Call the new function for custom reason
+      } else {
+        this.doBan(i, id, reason);
+      }
 
     })
 
   }
 
   /**
+ * Opens a modal to collect a custom ban reason from the user.
+ * @param {Interaction} interaction 
+ * @param {number} id 
+ */
+async useCustomBanModal(interaction, id) {
+  const modal = new ModalBuilder()
+    .setCustomId('customBanReason')
+    .setTitle('Enter Custom Ban Reason')
+    .addComponents(
+      new ActionRowBuilder().addComponents(
+        new TextInputBuilder()
+          .setCustomId('custom_reason')
+          .setLabel('Ban Reason')
+          .setStyle(TextInputStyle.Short)
+          .setPlaceholder('Provide a reason for this ban')
+          .setRequired(true)
+      )
+    );
+
+  await interaction.showModal(modal);
+
+  // Collect modal submission
+  const modalFilter = (modalInteraction) => modalInteraction.customId === 'customBanReason';
+  interaction.awaitModalSubmit({ filter: modalFilter, time: 60_000 })
+    .then((modalInteraction) => {
+      const customReason = modalInteraction.fields.getTextInputValue('custom_reason');
+      this.doBan(modalInteraction, id, customReason);
+    })
+    .catch((err) => {
+      console.error("Modal timed out or encountered an error:", err);
+      interaction.followUp({ content: "Timed out or encountered an error while waiting for a response.", ephemeral: true });
+    });
+}
+
+
+  /**
    * 
-   * @param {Interac} interaction 
+   * @param {Interaction} interaction 
    * @param {number} id 
    * @param {string} reason 
    */

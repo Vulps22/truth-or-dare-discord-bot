@@ -25,7 +25,8 @@ class BanHandler {
             { name: "10 - Likely to be Ignored", value: "Likely To Be Ignored" },
             { name: "11 - Requires More Than One Person", value: "Requires More Than One Person" },
             { name: "12 - Low effort", value: "Low effort" },
-            { name: "13 - Poor Spelling or Grammar", value: "Poor Spelling Or Grammar - Feel Free to Resubmit with proper Spelling and Grammer" }
+            { name: "13 - Poor Spelling or Grammar", value: "Poor Spelling Or Grammar - Feel Free to Resubmit with proper Spelling and Grammer" },
+            { name: "14 - Other (Custom Reason)", value: "other" },
         ];
 
 
@@ -36,15 +37,17 @@ class BanHandler {
             { name: "3 - Server Name contains Hate Speech", value: "Server Name contains Hate Speech" },
             { name: "4 - Confirmed server members are under 18", value: "Confirmed members are under 18" },
             { name: "5 - Server-wide creation spam", value: "Server-wide creation spam" },
+            { name: "6 - Other (Custom Reason)", value: "other" },
         ];
 
         this.UserBanReasonList = [
             { name: "1 - Breached Discord T&C or Community Guidelines", value: "Breaches Discord T&C or Community Guidelines" },
             { name: "2 - Suspected Under 18 User", value: "Suspected Under 18 User" },
-            { name: "3 - Activity suggests user could be under 18", value: "Activity suggests user could be under 18" },
-            { name: "3 - Name contains Hate Speech", value: "Name contains Hate Speech" },
-            { name: "4 - Confirmed user is under 18", value: "Confirmed user is under 18" },
-            { name: "5 - creation spam", value: "creation spam" },
+            { name: "3 - Activity Suggests User Could Be Under 18", value: "Activity suggests user could be under 18" },
+            { name: "3 - Name Contains Hate Speech", value: "Name contains Hate Speech" },
+            { name: "4 - Confirmed User is Under 18", value: "Confirmed user is under 18" },
+            { name: "5 - Creation Spam", value: "creation spam" },
+            { name: "6 - Other (Custom Reason)", value: "other" },
         ]
     }
 
