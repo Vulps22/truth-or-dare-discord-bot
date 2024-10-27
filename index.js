@@ -41,7 +41,9 @@ async function main() {
 
 
 
-    const manager = new ShardingManager('./bot.js')
+    const manager = new ShardingManager('./bot.js', {
+        token: my.secret,
+    })
 
     manager.on('shardCreate', shard => console.log(`Launched shard ${shard.id}`));
 
