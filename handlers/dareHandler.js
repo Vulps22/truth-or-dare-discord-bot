@@ -345,8 +345,6 @@ class DareHandler extends Handler {
 			return;
 		}
 
-
-
 		const embed = await this.createUpdatedDareEmbed(userDare, interaction);
 
 		let row = this.createActionRow();

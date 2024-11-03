@@ -74,6 +74,8 @@ class Advert {
             description: this.description,
         };
 
+        console.log("Saving: ", valueObject);
+
         this.serverId = await this.db.set("adverts", valueObject, 'serverId'); // Inserts or updates and sets `this.serverId` to the inserted ID if new
     }
 

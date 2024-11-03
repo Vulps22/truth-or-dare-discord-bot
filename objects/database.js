@@ -155,7 +155,7 @@ class Database {
 		} else if (value === null || value === undefined) {
 			return 'NULL';
 		} else {
-			throw new Error(`Unsupported type ${typeof value}`);
+			throw new Error(`Unsupported type: ${typeof value}`);
 		}
 	}
 }
