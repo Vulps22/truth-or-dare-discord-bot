@@ -6,7 +6,8 @@
   "scripts": {
     "test": "cross-env NODE_PATH=./ jest --bail",
     "coverage": "cross-env NODE_PATH=./ jest --coverage",
-    "start": "cross-env NODE_PATH=./ node index.js"
+    "start": "cross-env NODE_PATH=./ node index.js",
+    "deploy-global": "cross-env NODE_PATH=./ node deploy-commands-global.js"
   },
   "keywords": [],
   "author": "",
