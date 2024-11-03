@@ -29,6 +29,7 @@ class Question {
 		this.isApproved = 0;
 		this.isBanned = 0
 		this.banReason = ' ';
+		this.bannedBy = ' ';
 		this.messageId = ' ';
 		this.db = new Database();
 	}
@@ -43,6 +44,7 @@ class Question {
 		this.isApproved = question.isApproved;
 		this.isBanned = question.isBanned;
 		this.banReason = question.banReason;
+		this.bannedBy = question.bannedBy;
 		this.messageId = question.messageId;
 		if (question.serverId) {
 			this.server = new Server(question.serverId);
@@ -124,6 +126,13 @@ class Question {
 	}
 
 	return await this.db.set('questions', savable)
+}
+
+async getBannedByUser() {
+	if(!this.isBanned) return false;
+
+	if(this.bannedBy) return await new User(this.bannedBy).get();
+	return "Untracked";
 }
 
 	async find(messageId) {

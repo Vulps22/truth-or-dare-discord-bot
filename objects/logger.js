@@ -3,6 +3,7 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, TextChannel,
 const Truth = require('objects/truth.js');
 const Server = require('objects/server.js');
 const Dare = require('./dare');
+const Question = require('./question');
 
 module.exports = {
 
@@ -54,7 +55,6 @@ module.exports = {
      */
     async newDare(dare) {
         let serverName = 'pre-v5';
-        if (dare.server && dare.server.name) serverName = dare.server.name;
 
         let channel = getChannel(my.dares_log);
 
@@ -70,8 +70,6 @@ module.exports = {
      * @param {Dare} dare 
      */
     async updateDare(dare, userBan = false) {
-        let serverName = 'pre-v5';
-        if (dare.server && dare.server.name) serverName = dare.server.name;
 
         let channel = getChannel(my.dares_log);
         let embed = await this.getDareEmbed(dare);
@@ -210,19 +208,12 @@ module.exports = {
     /**
      * 
      * @param {Dare} dare 
-     * @returns 
+     * @returns {Promise<EmbedBuilder>}
      */
     async getDareEmbed(dare) {
+        if (!dare.server || !dare.server.name) dare.server = { name: 'Pre-V5' };
 
-        let embed = new EmbedBuilder()
-            .setTitle("New Dare")
-            .addFields(
-                { name: "Dare", value: dare.question ?? ' ' },
-                { name: "Author Name", value: `${await dare.getCreatorUsername()} | ${dare.creator}` ?? ' ' },
-                { name: "Server:", value: dare.server.name },
-                { name: "Ban Reason:", value: dare.banReason ?? ' ' },
-            )
-            .setFooter({ text: `ID: #${dare.id}` })
+        const embed = await questionEmbed(dare);
 
         return embed;
     },
@@ -230,24 +221,46 @@ module.exports = {
     /**
      * 
      * @param {Truth} truth 
-     * @returns 
+     * @returns {Promise<EmbedBuilder>}
      */
     async getTruthEmbed(truth) {
-
-        let embed = new EmbedBuilder()
-            .setTitle("New Truth")
-            .addFields(
-                { name: "Truth", value: truth.question ?? '' },
-                { name: "Author Name", value: `${await truth.getCreatorUsername()} | ${truth.creator}` ?? '' },
-                { name: "Server:", value: truth.server.name },
-                { name: "Ban Reason:", value: truth.banReason ?? '' },
-            )
-            .setFooter({ text: `ID: #${truth.id}` });
+        if (!truth.server || !truth.server.name) truth.server = { name: 'Pre-V5' };
+        const embed = await questionEmbed(truth);
 
         return embed
     }
 
 }
+
+/**
+ * 
+ * @param {Question} question 
+ * @returns {Promise<EmbedBuilder>}
+ */
+async function questionEmbed(question) {
+    let embed = new EmbedBuilder()
+        .setTitle(`New ${question.type == 'dare' ? 'Dare' : 'Truth'}`)
+        .addFields(
+            { name: "Question", value: question.question ?? ' ' },
+            { name: "Author Name", value: `${await question.getCreatorUsername()} | ${question.creator}` ?? ' ' },
+            { name: "Server:", value: question.server.name },
+        )
+        .setFooter({ text: `ID: #${question.id}` })
+
+    if (question.isBanned) {
+        const bannedBy = await question.getBannedByUser();
+        if (bannedBy) {
+            embed.addFields(
+                { name: "Banned:", value: "YES" },
+                { name: "Ban Reason:", value: question.banReason ?? ' ' },
+                { name: "Banned By:", value: bannedBy.username ?? ' ' },
+            )
+        }
+    }
+
+    return embed;
+}
+
 /**
  * 
  * @param {Server} server 

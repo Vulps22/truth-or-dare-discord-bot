@@ -184,6 +184,15 @@ class BanHandler {
         throw new Error("Use BanQuestion instead");
     }
 
+    /**
+     * 
+     * @param {Number} id 
+     * @param {string} reason 
+     * @param {Interaction} interaction 
+     * @param {boolean} notify 
+     * @param {boolean} userBan 
+     * @returns 
+     */
     async banQuestion(id, reason, interaction, notify = true, userBan = false) {
         try {
             const question = new Question(id);
@@ -197,6 +206,7 @@ class BanHandler {
             if (notify) this.sendBanNotification(question, reason, question.type, interaction);
             question.isBanned = 1;
             question.banReason = reason;
+            question.bannedBy = interaction.user.id
             await question.save();
 
             let didUpdate = null;
@@ -213,6 +223,7 @@ class BanHandler {
 
             return true;
         } catch (error) {
+            console.log(error);
             logger.error(`Error banning question`);
             return false;
         }
