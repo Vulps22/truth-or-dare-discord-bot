@@ -110,8 +110,8 @@ class Database {
 	}
 
 
-	delete(table, id) {
-		return this.query(`DELETE FROM ${table} WHERE id=${id}`);
+	delete(table, id, idField = 'id') {
+		return this.query(`DELETE FROM ${table} WHERE ${idField}=${id}`);
 	}
 
 	createdWithin(table, interval, creatorId) {
