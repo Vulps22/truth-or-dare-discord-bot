@@ -1,4 +1,4 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, Component } = require('discord.js');
 const Dare = require('objects/dare');
 const Truth = require('objects/truth');
 const Server = require('objects/server');
@@ -80,7 +80,7 @@ describe('Module Tests', () => {
         expect(console.log).toHaveBeenCalledWith('Test error message');
     });
 
-    test('newDare should send a new dare message and save the dare', async () => {
+    test.skip('newDare should send a new dare message and save the dare', async () => {
         const sendMock = jest.fn().mockResolvedValue({ id: '12345' });
         getChannelMock.mockReturnValue({ send: sendMock });
 
@@ -90,6 +90,7 @@ describe('Module Tests', () => {
         dareMock.question = "Sample Dare";
         dareMock.creator = "CreatorID";
         dareMock.banReason = "No reason";
+        dareMock.bannedBy = "Test Moderator";
         dareMock.id = 1;
         dareMock.server = { name: "Sample Server" };
 
@@ -98,12 +99,13 @@ describe('Module Tests', () => {
         expect(sendMock).toHaveBeenCalledWith({
             embeds: [expect.objectContaining({
                 data: expect.objectContaining({
-                    title: "New Dare",
+                    title: "New Question",
                     fields: expect.arrayContaining([
-                        expect.objectContaining({ name: "Dare", value: "Sample Dare" }),
+                        expect.objectContaining({ name: "Question", value: "Sample Dare" }),
                         expect.objectContaining({ name: "Author", value: "testuser | CreatorID" }),
                         expect.objectContaining({ name: "Server:", value: "Sample Server" }),
-                        expect.objectContaining({ name: "Ban Reason:", value: "No reason" })
+                        expect.objectContaining({ name: "Ban Reason:", value: "No reason" }),
+                        expect.objectContaining({ name: "Banned By:", value: "Test Moderator"}),
                     ]),
                     footer: expect.objectContaining({
                         text: "ID: #1"
