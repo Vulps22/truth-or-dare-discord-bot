@@ -33,7 +33,7 @@ class ButtonEventHandler {
 
         // Check if the message was created before the target date
         if (messageTimestamp < targetDate) {
-            this.interaction.logMessage.edit(`${this.interaction.logInteraction} Button Interaction Aborted: Incompatible Versions (message too old)`)
+            logger.editLog(this.interaction.logMessage, `${this.interaction.logInteraction} Button Interaction Aborted: Incompatible Versions (message too old)`);
             this.interaction.message.edit({
                 content: this.interaction.message.content, // Keep the same content
                 embeds: this.interaction.message.embeds, // Keep the same embeds
@@ -77,7 +77,7 @@ class ButtonEventHandler {
                 user.rulesAccepted = true;
                 await user.save();
                 this.interaction.editReply('Rules Accepted.')
-                logger.editLog(this.interaction.logMessage.id, `${this.interaction.logInteraction} User has Accepted the Rules and can now create new Truths or Dares`);
+                logger.editLog(this.interaction.logMessage, `${this.interaction.logInteraction} User has Accepted the Rules and can now create new Truths or Dares`);
                 break;
             default:
                 await logger.error(`**Failed to find Button Command** | **server**: ${this.interaction.guild.name} \n\n**Button ID**: ${buttonId}`);

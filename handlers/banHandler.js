@@ -311,11 +311,8 @@ class BanHandler {
 
                     for (const question of questions) {
                         const actionRow = logger.getActionRow(question.type, true, true);
-                        const logType = `${question.type}s_log`;  // Construct the log type dynamically
-
-                        /** @type {TextChannel} */
-                        const channel = await logger.findChannel(my[logType]);
-                        if (!channel) continue;
+                        const logType = `${question.type}s_log`; // Construct the log type dynamically
+                        const channelId = my[logType]; // Get the appropriate channel ID from `my` object
 
                         let embed;
                         switch (question.type) {
@@ -327,17 +324,27 @@ class BanHandler {
                                 break;
                             default:
                                 logger.error(`Unexpected type used during user ban: Question with ID: ${question.id} | using Type: ${question.type}`);
+                                continue;
                         }
+
+                        // Edit the message across shards if messageId is valid
                         if (question.messageId != undefined && question.messageId != 'pre-v5') {
-                            await channel.messages.edit(question.messageId, { embed: [embed], components: [actionRow] }).catch(reason => {
-                                logger.error(`Failed to edit message: ${reason}`);
-                            });
+                            try {
+                                const success = await editMessageInChannel(channelId, question.messageId, { embeds: [embed], components: [actionRow] });
+
+                                if (!success) {
+                                    logger.error(`Failed to edit message with ID: ${question.messageId}`);
+                                }
+                            } catch (error) {
+                                logger.error(`Error editing message for question ID ${question.id}: ${error}`);
+                            }
                         }
                     }
                 })
                 .catch(error => {
                     logger.error(`Error loading questions for user ban: ${error}`);
                 });
+
 
 
             // Batch update to ban all servers owned by the user

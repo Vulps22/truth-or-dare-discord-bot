@@ -31,7 +31,7 @@ async function init() {
     try {
         const data = await db.get('config', 3);
         global.my = data;
-        console.log(my);
+
     } catch (error) {
         console.error('Error loading config from database:', error);
         return;  // Exit if configuration loading fails
@@ -39,12 +39,9 @@ async function init() {
 
     try {
         const questions = await db.list('questions');
-        console.log("loaded: ", questions.length);
     } catch (error) {
         console.error('Error loading dares and truths:', error);
     }
-
-    console.log("loading events:");
 
     // Load event files
     const eventsPath = path.join(__dirname, "events");
@@ -53,7 +50,6 @@ async function init() {
 
         const filePath = path.join(eventsPath, file);
         const event = require(filePath);
-        console.log(event.name);
         if (event.once) {
             client.once(event.name, (...args) => event.execute(...args));
         } else {

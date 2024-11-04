@@ -48,7 +48,7 @@ module.exports = {
 						.setStyle(ButtonStyle.Success),
 				);
 			interaction.editReply({ content: "You must accept the rules before creating a Truth or Dare", embeds: [embedder.rules()], components: [row], ephemeral: true });
-			logger.editLog(interaction.logMessage.id, `${interaction.logInteraction} Aborted: User has not accepted the rules`);
+			logger.editLog(interaction.logMessage, `${interaction.logInteraction} Aborted: User has not accepted the rules`);
 			return;
 		}
 

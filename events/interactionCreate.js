@@ -123,13 +123,13 @@ async function runCommand(interaction) {
         interaction.logMessage = await logger.log(logInteraction);
 
         if (server.isBanned && interaction.commandName !== "help") {
-            logger.editLog(interaction.logMessage.id, `${logInteraction} Interaction aborted: Server is Banned`);
+            logger.editLog(interaction.logMessage, `${logInteraction} Interaction aborted: Server is Banned`);
             interaction.reply('Your Community has been banned for violating the bot\'s Terms of Use');
             return;
         }
 
         if (shouldExecute(interaction, command, server)) {
-            logger.editLog(interaction.logMessage.id, `${logInteraction} Executing Command`);
+            logger.editLog(interaction.logMessage, `${logInteraction} Executing Command`);
             await command.execute(interaction);
         }
     } catch (error) {

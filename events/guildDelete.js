@@ -11,7 +11,8 @@ module.exports = {
         try {
             logger.log(`Removing a server: ${guild.name} with ID: ${guild.id}`);
 
-            const server = await new Server(guild.id).load();
+            const server = new Server(guild.id)
+            await server.load();
 
             if (!server._loaded) {
                 logger.error("Tried to delete a server that never existed:", guild.id);
