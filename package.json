@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo 'Skipping Tests This Build",
+    "test": "echo 'Skipping Tests This Build'",
     "test-me": "cross-env NODE_PATH=./ jest --bail",
     "coverage": "cross-env NODE_PATH=./ jest --coverage",
     "start": "cross-env NODE_PATH=./ node index.js",
