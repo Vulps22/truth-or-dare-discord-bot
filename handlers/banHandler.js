@@ -1,4 +1,4 @@
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, Interaction } = require("discord.js");
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, Interaction, Message, TextChannel } = require("discord.js");
 const Database = require("objects/database");
 const { env } = require("process");
 const Dare = require("objects/dare");
@@ -9,6 +9,8 @@ const Truth = require("objects/truth");
 const User = require("objects/user");
 const Question = require("objects/question");
 const embedder = require("embedder");
+const { type } = require("os");
+const { log } = require("console");
 
 class BanHandler {
     constructor() {
@@ -25,7 +27,8 @@ class BanHandler {
             { name: "10 - Likely to be Ignored", value: "Likely To Be Ignored" },
             { name: "11 - Requires More Than One Person", value: "Requires More Than One Person" },
             { name: "12 - Low effort", value: "Low effort" },
-            { name: "13 - Poor Spelling or Grammar", value: "Poor Spelling Or Grammar - Feel Free to Resubmit with proper Spelling and Grammer" }
+            { name: "13 - Poor Spelling or Grammar", value: "Poor Spelling Or Grammar - Feel Free to Resubmit with proper Spelling and Grammer" },
+            { name: "14 - Other (Custom Reason)", value: "other" },
         ];
 
 
@@ -36,15 +39,17 @@ class BanHandler {
             { name: "3 - Server Name contains Hate Speech", value: "Server Name contains Hate Speech" },
             { name: "4 - Confirmed server members are under 18", value: "Confirmed members are under 18" },
             { name: "5 - Server-wide creation spam", value: "Server-wide creation spam" },
+            { name: "6 - Other (Custom Reason)", value: "other" },
         ];
 
         this.UserBanReasonList = [
             { name: "1 - Breached Discord T&C or Community Guidelines", value: "Breaches Discord T&C or Community Guidelines" },
             { name: "2 - Suspected Under 18 User", value: "Suspected Under 18 User" },
-            { name: "3 - Activity suggests user could be under 18", value: "Activity suggests user could be under 18" },
-            { name: "3 - Name contains Hate Speech", value: "Name contains Hate Speech" },
-            { name: "4 - Confirmed user is under 18", value: "Confirmed user is under 18" },
-            { name: "5 - creation spam", value: "creation spam" },
+            { name: "3 - Activity Suggests User Could Be Under 18", value: "Activity suggests user could be under 18" },
+            { name: "3 - Name Contains Hate Speech", value: "Name contains Hate Speech" },
+            { name: "4 - Confirmed User is Under 18", value: "Confirmed user is under 18" },
+            { name: "5 - Creation Spam", value: "creation spam" },
+            { name: "6 - Other (Custom Reason)", value: "other" },
         ]
     }
 
@@ -179,6 +184,15 @@ class BanHandler {
         throw new Error("Use BanQuestion instead");
     }
 
+    /**
+     * 
+     * @param {Number} id 
+     * @param {string} reason 
+     * @param {Interaction} interaction 
+     * @param {boolean} notify 
+     * @param {boolean} userBan 
+     * @returns 
+     */
     async banQuestion(id, reason, interaction, notify = true, userBan = false) {
         try {
             const question = new Question(id);
@@ -192,6 +206,7 @@ class BanHandler {
             if (notify) this.sendBanNotification(question, reason, question.type, interaction);
             question.isBanned = 1;
             question.banReason = reason;
+            question.bannedBy = interaction.user.id
             await question.save();
 
             let didUpdate = null;
@@ -204,10 +219,11 @@ class BanHandler {
                 if (notify) interaction.followUp(`Banned: Failed to update Action Row: Pre-V5 Question\n\nId: ${question.id} \n\n Question: ${question.question}\n\nReason: ${reason}`);
             }
 
-            if(notify) interaction.followUp({content: "Question has been banned!", ephemeral: true});
+            if (notify) interaction.followUp({ content: "Question has been banned!", ephemeral: true });
 
             return true;
         } catch (error) {
+            console.log(error);
             logger.error(`Error banning question`);
             return false;
         }
@@ -252,12 +268,12 @@ class BanHandler {
     }
 
     /**
-  * 
-  * @param {string} id 
-  * @param {string} reason 
-  * @param {Interaction} interaction 
-  * @returns 
-  */
+      * 
+      * @param {string} id 
+      * @param {string} reason 
+      * @param {Interaction} interaction 
+      * @returns 
+      */
     async banUser(id, reason, interaction) {
 
         logger.log("Banning User " + id);
@@ -281,26 +297,61 @@ class BanHandler {
             let questions = 0;
             let servers = 0;
 
-            // Collect all the promises
-            const questionPromises = db.query(`SELECT id FROM questions WHERE creator=${user.id} AND isBanned=0`).then((_questions) => {
-                return Promise.all(_questions.map(async (_question) => {
-                    await this.banQuestion(_question.id, "Creator was Banned", interaction, false, true);
-                    questions++;
-                }));
-            });
+            // Batch update to ban all questions created by the user
+            await db.query(`UPDATE questions SET isBanned=1, banReason='Creator was Banned' WHERE creator=${user.id} AND isBanned=0`);
+            questions = await db.query(`SELECT COUNT(*) as count FROM questions WHERE creator=${user.id} AND isBanned=1`);
+            let questionCount = questions[0].count;
 
-            const serverPromises = db.query(`SELECT * FROM servers WHERE owner=${user.id} AND isBanned=0`).then((_servers) => {
-                return Promise.all(_servers.map(async (_server) => {
-                    await this.banServer(_server.id, "Owner was Banned", interaction, false, true, true);
-                    servers++;
-                }));
-            });
+            db.query(`SELECT questions.*, servers.id as serverId, servers.name as serverName FROM questions LEFT JOIN servers ON questions.serverId = servers.id WHERE questions.creator=${user.id};`)
+                .then(async (questionsData) => {
+                    /**
+                     * @type {Question[]}
+                     */
+                    const questions = Question.loadMany(questionsData);
 
-            // Wait for all promises to resolve
-            await Promise.all([questionPromises, serverPromises]);
+                    for (const question of questions) {
+                        const actionRow = logger.getActionRow(question.type, true, true);
+                        const logType = `${question.type}s_log`;  // Construct the log type dynamically
+
+                        /** @type {TextChannel} */
+                        const channel = await logger.findChannel(my[logType]);
+                        if (!channel) continue;
+
+                        let embed;
+                        switch (question.type) {
+                            case 'truth':
+                                embed = await logger.getTruthEmbed(question);
+                                break;
+                            case 'dare':
+                                embed = await logger.getDareEmbed(question);
+                                break;
+                            default:
+                                logger.error(`Unexpected type used during user ban: Question with ID: ${question.id} | using Type: ${question.type}`);
+                        }
+                        if (question.messageId != undefined && question.messageId != 'pre-v5') {
+                            await channel.messages.edit(question.messageId, { embed: [embed], components: [actionRow] }).catch(reason => {
+                                logger.error(`Failed to edit message: ${reason}`);
+                            });
+                        }
+                    }
+                })
+                .catch(error => {
+                    logger.error(`Error loading questions for user ban: ${error}`);
+                });
+
+
+            // Batch update to ban all servers owned by the user
+            await db.query(`UPDATE servers SET isBanned=1, banReason='Owner was Banned' WHERE owner=${user.id} AND isBanned=0`);
+            servers = await db.query(`SELECT COUNT(*) as count FROM servers WHERE owner=${user.id} AND isBanned=1`);
+            let serverCount = servers[0].count;
+
+            db.query(`SELECT * FROM servers WHERE owner=${user.id};`).then(async serverData => {
+                /** @type {Server[]} */
+                const servers = Server.loadMany(serverData);
+            })
 
             logger.log(`User: ${user.username} with ID: ${user.id} has been banned for ${user.banReason} | Auto-Banned: ${questions} Truths/Dares | ${servers} Servers`);
-            logger.bannedUser(user, questions, servers);
+            logger.bannedUser(user, questionCount, serverCount);
             interaction.followUp("User has been banned. Check #logs for details");
 
             await this.sendUserBanNotification(user, reason, interaction);
@@ -308,11 +359,10 @@ class BanHandler {
             return true;
         } catch (error) {
             logger.error('Error banning user:', JSON.stringify(error));
+            console.log(error);
             return false;
         }
     }
-
-
 }
 
 module.exports = BanHandler;

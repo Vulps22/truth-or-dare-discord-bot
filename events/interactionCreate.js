@@ -253,7 +253,6 @@ async function registerServerUser(interaction) {
 }
 
 /**
- * @deprecated This should be breaking shit
  * @param {Interaction} interaction 
  * @returns 
  */

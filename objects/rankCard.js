@@ -3,6 +3,7 @@ const { createCanvas, loadImage } = require('canvas');
 const User = require('objects/user');
 
 class RankCard {
+    /** @type {User} */
     user;
     username;
     avatarURL;
@@ -16,6 +17,7 @@ class RankCard {
     }
 
     async generateCard() {
+        if(!this.user._serverUserLoaded) await this.user.loadServerUser();
         this.premium = await this.user._server.hasPremium();
         const canvas = this.createCanvas();
         const ctx = canvas.getContext('2d');

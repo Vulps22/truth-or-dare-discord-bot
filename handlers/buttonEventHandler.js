@@ -115,7 +115,7 @@ async function handleContentResponse(interaction, idComponents) {
             new TruthHandler(interaction.client).setTruth(interaction, decision);
             break;
         case "server":
-            new ServerHandler(interaction.client).banServer(interaction)
+            new ServerHandler(interaction.client).banServer(interaction, decision)
 
     }
 }
@@ -144,7 +144,10 @@ async function handleUserModerationCommand(interaction, idComponents) {
     }
 
     await entity.load();
-    const owner = new User(entity.creator);
+    /** TODO: Replace entity.owner with entity.creator */
+    const owner = new User(entity.creator ?? entity.owner);
+    console.log('server', entity);
+    console.log('owner', owner);
     await owner.get();
     await new UserHandler().banUser(interaction, owner);
 }

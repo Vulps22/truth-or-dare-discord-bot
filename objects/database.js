@@ -110,8 +110,8 @@ class Database {
 	}
 
 
-	delete(table, id) {
-		return this.query(`DELETE FROM ${table} WHERE id=${id}`);
+	delete(table, id, idField = 'id') {
+		return this.query(`DELETE FROM ${table} WHERE ${idField}=${id}`);
 	}
 
 	createdWithin(table, interval, creatorId) {
@@ -155,7 +155,7 @@ class Database {
 		} else if (value === null || value === undefined) {
 			return 'NULL';
 		} else {
-			throw new Error(`Unsupported type ${typeof value}`);
+			throw new Error(`Unsupported type: ${typeof value}`);
 		}
 	}
 }

@@ -1,12 +1,13 @@
 {
   "name": "nodejs",
-  "version": "5.3.692",
+  "version": "5.4.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "test": "cross-env NODE_PATH=./ jest --bail",
     "coverage": "cross-env NODE_PATH=./ jest --coverage",
-    "start": "cross-env NODE_PATH=./ node index.js"
+    "start": "cross-env NODE_PATH=./ node index.js",
+    "deploy-global": "cross-env NODE_PATH=./ node deploy-commands-global.js"
   },
   "keywords": [],
   "author": "",

@@ -1,8 +1,9 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, TextChannel, Message } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, TextChannel, Message, Snowflake } = require('discord.js');
 
 const Truth = require('objects/truth.js');
 const Server = require('objects/server.js');
 const Dare = require('./dare');
+const Question = require('./question');
 
 module.exports = {
 
@@ -14,7 +15,7 @@ module.exports = {
     async log(message) {
         try {
             let channel = getChannel(my.logs);
-            const loggedMessage = await channel.send({content: message, fetchReply: true});
+            const loggedMessage = await channel.send({ content: message, fetchReply: true });
             console.log(message);
             return loggedMessage
         } catch (error) {
@@ -26,7 +27,7 @@ module.exports = {
         try {
             let channel = getChannel(my.logs); // Fetch the logs channel
             const message = await channel.messages.fetch(messageId); // Fetch the message by its ID
-            
+
             if (message) {
                 await message.edit({ content: newString }); // Edit the message content
                 console.log(`Log message updated: ${newString}`);
@@ -37,7 +38,7 @@ module.exports = {
             console.log(`Error editing log message with ID ${messageId}:`, error);
         }
     },
-    
+
 
     async error(message) {
         let channel = getChannel(my.errors_log);
@@ -54,20 +55,10 @@ module.exports = {
      */
     async newDare(dare) {
         let serverName = 'pre-v5';
-        if (dare.server && dare.server.name) serverName = dare.server.name;
 
         let channel = getChannel(my.dares_log);
 
-        let embed = new EmbedBuilder()
-            .setTitle("New Dare")
-            .addFields(
-                { name: "Dare", value: dare.question ?? '' },
-                { name: "Author", value: `${await dare.getCreatorUsername()} | ${dare.creator}` ?? '' },
-                { name: "Server:", value: serverName },
-                { name: "Ban Reason:", value: dare.banReason ?? '' },
-
-            )
-            .setFooter({ text: `ID: #${dare.id}` })
+        let embed = await this.getDareEmbed(dare);
         let actionRow = createActionRow("dare")
         const message = await channel.send({ embeds: [embed], components: [actionRow], fetchReply: true });
         console.log("Logged:", message.id)
@@ -79,21 +70,11 @@ module.exports = {
      * @param {Dare} dare 
      */
     async updateDare(dare, userBan = false) {
-        let serverName = 'pre-v5';
-        if (dare.server && dare.server.name) serverName = dare.server.name;
 
         let channel = getChannel(my.dares_log);
-
-        let embed = new EmbedBuilder()
-            .setTitle("New Dare")
-            .addFields(
-                { name: "Dare", value: dare.question ?? ' ' },
-                { name: "Author Name", value: `${await dare.getCreatorUsername()} | ${dare.creator}` ?? ' ' },
-                { name: "Server:", value: serverName },
-                { name: "Ban Reason:", value: dare.banReason ?? ' ' },
-            )
-            .setFooter({ text: `ID: #${dare.id}` })
+        let embed = await this.getDareEmbed(dare);
         let actionRow = createActionRow("dare", dare.isBanned, userBan);
+
         let message;
         if (dare.messageId !== 'pre-v5') {
             message = await channel.messages.edit(dare.messageId, { embeds: [embed], components: [actionRow] });
@@ -112,16 +93,9 @@ module.exports = {
         if (truth.server && truth.server.name) serverName = truth.server.name;
 
         let channel = getChannel(my.truths_log);
-        let embed = new EmbedBuilder()
-            .setTitle("New Truth")
-            .addFields(
-                { name: "Truth", value: truth.question ?? '' },
-                { name: "Author Name", value: `${await truth.getCreatorUsername()} | ${truth.creator}` ?? '' },
-                { name: "Server:", value: serverName },
-                { name: "Ban Reason:", value: truth.banReason ?? '' },
-            )
-            .setFooter({ text: `ID: #${truth.id}` });
+        let embed = await this.getTruthEmbed(truth);
         let actionRow = createActionRow("truth");
+
         const message = await channel.send({ embeds: [embed], components: [actionRow], fetchReply: true });
         console.log("logged", message.id)
         truth.messageId = message.id;
@@ -138,15 +112,7 @@ module.exports = {
 
         let channel = getChannel(my.truths_log);
 
-        let embed = new EmbedBuilder()
-            .setTitle("New Truth")
-            .addFields(
-                { name: "Truth", value: truth.question ?? ' ' },
-                { name: "Author Name", value: `${await truth.getCreatorUsername()} | ${truth.creator}` ?? ' ' },
-                { name: "Server:", value: serverName },
-                { name: "Ban Reason:", value: truth.banReason ?? ' ' },
-            )
-            .setFooter({ text: `ID: #${truth.id}` })
+        let embed = await this.getTruthEmbed(truth);
         let actionRow = createActionRow("truth", truth.isBanned, userBan)
 
         let message;
@@ -224,8 +190,77 @@ module.exports = {
         let message = await channel.messages.fetch(messageId);
         const didDelete = await message.delete();
         console.log("Server deleted from log?:", didDelete);
+    },
+
+    getActionRow(type, isBanned = false, userBanned = false) {
+        return createActionRow(type, isBanned, userBanned);
+    },
+
+    /**
+     * 
+     * @param {Snowflake} channelId 
+     * @returns 
+     */
+    async findChannel(channelId) {
+        return getChannel(channelId);
+    },
+
+    /**
+     * 
+     * @param {Dare} dare 
+     * @returns {Promise<EmbedBuilder>}
+     */
+    async getDareEmbed(dare) {
+        if (!dare.server || !dare.server.name) dare.server = { name: 'Pre-V5' };
+
+        const embed = await questionEmbed(dare);
+
+        return embed;
+    },
+
+    /**
+     * 
+     * @param {Truth} truth 
+     * @returns {Promise<EmbedBuilder>}
+     */
+    async getTruthEmbed(truth) {
+        if (!truth.server || !truth.server.name) truth.server = { name: 'Pre-V5' };
+        const embed = await questionEmbed(truth);
+
+        return embed
     }
+
 }
+
+/**
+ * 
+ * @param {Question} question 
+ * @returns {Promise<EmbedBuilder>}
+ */
+async function questionEmbed(question) {
+    let embed = new EmbedBuilder()
+        .setTitle(`New ${question.type == 'dare' ? 'Dare' : 'Truth'}`)
+        .addFields(
+            { name: "Question", value: question.question ?? ' ' },
+            { name: "Author Name", value: `${await question.getCreatorUsername()} | ${question.creator}` ?? ' ' },
+            { name: "Server:", value: question.server.name },
+        )
+        .setFooter({ text: `ID: #${question.id}` })
+
+    if (question.isBanned) {
+        const bannedBy = await question.getBannedByUser();
+        if (bannedBy) {
+            embed.addFields(
+                { name: "Banned:", value: "YES" },
+                { name: "Ban Reason:", value: question.banReason ?? ' ' },
+                { name: "Banned By:", value: bannedBy.username ?? ' ' },
+            )
+        }
+    }
+
+    return embed;
+}
+
 /**
  * 
  * @param {Server} server 
@@ -265,7 +300,7 @@ function getChannel(channelId) {
 /**
  * 
  * @param {string<truth|dare>} type 
- * @returns 
+ * @returns {ActionRowBuilder}
  */
 function createActionRow(type, isBanned = false, userBanned = false) {
     if (!isBanned) {

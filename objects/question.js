@@ -29,6 +29,7 @@ class Question {
 		this.isApproved = 0;
 		this.isBanned = 0
 		this.banReason = ' ';
+		this.bannedBy = ' ';
 		this.messageId = ' ';
 		this.db = new Database();
 	}
@@ -43,6 +44,7 @@ class Question {
 		this.isApproved = question.isApproved;
 		this.isBanned = question.isBanned;
 		this.banReason = question.banReason;
+		this.bannedBy = question.bannedBy;
 		this.messageId = question.messageId;
 		if (question.serverId) {
 			this.server = new Server(question.serverId);
@@ -53,106 +55,142 @@ class Question {
 		return this;
 	}
 
-	async create(question, creator, serverId) {
-		if (!question || !creator || !serverId) {
-			throw new Error("Question, creator or serverId is not defined in new Question");
-		}
+	/**
+	 * Creates and returns an array of Question instances populated from input data.
+	 * @param {Array<Object>} questionDataArray - Array of objects containing question data.
+	 * @returns {Question[]} - Array of populated Question instances.
+	 */
+	static loadMany(questionDataArray) {
+		return questionDataArray.map(data => {
+			const question = new Question(data.id, data.type);
 
-		this.question = question;
-		this.creator = creator;
-		this.server = new Server(serverId);
-		await this.server.load();
+			// Directly assign provided data to the question instance, avoiding any database calls
+			question.question = data.question || ' ';
+			question.creator = data.creator || ' ';
+			question.isApproved = data.isApproved || 0;
+			question.isBanned = data.isBanned || 0;
+			question.banReason = data.banReason || ' ';
+			question.messageId = data.messageId || ' ';
+			question.exists = true;
 
+			if(data.serverId) {
+				question.server = new Server(data.serverId);
+				question.server.name = data.serverName;
+			} else {
+				question.server = {name: 'Server Data No Longer Exists'};
+			}
 
-		const newQuestionId = await this.db.set('questions', {
-			question: this.question,
-			creator: this.creator,
-			isBanned: this.isBanned,
-			isApproved: this.isApproved,
-			banReason: this.banReason,
-			serverId: this.server.id,
-			type: this.type,
+			return question;
 		});
-
-		this.id = newQuestionId;
-		this.exists = true;
-		return this;
 	}
+
+	async create(question, creator, serverId) {
+	if (!question || !creator || !serverId) {
+		throw new Error("Question, creator or serverId is not defined in new Question");
+	}
+
+	this.question = question;
+	this.creator = creator;
+	this.server = new Server(serverId);
+	await this.server.load();
+
+
+	const newQuestionId = await this.db.set('questions', {
+		question: this.question,
+		creator: this.creator,
+		isBanned: this.isBanned,
+		isApproved: this.isApproved,
+		banReason: this.banReason,
+		serverId: this.server.id,
+		type: this.type,
+	});
+
+	this.id = newQuestionId;
+	this.exists = true;
+	return this;
+}
 
 	async save() {
-		this.exists = true;
-		if (!this.messageId) throw new Error("Missing Message ID: " + this.id + this.type);
-		let savable = {
-			id: this.id,
-			question: this.question,
-			creator: this.creator,
-			isApproved: this.isApproved,
-			isBanned: this.isBanned,
-			banReason: this.banReason,
-			serverId: this.server.id ?? 'pre-v5',
-			messageId: this.messageId,
-			type: this.type,
-		}
-
-		return await this.db.set('questions', savable)
+	this.exists = true;
+	if (!this.messageId) throw new Error("Missing Message ID: " + this.id + this.type);
+	let savable = {
+		id: this.id,
+		question: this.question,
+		creator: this.creator,
+		isApproved: this.isApproved,
+		isBanned: this.isBanned,
+		banReason: this.banReason,
+		serverId: this.server.id ?? 'pre-v5',
+		messageId: this.messageId,
+		type: this.type,
 	}
+
+	return await this.db.set('questions', savable)
+}
+
+async getBannedByUser() {
+	if(!this.isBanned) return false;
+
+	if(this.bannedBy) return await new User(this.bannedBy).get();
+	return "Untracked";
+}
 
 	async find(messageId) {
-		/** @type {Array} */
-		const question = await this.db.query(`select id FROM questions WHERE messageId = ${messageId}`);
-		if (!question || question.length == 0) return null;
-		const questionId = question[0].id;
-		this.id = questionId;
-		await this.load();
-		return this;
-	}
+	/** @type {Array} */
+	const question = await this.db.query(`select id FROM questions WHERE messageId = ${messageId}`);
+	if (!question || question.length == 0) return null;
+	const questionId = question[0].id;
+	this.id = questionId;
+	await this.load();
+	return this;
+}
 
 	/**
 	 * 
 	 * @param {"truth" | "dare"} type 
 	 */
 	static async collect(type) {
-		const db = new Database();
+	const db = new Database();
 
-		const questions = await db.query(`SELECT * FROM questions WHERE type='${type}' AND isBanned=0 AND isApproved=1`);
+	const questions = await db.query(`SELECT * FROM questions WHERE type='${type}' AND isBanned=0 AND isApproved=1`);
 
-		return questions ?? [];
-	}
+	return questions ?? [];
+}
 
 	async ban(reason) {
-		this.isBanned = 1;
-		this.banReason = reason;
-		return this.save();
-	}
+	this.isBanned = 1;
+	this.banReason = reason;
+	return this.save();
+}
 
 	async unBan() {
-		this.isBanned = 0;
-		this.banReason = null;
-		return this.save();
-	}
+	this.isBanned = 0;
+	this.banReason = null;
+	return this.save();
+}
 
 	async approve() {
-		this.isApproved = 1;
-		await this.save();
-	}
+	this.isApproved = 1;
+	await this.save();
+}
 
 	async getCreatorUsername() {
-		const user = new User(this.creator);
-		await user.get();
+	const user = new User(this.creator);
+	await user.get();
 
-		return user.username;
-	}
+	return user.username;
+}
 
-	toJson() {
-		let string = {}
-		string.id = this.id ?? "No ID";
-		string.question = this.question;
-		string.creator = this.creator;
-		string.isBanned = this.isBanned;
-		string.banReason = this.banReason;
-		string.type = this.type;
-		return string;
-	}
+toJson() {
+	let string = {}
+	string.id = this.id ?? "No ID";
+	string.question = this.question;
+	string.creator = this.creator;
+	string.isBanned = this.isBanned;
+	string.banReason = this.banReason;
+	string.type = this.type;
+	return string;
+}
 }
 
 module.exports = Question

@@ -1,6 +1,7 @@
 const Server = require("objects/server");
 const Handler = require("handlers/handler");
 const { Interaction } = require('discord.js');
+const logger = require("objects/logger");
 
 class ServerHandler extends Handler {
     constructor() {
@@ -10,8 +11,9 @@ class ServerHandler extends Handler {
     /**
      * 
      * @param {Interaction} interaction 
+     * @param {string} decision 
      */
-    async banServer(interaction) {
+    async banServer(interaction, decision) {
         let server = await new Server().find(interaction.message.id);
 
         if (!server) {
@@ -20,7 +22,15 @@ class ServerHandler extends Handler {
             return;
         }
 
-        this.getBanReason(interaction, server.id);
+        if(decision == 'ban'){
+            this.getBanReason(interaction, server.id);
+        } else {
+            server.isBanned = 0;
+            server.banReason = null;
+            await server.save();
+            logger.updateServer(server, false);
+            interaction.editReply('Server has been Unbanned');
+        }
     }
 }
 
