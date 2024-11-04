@@ -9,7 +9,7 @@ async function deployCommands() {
 
     let config;
     try {
-        config = await db.get('config', 1); // Assuming 'config' table has an id column
+        config = await db.get('config', 3); // Assuming 'config' table has an id column
         console.log("Configuration loaded:", config.environment);
     } catch (error) {
         console.error('Error loading config from database:', error);
