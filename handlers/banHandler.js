@@ -1,16 +1,11 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, Interaction, Message, TextChannel } = require("discord.js");
 const Database = require("objects/database");
 const { env } = require("process");
-const Dare = require("objects/dare");
-const Handler = require("handlers/handler");
 const Server = require("objects/server");
 const logger = require("objects/logger");
-const Truth = require("objects/truth");
 const User = require("objects/user");
 const Question = require("objects/question");
 const embedder = require("embedder");
-const { type } = require("os");
-const { log } = require("console");
 
 class BanHandler {
     constructor() {

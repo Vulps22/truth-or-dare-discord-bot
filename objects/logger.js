@@ -1,9 +1,4 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, TextChannel, Message, Snowflake, Client } = require('discord.js');
-
-const Truth = require('objects/truth.js');
-const Server = require('objects/server.js');
-const Dare = require('./dare');
-const Question = require('./question');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, Message, } = require('discord.js');
 
 module.exports = {
 
@@ -81,7 +76,6 @@ module.exports = {
  * @param {Dare} dare 
  */
     async newDare(dare) {
-        let serverName = 'pre-v5';
 
         const channelId = my.dares_log; // Assuming `my.dares_log` contains the dares log channel ID
         const embed = await this.getDareEmbed(dare);
@@ -308,6 +302,16 @@ module.exports = {
             console.log("Error deleting server message:", error);
         }
     },
+
+    async newReport(type, reason, offender, questionText = '') {
+        try {
+            const channel = await getChannel(my.reports_log); // Make sure `my.reports_log` is set correctly
+            const reportContent = `New report received:\nType: ${type}\nReason: ${reason}\nID: ${offender}\n${questionText ? `Question: ${questionText}` : ''}`;
+            await sendTo({ content: reportContent }, channel.id);
+        } catch (error) {
+            console.error(`Failed to log report: ${error}`);
+        }
+    },    
 
 
     getActionRow(type, isBanned = false, userBanned = false) {

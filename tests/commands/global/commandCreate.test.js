@@ -1,4 +1,3 @@
-const { SlashCommandBuilder } = require("discord.js");
 const command = require('commands/global/create'); // adjust the path to your file
 const DareHandler = require("handlers/dareHandler");
 const TruthHandler = require("handlers/truthHandler");

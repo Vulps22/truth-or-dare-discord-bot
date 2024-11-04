@@ -23,6 +23,7 @@ module.exports = {
 	 * @param {Interaction} interaction 
 	 */
 	async execute(interaction) {
+		await interaction.deferReply();
 		try {
 			let command = interaction.options.getSubcommand();
 
@@ -34,14 +35,14 @@ module.exports = {
 				}
 				const premium = await server.hasPremium();
 				if (!premium) {
-					interaction.reply({ content: "This is a premium command. Premium is not quite ready yet, But I'm working hard to make these commands available for everyone :)", ephemeral: true });
+					interaction.editReply({ content: "This is a premium command. Premium is not quite ready yet, But I'm working hard to make these commands available for everyone :)", ephemeral: true });
 
 					//interaction.sendPremiumRequired();
 					return;
 				}
 			}
 
-			interaction.deferReply();
+			
 			let leaderboard = new Leaderboard(interaction, interaction.client);
 			let card = await leaderboard.generateLeaderboard(command == 'global');
 			interaction.editReply({ files: [card] });
