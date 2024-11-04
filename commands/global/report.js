@@ -1,7 +1,6 @@
-require('dotenv').config();
-const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandNumberOption, SlashCommandStringOption, WebhookClient } = require("discord.js");
-const Database = require("objects/database");
-const Server = require("objects/server"); // Import the Server class
+const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandNumberOption, SlashCommandStringOption } = require("discord.js");
+const Report = require("objects/report"); // Use the new Report class
+const logger = require("objects/logger"); // Ensure the logger path is correct
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -47,46 +46,36 @@ module.exports = {
     nsfw: false,
     administrator: false,
     async execute(interaction) {
+        await interaction.deferReply({ ephemeral: true });
+
         const subcommand = interaction.options.getSubcommand();
         const reason = interaction.options.getString('reason');
-        if (!reason) {
-            interaction.reply({
-                content: 'You must specify a reason. Only you can see this message',
-                ephemeral: true
-            });
-            return;
-        }
+        let offenderId = subcommand === 'server' ? interaction.guildId : interaction.options.getNumber('id');
+        
+        //try {
+            // Create a new Report instance and save it
+            const report = new Report(null, subcommand, interaction.user.id, reason, offenderId);
+            report.type = subcommand;
+            report.senderId = interaction.user.id;
+            report.serverId = interaction.guildId;
+            report.reason = reason;
+            report.offenderId = offenderId;
+            let reportId = await report.save();
+            console.log("Reported with ", reportId);
 
-        let offender = 0;
+            // Log the report using the logger
+            let questionText = '';
+            if (subcommand === 'dare' || subcommand === 'truth') {
+                const question = await report.loadOffender();
+                questionText = question ? `Question: ${question.question}` : '';
+            }
 
-        if (subcommand === 'server') offender = interaction.guildId;
-        else offender = interaction.options.getNumber('id');
+            await logger.newReport(report);
 
-        const db = new Database();
-        await db.set('reports', {
-            type: (subcommand === 'server') ? 'server' : subcommand,
-            sender: interaction.user.id,
-            reason: reason,
-            offenderId: offender
-        });
-
-        await sendReportNotification(interaction, subcommand, reason, offender);
+            await interaction.editReply("Your report has been submitted. Only you can see this message.");
+        //} catch (error) {
+           // console.error(`Failed to submit report: ${error}`);
+           // await interaction.editReply("There was an issue submitting your report. Please try again later.");
+        //}
     }
 };
-
-async function sendReportNotification(interaction, subcommand, reason, offender) {
-    const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_REPORT_URL });
-    let message = `New report received:\nType: ${subcommand}\nReason: ${reason}\nID: ${offender}`;
-
-    if (subcommand === 'dare' || subcommand === 'truth') {
-        const db = new Database();
-        const question = await db.get(subcommand + 's', offender);
-        message += ` \nQuestion: ${question.question}`;
-    }
-
-    await webhookClient.send(message);
-    await interaction.reply({
-        content: "Your report has been submitted. Only you can see this message.",
-        ephemeral: true
-    });
-}

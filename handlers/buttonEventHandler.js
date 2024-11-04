@@ -24,7 +24,7 @@ class ButtonEventHandler {
     }
 
     async execute() {
-
+        await this.interaction.deferReply({ ephemeral: true });
         // The target date: 5th September 2024 at 05:11 AM (UK time)
         const targetDate = new Date('2024-09-05T05:11:00Z'); // UTC date format
 
@@ -42,8 +42,7 @@ class ButtonEventHandler {
             this.interaction.reply("A recent Update has changed how I identify bots. I am unable to register any votes on messages created before <t:1725855060:F>")
         }
 
-
-        await this.interaction.deferReply({ ephemeral: true });
+        
         let buttonId = this.interaction.customId;
         /** @type {Array<string>} */
         let idComponents = buttonId.split('_')

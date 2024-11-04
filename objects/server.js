@@ -1,6 +1,6 @@
 const { Message, TextChannel } = require("discord.js");
 const Database = require("objects/database");
-const logger = require("./logger");
+const logger = require("objects/logger");
 
 class Server {
 

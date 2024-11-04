@@ -130,7 +130,6 @@ module.exports = {
      * @param {Truth} truth 
      */
     async newTruth(truth) {
-        let serverName = 'pre-v5';
         if (truth.server && truth.server.name) serverName = truth.server.name;
 
         const channelId = my.truths_log; // Assuming `my.truths_log` contains the truths log channel ID
@@ -303,15 +302,59 @@ module.exports = {
         }
     },
 
-    async newReport(type, reason, offender, questionText = '') {
+    /**
+     * Logs a new report using the Report class.
+     * @param {Report} - The report created by the command. Should be loaded before reaching here
+     */
+    async newReport(report) {
         try {
-            const channel = await getChannel(my.reports_log); // Make sure `my.reports_log` is set correctly
-            const reportContent = `New report received:\nType: ${type}\nReason: ${reason}\nID: ${offender}\n${questionText ? `Question: ${questionText}` : ''}`;
-            await sendTo({ content: reportContent }, channel.id);
+            // Create the report embed
+            const embed = new EmbedBuilder()
+                .setTitle("New Report")
+                .addFields(
+                    { name: "Type", value: report.type },
+                    { name: "Reason", value: report.reason },
+                    { name: "Offender", value: `${report.offender.id} | ${report.type == 'server' ? report.offender.name : report.offender.question}` }
+                )
+                .setTimestamp();
+
+            // Get the channel and send the embed with the action row
+            const channelId = my.reports_log;
+            await sendTo({
+                embeds: [embed],
+                components: [this.createReportActionRow()],
+            }, channelId);
+
         } catch (error) {
             console.error(`Failed to log report: ${error}`);
         }
-    },    
+    },
+
+    /**
+     * Creates an action row for report actions (e.g., Approve, Dismiss).
+     * @returns {ActionRowBuilder} The action row with buttons for report actions.
+     */
+    createReportActionRow() {
+        return new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId("report_safe")
+                    .setLabel("Safe")
+                    .setStyle(ButtonStyle.Success)
+                    .setDisabled(true),
+                new ButtonBuilder()
+                    .setCustomId("report_ban")
+                    .setLabel("Ban")
+                    .setStyle(ButtonStyle.Danger)
+                    .setDisabled(true),
+                new ButtonBuilder()
+                    .setCustomId("report_show")
+                    .setLabel("Show Offender")
+                    .setStyle(ButtonStyle.Secondary)
+                    .setDisabled(true),
+
+            );
+    },
 
 
     getActionRow(type, isBanned = false, userBanned = false) {

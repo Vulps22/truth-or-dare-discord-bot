@@ -99,7 +99,11 @@ async function handleAutoComplete(interaction) {
         console.error(error);
     }
 }
-
+/**
+ * 
+ * @param {Interaction} interaction 
+ * @returns 
+ */
 async function runCommand(interaction) {
     try {
         const command = interaction.client.commands.get(interaction.commandName);
@@ -135,7 +139,8 @@ async function runCommand(interaction) {
     } catch (error) {
         console.error(`Error executing ${interaction.commandName}`);
         console.error(error);
-        interaction.reply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:");
+        if(!interaction.deferred) interaction.reply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:");
+        else interaction.editReply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:")
         logger.error(`New Brain Fart occurred!\nCommand: ${interaction.commandName}\nError: ${error.message}`);
     }
 }
