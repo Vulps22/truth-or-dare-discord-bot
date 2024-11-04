@@ -14,7 +14,7 @@ module.exports = {
      */
     async log(message) {
         try {
-            let channel = getChannel(my.logs);
+            let channel = await getChannel(my.logs);
             const loggedMessage = await channel.send({ content: message, fetchReply: true });
             console.log(message);
             return loggedMessage
@@ -25,7 +25,7 @@ module.exports = {
 
     async editLog(messageId, newString) {
         try {
-            let channel = getChannel(my.logs); // Fetch the logs channel
+            let channel = await getChannel(my.logs); // Fetch the logs channel
             const message = await channel.messages.fetch(messageId); // Fetch the message by its ID
 
             if (message) {
@@ -41,7 +41,7 @@ module.exports = {
 
 
     async error(message) {
-        let channel = getChannel(my.errors_log);
+        let channel = await getChannel(my.errors_log);
         let embed = new EmbedBuilder()
             .setTitle("Error")
             .setDescription(message)
@@ -56,7 +56,7 @@ module.exports = {
     async newDare(dare) {
         let serverName = 'pre-v5';
 
-        let channel = getChannel(my.dares_log);
+        let channel = await getChannel(my.dares_log);
 
         let embed = await this.getDareEmbed(dare);
         let actionRow = createActionRow("dare")
@@ -71,7 +71,7 @@ module.exports = {
      */
     async updateDare(dare, userBan = false) {
 
-        let channel = getChannel(my.dares_log);
+        let channel = await getChannel(my.dares_log);
         let embed = await this.getDareEmbed(dare);
         let actionRow = createActionRow("dare", dare.isBanned, userBan);
 
@@ -92,7 +92,7 @@ module.exports = {
         let serverName = 'pre-v5';
         if (truth.server && truth.server.name) serverName = truth.server.name;
 
-        let channel = getChannel(my.truths_log);
+        let channel = await getChannel(my.truths_log);
         let embed = await this.getTruthEmbed(truth);
         let actionRow = createActionRow("truth");
 
@@ -110,7 +110,7 @@ module.exports = {
         let serverName = 'pre-v5';
         if (truth.server && truth.server.name) serverName = truth.server.name;
 
-        let channel = getChannel(my.truths_log);
+        let channel = await getChannel(my.truths_log);
 
         let embed = await this.getTruthEmbed(truth);
         let actionRow = createActionRow("truth", truth.isBanned, userBan)
@@ -132,7 +132,7 @@ module.exports = {
      */
     async bannedUser(user, questions, servers) {
 
-        let channel = getChannel(my.banned_users_log);
+        let channel = await getChannel(my.banned_users_log);
 
         let embed = new EmbedBuilder()
             .setTitle("User Banned")
@@ -155,7 +155,8 @@ module.exports = {
      */
     async newServer(server) {
         console.log("New Server")
-        let channel = getChannel(my.servers_log);
+        let channel = await getChannel(my.servers_log);
+        console.log(channel)
         let embed = serverEmbed(server);
         let actionRow = createActionRow("server");
         const message = await channel.send({ embeds: [embed], components: [actionRow], fetchReply: true });
@@ -171,7 +172,7 @@ module.exports = {
     async updateServer(server, userBan = false) {
         try {
             if (!server._loaded) throw Error("Attempted to update an unloaded server");
-            let channel = getChannel(my.servers_log);
+            let channel = await getChannel(my.servers_log);
             /** @type {Message} */
             let message = await channel.messages.fetch(server.message_id);
             let embed = serverEmbed(server);
@@ -184,7 +185,7 @@ module.exports = {
     },
 
     async deleteServer(messageId) {
-        let channel = getChannel(my.servers_log);
+        let channel = await getChannel(my.servers_log);
 
         /** @type {Message} */
         let message = await channel.messages.fetch(messageId);
@@ -202,7 +203,7 @@ module.exports = {
      * @returns 
      */
     async findChannel(channelId) {
-        return getChannel(channelId);
+        return await getChannel(channelId);
     },
 
     /**
@@ -292,9 +293,10 @@ function serverEmbed(server) {
  * @param {string} channelId 
  * @returns {TextChannel}
  */
-function getChannel(channelId) {
+async function getChannel(channelId) {
     let client = global.client;
-    return client.channels.cache.get(channelId);
+    console.log(client);
+    return await client.channels.cache.get(channelId);
 }
 
 /**
