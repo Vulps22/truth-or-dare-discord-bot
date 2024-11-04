@@ -23,7 +23,7 @@ async function init() {
     const db = new Database();
 
     try {
-        const data = await db.get('config', 3);
+        const data = await db.get('config', process.env['ENVIRONMENT_KEY']);
         global.my = data;
 
     } catch (error) {

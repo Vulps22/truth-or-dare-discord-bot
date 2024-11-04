@@ -39,7 +39,7 @@ global.my = {
 async function main() {
     const db = new Database();
     try {
-        const data = await db.get('config', 3);
+        const data = await db.get('config', process.env['ENVIRONMENT_KEY']);
         global.my = data;
         console.log(my);
     } catch (error) {
