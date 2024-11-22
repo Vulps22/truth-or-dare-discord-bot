@@ -12,8 +12,8 @@ This repository is dedicated solely to managing issues. It serves as a central p
 ## How to Use
 
 1. **Create a New Issue:** Click on the "Issues" tab and then click "New Issue" to start a new discussion or report a bug.
-2. **Label Your Issue:** Use labels to categorize your issues (e.g., "bug," "enhancement," "discussion"). This helps in organizing and prioritizing tasks.
-3. **Comment and Collaborate:** Feel free to comment on existing issues to provide feedback, suggestions, or additional details.
+2. **Comment and Collaborate:** Feel free to comment on existing issues to provide feedback, suggestions, or additional details.
+3. **Developer Review:** A Developer will review your ticket and assign any appropriate labels or ask any additional questions
 
 ## Guidelines
 
