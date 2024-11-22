@@ -25,6 +25,6 @@ This repository is dedicated solely to managing issues. It serves as a central p
 
 To create an issue, click [here](../../issues) or navigate to the "Issues" tab above.
 
-To see what's currently being worked on, and what's coming in future releases, click [here](https://github.com/users/Vulps22/projects/5)
+To see the roadmap of what's currently being worked on, and what's coming in future releases, click [here](https://github.com/users/Vulps22/projects/5)
 
 Thank you for contributing and helping make this project better!
