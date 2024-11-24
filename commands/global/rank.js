@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, SlashCommandUserOption } = require("discord.js");
 const UserHandler = require("handlers/userHandler");
 const RankCard = require("objects/rankCard");
+const Server = require("objects/server");
 const User = require("objects/user");
 
 module.exports = {
@@ -20,7 +21,9 @@ module.exports = {
      * @returns 
      */
     async execute(interaction) {
-        await interaction.deferReply();
+        if (!interaction.deferred) await interaction.deferReply();
+        const startTime = Date.now();
+
         let discordUser = interaction.options.getUser('user');
         let user_id;
         if (discordUser) user_id = interaction.options.getUser('user').id;
@@ -35,11 +38,22 @@ module.exports = {
             interaction.editReply("Hmm, I can't find your user data. This might be a bug, try again later");
             return;
         }
-        await user.loadServerUser(interaction.guildId);
-        let image = await user.getImage();
-        let rankCard = new RankCard(user, image);
-        let card = await rankCard.generateCard();
-        interaction.editReply({ files: [card] });
 
+        await user.loadServerUser(interaction.guild.id);
+        if(!user._server) {
+            user._server = new Server(interaction.guild.id);
+            await user._server.load();
+        }
+        let image = await user.getImage();
+        let rankCard = new RankCard(user, image, user._server.hasPremium());
+        let card = await rankCard.generateCard();
+        
+        const executionTime = Date.now() - startTime;
+        if (executionTime > 5000) {
+            throw new Error(`Rank command took too long to execute: ${executionTime}ms`);
+        }
+        
+        await interaction.editReply({ files: [card] });
+        console.log(`Rank command executed in ${executionTime}ms`);
     }
 }

@@ -9,16 +9,15 @@ class RankCard {
     avatarURL;
     premium = false;
 
-    constructor(user, avatarURL) {
+    constructor(user, avatarURL, premium = false) {
         /**@type {User} */
         this.user = user;
         this.username = user.username;
         this.avatarURL = avatarURL;
+        this.premium = premium;
     }
 
     async generateCard() {
-        if(!this.user._serverUserLoaded) await this.user.loadServerUser();
-        this.premium = await this.user._server.hasPremium();
         const canvas = this.createCanvas();
         const ctx = canvas.getContext('2d');
 
@@ -131,7 +130,7 @@ class RankCard {
         ctx.fillText(`Dares Done: ${stats.daresDone ?? 0}`, xleft, truthsRow);
         ctx.fillText(`Dares Failed: ${stats.daresFailed ?? 0}`, xright, truthsRow);
         ctx.textAlign = 'left'; // Align text to the left for the XP row
-        ctx.fillText(`Global XP: ${this.user.globalLevelXP ?? 0} / ${this.user.calculateXpForLevel(this.user.globalLevel + 1)}`, 240, xpRow);
+        ctx.fillText(`Global XP: ${this.user.globalLevelXp ?? 0} / ${this.user.calculateXpForLevel(this.user.globalLevel + 1)}`, 240, xpRow);
         ctx.fillText(`Server XP: ${serverText}`, 240, serverXpRow);
         ctx.textAlign = 'center'; // Reset text alignment to 'center'
     }
