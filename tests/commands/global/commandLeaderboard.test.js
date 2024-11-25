@@ -126,9 +126,9 @@ describe('leaderboard command', () => {
         // Assertions
         expect(Server).toHaveBeenCalledWith(interaction.guildId);
         expect(hasPremiumMockFalse).toHaveBeenCalled();
-        expect(interaction.deferReply).not.toHaveBeenCalled();
+        expect(interaction.deferReply).toHaveBeenCalled();
         expect(generateLeaderboardMock).not.toHaveBeenCalledWith(false);
-        expect(interaction.reply).toHaveBeenCalledWith(expect.objectContaining({ content: "This is a premium command. Premium is not quite ready yet, But I'm working hard to make these commands available for everyone :)" }));
+        expect(interaction.editReply).toHaveBeenCalledWith(expect.objectContaining({ content: "This is a premium command. Premium is not quite ready yet, But I'm working hard to make these commands available for everyone :)" }));
     });
 
     test('should log error when server is undefined', async () => {

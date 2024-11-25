@@ -29,6 +29,18 @@ class User {
 
     _serverId;
 
+    _truths = {
+        done: 0,
+        failed: 0,
+    }
+
+    _dares = {
+        done: 0,
+        failed: 0,
+    }
+
+    _useDoneObjects = false;
+
     /** @type {Server} */
     _server;
     _serverUserLoaded = false;
@@ -112,14 +124,16 @@ class User {
     }
 
     async loadServerUser(serverId, orCreate = false) {
+        
         const db = new Database();
-
-        let serverUserRaw = await db.query(`SELECT * FROM server_users WHERE user_id = ${this.id} AND server_id = ${serverId}`);
+        
+        const query = `SELECT * FROM server_users WHERE user_id = ${this.id} AND server_id = ${serverId}`;
+        
+        let serverUserRaw = await db.query(query);
         let serverUser = serverUserRaw[0];
 
         if (!serverUser) {
             if (orCreate) {
-                console.log("no server user, adding one");
                 await this.addServerUser(serverId);
                 this._serverUserLoaded = true;
             }
@@ -164,7 +178,7 @@ class User {
 
         if (!didLoad) return false;
         const db = new Database();
-        db.query(`DELETE FROM server_users WHERE server_id = '${serverId}' && user_id = '${this.id}`);
+        db.query(`DELETE FROM server_users WHERE server_id = '${serverId}' && user_id = '${this.id}'`);
 
         const servers = await this.getServerList();
 
@@ -389,40 +403,55 @@ class User {
      * Counts the number of dares the user has done successfully
      */
     async daresDone(serverId) {
-        const db = new Database();
-        //use db.query(sql) to get the number of dares from user_dares where done_count >= 5
-        let dares = await db.query(`SELECT COUNT(*) as count FROM user_dares WHERE user_id = ${this.id} AND done_count >= ${this._required_votes} ${serverId ? `AND server_id = ${serverId}` : ''}`);
-        return dares[0].count;
+        if (!this._useDoneObjects) {
+
+            const db = new Database();
+            //use db.query(sql) to get the number of dares from user_questions where type = dare AND done_count >= 5
+            let dares = await db.query(`SELECT COUNT(*) as count FROM user_questions WHERE userId = ${this.id} AND type = 'dare' AND doneCount >= ${this._required_votes} ${serverId ? `AND serverId = ${serverId}` : ''}`);
+            return dares[0].count;
+        }
+        return this._dares.done;
     }
 
     /**
      * Counts the number of dares the user has failed
      */
     async daresFailed(serverId = false) {
-        const db = new Database();
-        //use db.query(sql) to get the number of dares from user_dares where failed_count >= 5
-        let dares = await db.query(`SELECT COUNT(*) as count FROM user_dares WHERE user_id = ${this.id} AND failed_count >= ${this._required_votes} ${serverId ? `AND server_id = ${serverId}` : ''}`);
-        return dares[0].count;
+        if (!this._useDoneObjects) {
+            const db = new Database();
+            //use db.query(sql) to get the number of dares from user_questions where type = dare AND failedCount >= 5
+            let dares = await db.query(`SELECT COUNT(*) as count FROM user_questions WHERE userId = ${this.id} AND type = 'dare' AND failedCount >= ${this._required_votes} ${serverId ? `AND serverId = ${serverId}` : ''}`);
+            return dares[0].count;
+        }
+        return this._dares.failed;
     }
 
     /**
      * Counts the number of truths the user has done successfully
      */
     async truthsDone(serverId = false) {
-        const db = new Database();
-        //use db.query(sql) to get the number of truths from user_truths where done_count >= 5
-        let truths = await db.query(`SELECT COUNT(*) as count FROM user_truths WHERE user_id = ${this.id} AND done_count >= ${this._required_votes} ${serverId ? `AND server_id = ${serverId}` : ''}`);
-        return truths[0].count;
+        if (!this._useDoneObjects) {
+            const db = new Database();
+            //use db.query(sql) to get the number of truths from user_questions where type = truth AND done_count >= 5
+            let truths = await db.query(`SELECT COUNT(*) as count FROM user_questions WHERE userId = ${this.id} AND type = 'truth' AND doneCount >= ${this._required_votes} ${serverId ? `AND serverId = ${serverId}` : ''}`);
+            return truths[0].count;
+        }
+
+        return this._truths.done;
     }
 
     /**
      * Counts the number of truths the user has failed
      */
     async truthsFailed(serverId = false) {
-        const db = new Database();
-        //use db.query(sql) to get the number of truths from user_truths where failed_count >= 5
-        let truths = await db.query(`SELECT COUNT(*) AS count FROM user_truths WHERE user_id = ${this.id} AND failed_count >= ${this._required_votes} ${serverId ? `AND server_id = ${serverId}` : ''}`);
-        return truths[0].count;
+        if (!this._useDoneObjects) {
+            const db = new Database();
+            //use db.query(sql) to get the number of truths from user_questions where type = truth AND failed_count >= 5
+            let truths = await db.query(`SELECT COUNT(*) AS count FROM user_questions WHERE userId = ${this.id} AND type = 'truth' AND failedCount >= ${this._required_votes} ${serverId ? `AND serverId = ${serverId}` : ''}`);
+            return truths[0].count;
+        }
+
+        return this._truths.failed;
     }
 
     // Function to check if the last vote was within 24 hours

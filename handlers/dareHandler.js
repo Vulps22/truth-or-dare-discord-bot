@@ -329,7 +329,15 @@ class DareHandler extends Handler {
 
 	}
 
-
+	/**
+	 * 
+	 * @param {Interaction} interaction 
+	 * @param {UserDare} userDare 
+	 * @param {String} dareUser 
+	 * @param {User} user 
+	 * @param {Server} server 
+	 * @returns 
+	 */
 	async doVote(interaction, userDare, dareUser, user, server) {
 
 		if (dareUser == interaction.user.id && !this.ALPHA) {

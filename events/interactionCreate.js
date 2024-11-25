@@ -140,7 +140,8 @@ async function runCommand(interaction) {
         console.error(`Error executing ${interaction.commandName}`);
         console.error(error);
         if(!interaction.deferred) interaction.reply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:");
-        else interaction.editReply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:")
+        else interaction.editReply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:");
+
         logger.error(`New Brain Fart occurred!\nCommand: ${interaction.commandName}\nError: ${error.message}`);
     }
 }

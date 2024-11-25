@@ -3,9 +3,11 @@
 const rankCommand = require('commands/global/rank');
 const UserHandler = require('handlers/userHandler');
 const RankCard = require('objects/rankCard');
+const Server = require('objects/server');
 
 jest.mock('handlers/userHandler');
 jest.mock('objects/rankCard');
+jest.mock('objects/server');
 
 describe('rank command', () => {
   let interaction;
@@ -18,14 +20,25 @@ describe('rank command', () => {
       user: {
         id: 'test-user-id',
       },
+      guild: {
+        id: 'test-guild-id'
+      },
       guildId: 'test-guild-id',
       deferReply: jest.fn(),
       editReply: jest.fn(),
     };
 
-    // Clear mocks before each test
+    // Clear all mocks before each test
     UserHandler.mockClear();
     RankCard.mockClear();
+    Server.mockClear();
+
+    // Mock Server class
+    const serverInstance = {
+      load: jest.fn().mockResolvedValue(),
+      hasPremium: jest.fn().mockReturnValue(false)
+    };
+    Server.mockImplementation(() => serverInstance);
   });
 
   test('should handle when a user is provided', async () => {
@@ -35,6 +48,7 @@ describe('rank command', () => {
     const userInstance = {
       loadServerUser: jest.fn().mockResolvedValue(),
       getImage: jest.fn().mockResolvedValue('user-image'),
+      _server: null
     };
 
     const rankCardInstance = {
@@ -64,6 +78,7 @@ describe('rank command', () => {
     const userInstance = {
       loadServerUser: jest.fn().mockResolvedValue(),
       getImage: jest.fn().mockResolvedValue('user-image'),
+      _server: null
     };
 
     const rankCardInstance = {

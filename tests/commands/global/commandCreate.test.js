@@ -112,19 +112,36 @@ describe('Create Truth or Dare Command', () => {
     });
 
     test('should abort creation if a dare or truth was created within 2 minutes', async () => {
+        // Clear all relevant mocks
+        logger.editLog.mockClear();
         interaction.options.getSubcommand.mockReturnValue('dare');
 
-        Database.mockImplementation(() => ({
+        // Mock user to have accepted rules
+        User.mockImplementation(() => ({
+            get: jest.fn().mockResolvedValue(true),
+            canCreate: jest.fn().mockResolvedValue(true),
+            username: 'testUser'
+        }));
+
+        // Mock database to return a recent creation
+        const mockDb = {
             createdWithin: jest.fn().mockResolvedValue([{}])
-        }))
+        };
+        Database.mockImplementation(() => mockDb);
 
         await command.execute(interaction);
 
+        // Verify the correct message was sent
         expect(interaction.editReply).toHaveBeenCalledWith({
             content: expect.stringContaining('Aborted creation: User attempted to create a Truth or Dare within 2 minutes'),
             ephemeral: true
         });
-        expect(logger.error).toHaveBeenCalledWith("Aborted creation: User attempted to create a Truth or Dare within 2 minutes");
+
+        // Verify the log contains our abort message using stringMatching
+        expect(logger.editLog).toHaveBeenCalledWith(
+            interaction.logMessage.id,
+            expect.stringMatching(/.*Aborted: User attempted to create a Truth or Dare within 2 minutes.*/)
+        );
     });
 
     test('should log an error for invalid subcommand', async () => {

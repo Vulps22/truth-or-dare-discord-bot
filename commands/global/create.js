@@ -80,9 +80,9 @@ async function canCreate(interaction) {
 	const db = new Database();
 	lastQuestion = await db.createdWithin('questions', 2, interaction.user.id);
 
-	if (lastQuestion.length > 0 && my.environment !== 'dev') {
+	if (lastQuestion.length > 0 && my.environment !== 'devv') {
 		interaction.editReply({ content: `Aborted creation: User attempted to create a Truth or Dare within 2 minutes`, ephemeral: true });
-		logger.error(`Aborted creation: User attempted to create a Truth or Dare within 2 minutes`);
+		logger.editLog(interaction.logMessage.id, `${interaction.logInteraction} Aborted: User attempted to create a Truth or Dare within 2 minutes`);
 
 		return;
 	}
