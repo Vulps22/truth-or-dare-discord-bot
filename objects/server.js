@@ -1,5 +1,6 @@
 const { Message, TextChannel } = require("discord.js");
 const Database = require("objects/database");
+const logger = require("objects/logger");
 
 class Server {
 
@@ -214,8 +215,7 @@ class Server {
     */
     async deleteServer() {
 
-        const message = await this.getMessage();
-        message.delete();
+        logger.deleteServer(this.message_id);
 
         const db = new Database();
 

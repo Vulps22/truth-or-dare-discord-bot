@@ -1,7 +1,6 @@
 const { Client, Intents, GatewayIntentBits } = require('discord.js');
 const sinon = require('sinon');
 const helpCommand = require('commands/global/help'); // Adjust the path to your help command file
-const embedder = require('embedder');
 const Database = require('objects/database');
 
 jest.mock('objects/database');

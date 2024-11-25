@@ -25,8 +25,10 @@ module.exports = {
 	 * @param {Interaction} interaction 
 	 */
 	async execute(interaction) {
+
 		if (!interaction.deferred) await interaction.deferReply();
 		const startTime = Date.now();
+
 		try {
 			let command = interaction.options.getSubcommand();
 

@@ -78,8 +78,8 @@ module.exports = {
 			])
 			.addFields(
 				{ name: 'Links', value: ' ' },
-				{ name: 'For updates and help', value: ` [Join Our Support Server](https://discord.gg/${process.env.DISCORD_INVITE_CODE})`, inline: true },
-				{ name: 'Got your own community?', value: `[Add The Bot](${process.env.BOT_INVITE_URL})\n\n`, inline: true },
+				{ name: 'For updates and help', value: ` [Join Our Support Server](https://discord.gg/${my.discord_invite_code})`, inline: true },
+				{ name: 'Got your own community?', value: `[Add The Bot](${my.bot_invite_url})\n\n`, inline: true },
 			)
 	},
 	rules() {

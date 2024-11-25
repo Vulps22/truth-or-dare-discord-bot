@@ -24,7 +24,7 @@ class ButtonEventHandler {
     }
 
     async execute() {
-
+        await this.interaction.deferReply({ ephemeral: true });
         // The target date: 5th September 2024 at 05:11 AM (UK time)
         const targetDate = new Date('2024-09-05T05:11:00Z'); // UTC date format
 
@@ -33,7 +33,7 @@ class ButtonEventHandler {
 
         // Check if the message was created before the target date
         if (messageTimestamp < targetDate) {
-            this.interaction.logMessage.edit(`${this.interaction.logInteraction} Button Interaction Aborted: Incompatible Versions (message too old)`)
+            logger.editLog(this.interaction.logMessage, `${this.interaction.logInteraction} Button Interaction Aborted: Incompatible Versions (message too old)`);
             this.interaction.message.edit({
                 content: this.interaction.message.content, // Keep the same content
                 embeds: this.interaction.message.embeds, // Keep the same embeds
@@ -42,8 +42,7 @@ class ButtonEventHandler {
             this.interaction.reply("A recent Update has changed how I identify bots. I am unable to register any votes on messages created before <t:1725855060:F>")
         }
 
-
-        await this.interaction.deferReply({ ephemeral: true });
+        
         let buttonId = this.interaction.customId;
         /** @type {Array<string>} */
         let idComponents = buttonId.split('_')
@@ -77,7 +76,7 @@ class ButtonEventHandler {
                 user.rulesAccepted = true;
                 await user.save();
                 this.interaction.editReply('Rules Accepted.')
-                logger.editLog(this.interaction.logMessage.id, `${this.interaction.logInteraction} User has Accepted the Rules and can now create new Truths or Dares`);
+                logger.editLog(this.interaction.logMessage, `${this.interaction.logInteraction} User has Accepted the Rules and can now create new Truths or Dares`);
                 break;
             default:
                 await logger.error(`**Failed to find Button Command** | **server**: ${this.interaction.guild.name} \n\n**Button ID**: ${buttonId}`);

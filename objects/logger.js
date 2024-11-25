@@ -1,9 +1,4 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, TextChannel, Message, Snowflake } = require('discord.js');
-
-const Truth = require('objects/truth.js');
-const Server = require('objects/server.js');
-const Dare = require('./dare');
-const Question = require('./question');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, Message, } = require('discord.js');
 
 module.exports = {
 
@@ -12,27 +7,39 @@ module.exports = {
      * @param {string} message 
      * @returns {Message}
      */
-    async log(message) {
+    async log(m) {
         try {
-            let channel = getChannel(my.logs);
-            const loggedMessage = await channel.send({ content: message, fetchReply: true });
-            console.log(message);
-            return loggedMessage
+            const messageOptions = { content: m, fetchReply: true };
+            const channelId = my.logs; // Assuming `my.logs` contains the channel ID
+
+            // Use sendTo function to send the message to the specified channel
+            const messageId = await sendTo(messageOptions, channelId);
+            console.log(messageId)
+            if (messageId) {
+                console.log(`Logged message with ID: ${messageId}`);
+                return messageId;
+            } else {
+                console.log("Failed to log the message.");
+                return null;
+            }
         } catch (error) {
             console.log(error);
         }
     },
 
+
     async editLog(messageId, newString) {
         try {
-            let channel = getChannel(my.logs); // Fetch the logs channel
-            const message = await channel.messages.fetch(messageId); // Fetch the message by its ID
+            const channelId = my.logs; // Assuming `my.logs` contains the channel ID
+            const newContent = { content: newString };
 
-            if (message) {
-                await message.edit({ content: newString }); // Edit the message content
+            // Use editMessageInChannel to edit the message across shards
+            const success = await editMessageInChannel(channelId, messageId, newContent);
+
+            if (success) {
                 console.log(`Log message updated: ${newString}`);
             } else {
-                console.log(`Message with ID ${messageId} not found.`);
+                console.log(`Failed to update log message with ID: ${messageId}`);
             }
         } catch (error) {
             console.log(`Error editing log message with ID ${messageId}:`, error);
@@ -40,66 +47,109 @@ module.exports = {
     },
 
 
+
     async error(message) {
-        let channel = getChannel(my.errors_log);
-        let embed = new EmbedBuilder()
-            .setTitle("Error")
-            .setDescription(message)
-        channel.send({ embeds: [embed] });
-        console.error(message);
-        this.log(message);
-    },
+        try {
+            const channelId = my.errors_log; // Assuming `my.errors_log` contains the error log channel ID
+            const embed = new EmbedBuilder()
+                .setTitle("Error")
+                .setDescription(message);
 
-    /**
-     * @param {Dare} dare 
-     */
-    async newDare(dare) {
-        let serverName = 'pre-v5';
+            // Use sendTo to send the error embed message to the specified channel
+            const messageId = await sendTo({ embeds: [embed] }, channelId);
 
-        let channel = getChannel(my.dares_log);
+            if (messageId) {
+                console.log(`Error message logged with ID: ${messageId}`);
+            } else {
+                console.log("Failed to log the error message.");
+            }
 
-        let embed = await this.getDareEmbed(dare);
-        let actionRow = createActionRow("dare")
-        const message = await channel.send({ embeds: [embed], components: [actionRow], fetchReply: true });
-        console.log("Logged:", message.id)
-        dare.messageId = message.id;
-        await dare.save();
-    },
-
-    /**
-     * @param {Dare} dare 
-     */
-    async updateDare(dare, userBan = false) {
-
-        let channel = getChannel(my.dares_log);
-        let embed = await this.getDareEmbed(dare);
-        let actionRow = createActionRow("dare", dare.isBanned, userBan);
-
-        let message;
-        if (dare.messageId !== 'pre-v5') {
-            message = await channel.messages.edit(dare.messageId, { embeds: [embed], components: [actionRow] });
-            console.log("Updated:", message.id);
+            console.error(message);
+            await this.log(message); // Log the error message to the general log as well
+        } catch (error) {
+            console.log("Error logging to the errors channel:", error);
         }
-
-        return true;
     },
 
+
     /**
-     * 
+ * @param {Dare} dare 
+ */
+    async newDare(dare) {
+
+        const channelId = my.dares_log; // Assuming `my.dares_log` contains the dares log channel ID
+        const embed = await this.getDareEmbed(dare);
+        const actionRow = createActionRow("dare");
+
+        try {
+            // Use sendTo to send the dare embed message with action row
+            const messageId = await sendTo({ embeds: [embed], components: [actionRow] }, channelId);
+
+            if (messageId) {
+                console.log("Logged:", messageId);
+                dare.messageId = messageId;
+                await dare.save();
+            } else {
+                console.log("Failed to log the dare message.");
+            }
+        } catch (error) {
+            console.log("Error logging new dare:", error);
+        }
+    },
+
+
+    /**
+ * @param {Dare} dare 
+ */
+    async updateDare(dare, userBan = false) {
+        const channelId = my.dares_log; // Assuming `my.dares_log` contains the dares log channel ID
+        const embed = await this.getDareEmbed(dare);
+        const actionRow = createActionRow("dare", dare.isBanned, userBan);
+
+        try {
+            if (dare.messageId !== 'pre-v5') {
+                // Use editMessageInChannel to edit the message across shards
+                const success = await editMessageInChannel(channelId, dare.messageId, { embeds: [embed], components: [actionRow] });
+
+                if (success) {
+                    console.log("Updated message with ID:", dare.messageId);
+                    return true;
+                } else {
+                    console.log(`Failed to update dare message with ID: ${dare.messageId}`);
+                    return false;
+                }
+            }
+        } catch (error) {
+            console.log(`Error updating dare message with ID ${dare.messageId}:`, error);
+            return false;
+        }
+    },
+
+
+    /**
      * @param {Truth} truth 
      */
     async newTruth(truth) {
-        let serverName = 'pre-v5';
         if (truth.server && truth.server.name) serverName = truth.server.name;
 
-        let channel = getChannel(my.truths_log);
-        let embed = await this.getTruthEmbed(truth);
-        let actionRow = createActionRow("truth");
+        const channelId = my.truths_log; // Assuming `my.truths_log` contains the truths log channel ID
+        const embed = await this.getTruthEmbed(truth);
+        const actionRow = createActionRow("truth");
 
-        const message = await channel.send({ embeds: [embed], components: [actionRow], fetchReply: true });
-        console.log("logged", message.id)
-        truth.messageId = message.id;
-        truth.save();
+        try {
+            // Use sendTo to send the truth embed message with action row
+            const messageId = await sendTo({ embeds: [embed], components: [actionRow] }, channelId);
+
+            if (messageId) {
+                console.log("Logged message with ID:", messageId);
+                truth.messageId = messageId;
+                await truth.save();
+            } else {
+                console.log("Failed to log the truth message.");
+            }
+        } catch (error) {
+            console.log("Error logging new truth:", error);
+        }
     },
 
     /**
@@ -110,99 +160,205 @@ module.exports = {
         let serverName = 'pre-v5';
         if (truth.server && truth.server.name) serverName = truth.server.name;
 
-        let channel = getChannel(my.truths_log);
+        const channelId = my.truths_log; // Assuming `my.truths_log` contains the truths log channel ID
+        const embed = await this.getTruthEmbed(truth);
+        const actionRow = createActionRow("truth", truth.isBanned, userBan);
 
-        let embed = await this.getTruthEmbed(truth);
-        let actionRow = createActionRow("truth", truth.isBanned, userBan)
+        try {
+            if (truth.messageId !== 'pre-v5') {
+                // Use editMessageInChannel to edit the message across shards
+                const success = await editMessageInChannel(channelId, truth.messageId, { embeds: [embed], components: [actionRow] });
 
-        let message;
-        if (truth.messageId !== 'pre-v5') {
-            message = await channel.messages.edit(truth.messageId, { embeds: [embed], components: [actionRow] });
-            console.log("Updated:", message.id)
+                if (success) {
+                    console.log("Updated message with ID:", truth.messageId);
+                    return true;
+                } else {
+                    console.log(`Failed to update truth message with ID: ${truth.messageId}`);
+                    return false;
+                }
+            }
+        } catch (error) {
+            console.log(`Error updating truth message with ID ${truth.messageId}:`, error);
+            return false;
         }
-
-        return true;
     },
 
+
     /**
-     * 
-     * @param {User} user 
-     * @param {number} questions 
-     * @param {number} servers 
-     */
+ * @param {User} user 
+ * @param {number} questions 
+ * @param {number} servers 
+ */
     async bannedUser(user, questions, servers) {
+        const channelId = my.banned_users_log; // Assuming `my.banned_users_log` contains the banned users log channel ID
 
-        let channel = getChannel(my.banned_users_log);
-
-        let embed = new EmbedBuilder()
+        const embed = new EmbedBuilder()
             .setTitle("User Banned")
             .addFields(
                 { name: "Id", value: user.id ?? ' ' },
                 { name: "Username", value: user.username ?? ' ' },
                 { name: "Questions:", value: String(questions) ?? ' ' },
                 { name: "Servers:", value: String(servers) ?? ' ' },
-                { name: "Ban Reason:", value: user.banReason ?? ' ' },
+                { name: "Ban Reason:", value: user.banReason ?? ' ' }
+            );
 
-            )
-        const message = await channel.send({ embeds: [embed], fetchReply: true });
-        user.ban_message_id = message.id;
-        await user.save();
+        try {
+            // Use sendTo to send the banned user embed message
+            const messageId = await sendTo({ embeds: [embed], fetchReply: true }, channelId);
+
+            if (messageId) {
+                console.log("Banned user message logged with ID:", messageId);
+                user.ban_message_id = messageId;
+                await user.save();
+            } else {
+                console.log("Failed to log the banned user message.");
+            }
+        } catch (error) {
+            console.log("Error logging banned user:", error);
+        }
     },
 
+
     /**
-     * 
      * @param {Server} server
      */
     async newServer(server) {
-        console.log("New Server")
-        let channel = getChannel(my.servers_log);
-        let embed = serverEmbed(server);
-        let actionRow = createActionRow("server");
-        const message = await channel.send({ embeds: [embed], components: [actionRow], fetchReply: true });
-        console.log("Server Message:", message.id);
-        server.message_id = message.id;
-        await server.save();
+        console.log("New Server");
+        const channelId = my.servers_log; // Assuming `my.servers_log` contains the servers log channel ID
+        const embed = serverEmbed(server);
+        const actionRow = createActionRow("server");
+
+        try {
+            // Use sendTo to send the new server embed message with action row
+            const messageId = await sendTo({ embeds: [embed], components: [actionRow], fetchReply: true }, channelId);
+
+            if (messageId) {
+                console.log("Server message logged with ID:", messageId);
+                server.message_id = messageId;
+                await server.save();
+            } else {
+                console.log("Failed to log the server message.");
+            }
+        } catch (error) {
+            console.log("Error logging new server:", error);
+        }
     },
 
     /**
-     * 
      * @param {Server} server 
+     * @param {boolean} [userBan] 
      */
     async updateServer(server, userBan = false) {
         try {
             if (!server._loaded) throw Error("Attempted to update an unloaded server");
-            let channel = getChannel(my.servers_log);
-            /** @type {Message} */
-            let message = await channel.messages.fetch(server.message_id);
-            let embed = serverEmbed(server);
-            let actionRow = createActionRow("server", server.isBanned, userBan);
-            message.edit({ embeds: [embed], components: [actionRow] });
-            return true;
-        } catch {
+
+            const channelId = my.servers_log;
+            const embed = serverEmbed(server);
+            const actionRow = createActionRow("server", server.isBanned, userBan);
+
+            // Use editMessageInChannel to edit the server message across shards
+            const success = await editMessageInChannel(channelId, server.message_id, { embeds: [embed], components: [actionRow] });
+
+            if (success) {
+                console.log("Updated server message with ID:", server.message_id);
+                return true;
+            } else {
+                console.log(`Failed to update server message with ID: ${server.message_id}`);
+                return false;
+            }
+        } catch (error) {
+            console.log("Error updating server message:", error);
             return false;
         }
     },
 
     async deleteServer(messageId) {
-        let channel = getChannel(my.servers_log);
+        const channelId = my.servers_log;
 
-        /** @type {Message} */
-        let message = await channel.messages.fetch(messageId);
-        const didDelete = await message.delete();
-        console.log("Server deleted from log?:", didDelete);
-    },
+        try {
+            // Use editMessageInChannel to locate and delete the message across shards
+            const success = await global.client.shard.broadcastEval(
+                async (client, { channelId, messageId }) => {
+                    const channel = client.channels.cache.get(channelId);
+                    if (channel) {
+                        const message = await channel.messages.fetch(messageId).catch(() => null);
+                        if (message) {
+                            await message.delete();
+                            return true;
+                        }
+                    }
+                    return false;
+                },
+                { context: { channelId, messageId } }
+            );
 
-    getActionRow(type, isBanned = false, userBanned = false) {
-        return createActionRow(type, isBanned, userBanned);
+            if (success.some(result => result)) {
+                console.log("Server deleted from log.");
+            } else {
+                console.log("Failed to delete server message.");
+            }
+        } catch (error) {
+            console.log("Error deleting server message:", error);
+        }
     },
 
     /**
-     * 
-     * @param {Snowflake} channelId 
-     * @returns 
+     * Logs a new report using the Report class.
+     * @param {Report} - The report created by the command. Should be loaded before reaching here
      */
-    async findChannel(channelId) {
-        return getChannel(channelId);
+    async newReport(report) {
+        try {
+            // Create the report embed
+            const embed = new EmbedBuilder()
+                .setTitle("New Report")
+                .addFields(
+                    { name: "Type", value: report.type },
+                    { name: "Reason", value: report.reason },
+                    { name: "Offender", value: `${report.offender.id} | ${report.type == 'server' ? report.offender.name : report.offender.question}` }
+                )
+                .setTimestamp();
+
+            // Get the channel and send the embed with the action row
+            const channelId = my.reports_log;
+            await sendTo({
+                embeds: [embed],
+                components: [this.createReportActionRow()],
+            }, channelId);
+
+        } catch (error) {
+            console.error(`Failed to log report: ${error}`);
+        }
+    },
+
+    /**
+     * Creates an action row for report actions (e.g., Approve, Dismiss).
+     * @returns {ActionRowBuilder} The action row with buttons for report actions.
+     */
+    createReportActionRow() {
+        return new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId("report_safe")
+                    .setLabel("Safe")
+                    .setStyle(ButtonStyle.Success)
+                    .setDisabled(true),
+                new ButtonBuilder()
+                    .setCustomId("report_ban")
+                    .setLabel("Ban")
+                    .setStyle(ButtonStyle.Danger)
+                    .setDisabled(true),
+                new ButtonBuilder()
+                    .setCustomId("report_show")
+                    .setLabel("Show Offender")
+                    .setStyle(ButtonStyle.Secondary)
+                    .setDisabled(true),
+
+            );
+    },
+
+
+    getActionRow(type, isBanned = false, userBanned = false) {
+        return createActionRow(type, isBanned, userBanned);
     },
 
     /**
@@ -286,16 +442,72 @@ function serverEmbed(server) {
         );
 }
 
+/**
+ * Sends a message to a specific channel across shards.
+ * @param {Object} messageOptions - The message options (content, embeds, etc.) to be sent.
+ * @param {string} channelId - The ID of the channel to send the message to.
+ * @returns {Promise<string|null>} - Resolves with the message ID if sent successfully, or null if unsuccessful.
+ */
+async function sendTo(messageOptions, channelId) {
+
+    try {
+        // Use broadcastEval to locate the correct shard and send the message
+        const result = await global.client.shard.broadcastEval(
+            async (client, { channelId, messageOptions }) => {
+                const channel = client.channels.cache.get(channelId);
+                if (channel) {
+                    messageOptions.fetchReply = true;
+                    const message = await channel.send(messageOptions);
+                    return message.id; // Return the message ID
+                }
+                return false; // Return false if message couldn't be sent
+            },
+            { context: { channelId, messageOptions } }
+        );
+
+        // Find the first non-false result, which will be the message ID
+        const messageId = result.find(id => id !== false);
+        return messageId || null;
+    } catch (error) {
+        console.error(`Failed to send message to channel ${channelId}:`, error);
+        return null;
+    }
+}
+
 
 /**
- * 
- * @param {string} channelId 
- * @returns {TextChannel}
+ * Edits a message in a specific channel across shards.
+ * @param {string} channelId - The ID of the channel containing the message.
+ * @param {string} messageId - The ID of the message to edit.
+ * @param {Object} newContent - The new content for the message (e.g., { content: "Updated message" }).
+ * @returns {Promise<boolean>} - Resolves with `true` if the message was edited successfully, `false` otherwise.
  */
-function getChannel(channelId) {
-    let client = global.client;
-    return client.channels.cache.get(channelId);
+async function editMessageInChannel(channelId, messageId, newContent) {
+    try {
+        // Use broadcastEval to locate the correct shard, fetch the message, and edit it
+        const result = await global.client.shard.broadcastEval(
+            async (client, { channelId, messageId, newContent }) => {
+                const channel = client.channels.cache.get(channelId);
+                if (channel) {
+                    const message = await channel.messages.cache.get(messageId);
+                    if (message) {
+                        await message.edit(newContent);
+                        return true;
+                    }
+                }
+                return false;
+            },
+            { context: { channelId, messageId, newContent } }
+        );
+
+        // If any shard returned true, the message was successfully edited
+        return result.some(success => success);
+    } catch (error) {
+        console.error(`Failed to edit message in channel ${channelId}:`, error);
+        return false;
+    }
 }
+
 
 /**
  * 

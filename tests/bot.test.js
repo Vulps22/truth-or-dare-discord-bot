@@ -1,6 +1,4 @@
 // Import the module you're testing
-const { Client } = require('discord.js');
-const fs = require('fs');
 const path = require('path');
 const Database = require('objects/database');
 

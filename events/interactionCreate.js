@@ -99,7 +99,11 @@ async function handleAutoComplete(interaction) {
         console.error(error);
     }
 }
-
+/**
+ * 
+ * @param {Interaction} interaction 
+ * @returns 
+ */
 async function runCommand(interaction) {
     try {
         const command = interaction.client.commands.get(interaction.commandName);
@@ -123,13 +127,13 @@ async function runCommand(interaction) {
         interaction.logMessage = await logger.log(logInteraction);
 
         if (server.isBanned && interaction.commandName !== "help") {
-            logger.editLog(interaction.logMessage.id, `${logInteraction} Interaction aborted: Server is Banned`);
+            logger.editLog(interaction.logMessage, `${logInteraction} Interaction aborted: Server is Banned`);
             interaction.reply('Your Community has been banned for violating the bot\'s Terms of Use');
             return;
         }
 
         if (shouldExecute(interaction, command, server)) {
-            logger.editLog(interaction.logMessage.id, `${logInteraction} Executing Command`);
+            logger.editLog(interaction.logMessage, `${logInteraction} Executing Command`);
             await command.execute(interaction);
         }
     } catch (error) {
@@ -137,6 +141,7 @@ async function runCommand(interaction) {
         console.error(error);
         if(!interaction.deferred) interaction.reply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:");
         else interaction.editReply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:");
+
         logger.error(`New Brain Fart occurred!\nCommand: ${interaction.commandName}\nError: ${error.message}`);
     }
 }

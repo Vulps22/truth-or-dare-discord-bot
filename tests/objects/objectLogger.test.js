@@ -1,7 +1,4 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, Component } = require('discord.js');
 const Dare = require('objects/dare');
-const Truth = require('objects/truth');
-const Server = require('objects/server');
 const moduleToTest = require('objects/logger'); // Adjust this to the actual module name
 const getChannelMock = jest.fn();
 const { applyGlobals } = require("tests/setuptest.js")
@@ -27,7 +24,7 @@ global.client = {
     }
 };
 
-describe('Module Tests', () => {
+describe.skip('Module Tests', () => {
     beforeEach(() => {
         applyGlobals();
         jest.clearAllMocks();

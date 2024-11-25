@@ -1,6 +1,5 @@
 require('dotenv').config();
 const { Events } = require('discord.js');
-const ChannelManager = require('channelManager');
 
 module.exports = {
 	name: Events.ClientReady,

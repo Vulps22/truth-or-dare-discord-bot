@@ -38,7 +38,12 @@ module.exports = {
     nsfw: false,
     administrator: true,
     premium: true,
+    /**
+     * 
+     * @param {Interaction} interaction 
+     */
     async execute(interaction) {
+        await interaction.deferReply();
         //Log the parameters that have reached this point
 
 
@@ -52,7 +57,7 @@ module.exports = {
                 await takeXp(interaction);
                 break;
             default:
-                interaction.reply('Invalid subcommand');
+                interaction.editReply('Invalid subcommand');
                 break;
         }
     },
@@ -66,7 +71,7 @@ async function giveXp(interaction) {
 
     let userId = interaction.options.getUser('user').id;
     let amount = interaction.options.getNumber('amount');
-    if (amount < 0) return interaction.reply('You can\'t give negative XP! use /xp take instead');
+    if (amount < 0) return interaction.editReply('You can\'t give negative XP! use /xp take instead');
 
     let user = new User(userId);
     await user.get();
@@ -75,7 +80,7 @@ async function giveXp(interaction) {
     user.addServerXP(amount);
     await user.saveServerUser();
 
-    interaction.reply(`<@${interaction.user.id}> gave ${amount} XP to <@${userId}>`);
+    interaction.editReply(`<@${interaction.user.id}> gave ${amount} XP to <@${userId}>`);
 }
 
 /**
@@ -86,7 +91,7 @@ async function takeXp(interaction) {
     //take XP from a user
     let userId = interaction.options.getUser('user').id;
     let amount = interaction.options.getNumber('amount');
-    if (amount < 0) return interaction.reply('You can\'t take negative XP! use /xp give instead');
+    if (amount < 0) return interaction.editReply('You can\'t take negative XP! use /xp give instead');
 
     let user = new User(userId);
     await user.get();
@@ -95,5 +100,5 @@ async function takeXp(interaction) {
     user.subtractServerXP(amount);
     await user.saveServerUser();
 
-    interaction.reply(`<@${interaction.user.id}> took ${amount} XP from <@${userId}>`);
+    interaction.editReply(`<@${interaction.user.id}> took ${amount} XP from <@${userId}>`);
 }
