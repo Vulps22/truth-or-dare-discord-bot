@@ -250,16 +250,16 @@ class Leaderboard {
         const db = new Database();
         const userQuery = global ? `
             SELECT u.id, u.username, 
-                   (SELECT COUNT(*) FROM user_dares ud WHERE ud.user_id = u.id AND ud.done_count >= ${my.required_votes}) AS dares_done,
-                   (SELECT COUNT(*) FROM user_truths ut WHERE ut.user_id = u.id AND ut.done_count >= ${my.required_votes}) AS truths_done,
+                   (SELECT COUNT(*) FROM user_questions ud WHERE ud.userId = u.id AND ud.type = 'dare' AND ud.doneCount >= ${my.required_votes}) AS dares_done,
+                   (SELECT COUNT(*) FROM user_questions ut WHERE ut.userId = u.id AND ut.type = 'truth' AND ut.doneCount >= ${my.required_votes}) AS truths_done,
                    u.globalLevel, u.globalLevelXp,
                    (SELECT (SELECT COUNT(*) FROM users u2 WHERE u2.globalLevel > u.globalLevel OR (u2.globalLevel = u.globalLevel AND u2.globalLevelXp > u.globalLevelXp)) + 1) AS position
             FROM users u
             WHERE u.id = '${this.interaction.user.id}'
         ` : `
             SELECT su.user_id AS id, u.username,
-                   (SELECT COUNT(*) FROM user_dares ud WHERE ud.user_id = su.user_id AND ud.done_count >= ${my.required_votes} AND ud.server_id = '${this.interaction.guild.id}') AS dares_done,
-                   (SELECT COUNT(*) FROM user_truths ut WHERE ut.user_id = su.user_id AND ut.done_count >= ${my.required_votes} AND ut.server_id = '${this.interaction.guild.id}') AS truths_done,
+                   (SELECT COUNT(*) FROM user_questions ud WHERE ud.userId = su.user_id AND ud.type = 'dare' AND ud.doneCount >= ${my.required_votes} AND ud.serverId = '${this.interaction.guild.id}') AS dares_done,
+                   (SELECT COUNT(*) FROM user_questions ut WHERE ut.userId = su.user_id AND ut.type = 'truth' AND ut.doneCount >= ${my.required_votes} AND ut.serverId = '${this.interaction.guild.id}') AS truths_done,
                    su.server_level AS globalLevel, su.server_level_xp AS globalLevelXp,
                    (SELECT (SELECT COUNT(*) FROM server_users su2 WHERE su2.server_level > su.server_level OR (su2.server_level = su.server_level AND su2.server_level_xp > su.server_level_xp)) + 1) AS position
             FROM server_users su

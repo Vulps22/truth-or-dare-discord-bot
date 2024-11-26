@@ -124,42 +124,27 @@ class User {
     }
 
     async loadServerUser(serverId, orCreate = false) {
-        console.log(`[loadServerUser] Loading server user data for user ${this.id} in server ${serverId}`);
-        
         const db = new Database();
-        console.log(`[loadServerUser] Database connection established`);
-        
         const query = `SELECT * FROM server_users WHERE user_id = ${this.id} AND server_id = ${serverId}`;
-        console.log(`[loadServerUser] Executing query: ${query}`);
-        
         let serverUserRaw = await db.query(query);
-        console.log(`[loadServerUser] Query result:`, serverUserRaw);
-        
         let serverUser = serverUserRaw[0];
-        console.log(`[loadServerUser] First result:`, serverUser);
 
         if (!serverUser) {
-            console.log(`[loadServerUser] No existing server user found`);
             if (orCreate) {
-                console.log(`[loadServerUser] Creating new server user since orCreate=true`);
                 await this.addServerUser(serverId);
                 this._serverUserLoaded = true;
-                console.log(`[loadServerUser] New server user created and loaded`);
             }
             return false;
         }
 
-        console.log(`[loadServerUser] Setting server user properties`);
         this._serverId = serverUser.server_id;
         this._serverLevel = serverUser.server_level;
         this._serverLevelXp = serverUser.server_level_xp;
 
-        console.log(`[loadServerUser] Creating and loading server object`);
         this._server = new Server(serverId);
         await this._server.load();
 
         this._serverUserLoaded = true;
-        console.log(`[loadServerUser] Server user successfully loaded`);
         return true;
     }
 
@@ -175,7 +160,6 @@ class User {
     }
 
     async saveServerUser() {
-        console.log("Registering new server User");
         if (!this._serverUserLoaded) return;
         const db = new Database();
         await db.query(`UPDATE server_users SET server_level = ${this._serverLevel}, server_level_xp = ${this._serverLevelXp} WHERE user_id = ${this.id} AND server_id = ${this._serverId}`);

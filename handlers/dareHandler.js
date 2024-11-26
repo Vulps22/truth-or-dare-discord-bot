@@ -27,7 +27,6 @@ class DareHandler extends Handler {
 	async createDare(interaction) {
 
 		const dare = new Dare();
-		console.log(dare);
 
 		dare.question = interaction.options.getString('text');
 		if (!dare.question) {
@@ -365,13 +364,13 @@ class DareHandler extends Handler {
 		let row = this.createActionRow();
 
 		if (userDare.doneCount >= this.vote_count) {
-			//row = this.createPassedActionRow();
+			row = this.createPassedActionRow();
 
 			user.addXP(this.successXp);
 			user.addServerXP(server.dare_success_xp);
 
 		} else if (userDare.failedCount >= this.vote_count) {
-			//row = this.createFailedActionRow();
+			row = this.createFailedActionRow();
 
 			user.subtractXP(this.failXp);
 			user.subtractServerXP(server.dare_fail_xp);
