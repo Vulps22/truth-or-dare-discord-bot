@@ -39,6 +39,18 @@ describe('Give Command', () => {
         expect(interaction.deferReply).toHaveBeenCalledWith({ ephemeral: true });
     });
 
+    test('should defer reply when not already deferred', async () => {
+        interaction.deferred = false;  // Explicitly set to false
+        await command.execute(interaction);
+        expect(interaction.deferReply).toHaveBeenCalledWith({ ephemeral: true });
+    });
+
+    test('should skip deferring reply when already deferred', async () => {
+        interaction.deferred = true;  // Explicitly set to true
+        await command.execute(interaction);
+        expect(interaction.deferReply).not.toHaveBeenCalled();
+    });
+
     test('should execute truth subcommand successfully', async () => {
         // Set up mock interaction options
         interaction.options.getSubcommand.mockReturnValue('truth');
@@ -157,5 +169,81 @@ describe('Give Command', () => {
             ephemeral: true,
         });
         expect(TruthHandler).not.toHaveBeenCalled();
+    });
+});
+
+describe('hasEnoughXP function', () => {
+    let interaction;
+
+    beforeEach(() => {
+        interaction = {
+            options: {
+                getSubcommand: jest.fn(),
+                getString: jest.fn(),
+                getInteger: jest.fn()
+            },
+            user: { id: '123' },
+            client: {},
+            guildId: 'guild123',
+            reply: jest.fn(),
+            deferReply: jest.fn(),
+            editReply: jest.fn(),
+        };
+
+        User.mockClear();
+        Server.mockClear();
+        TruthHandler.mockClear();
+        DareHandler.mockClear();
+    });
+
+    test('should handle server XP when user has enough XP', async () => {
+        interaction.options.getString.mockReturnValue('server');
+        interaction.options.getInteger.mockReturnValue(100);
+
+        const userInstance = {
+            get: jest.fn(),
+            getTotalServerXP: jest.fn().mockReturnValue(200), // More than wager
+        };
+        User.mockImplementation(() => userInstance);
+
+        const serverInstance = {
+            load: jest.fn(),
+            hasPremium: jest.fn().mockResolvedValue(true),
+        };
+        Server.mockImplementation(() => serverInstance);
+
+        await command.execute(interaction);
+
+        expect(userInstance.getTotalServerXP).toHaveBeenCalled();
+        expect(interaction.editReply).not.toHaveBeenCalledWith(
+            expect.objectContaining({
+                content: expect.stringContaining('You do not have')
+            })
+        );
+    });
+
+    test('should handle server XP when user does not have enough XP', async () => {
+        interaction.options.getString.mockReturnValue('server');
+        interaction.options.getInteger.mockReturnValue(200);
+
+        const userInstance = {
+            get: jest.fn(),
+            getTotalServerXP: jest.fn().mockReturnValue(100), // Less than wager
+        };
+        User.mockImplementation(() => userInstance);
+
+        const serverInstance = {
+            load: jest.fn(),
+            hasPremium: jest.fn().mockResolvedValue(true),
+        };
+        Server.mockImplementation(() => serverInstance);
+
+        await command.execute(interaction);
+
+        expect(userInstance.getTotalServerXP).toHaveBeenCalled();
+        expect(interaction.editReply).toHaveBeenCalledWith({
+            content: 'You do not have 200 server XP to wager',
+            ephemeral: true
+        });
     });
 });
