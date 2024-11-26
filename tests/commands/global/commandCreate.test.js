@@ -111,10 +111,43 @@ describe('Create Truth or Dare Command', () => {
         expect(interaction.reply).not.toHaveBeenCalledWith(expect.objectContaining({ content: expect.stringContaining('Aborted creation') }));
     });
 
-    test('should abort creation if a dare or truth was created within 2 minutes', async () => {
+    test('should abort creation if a dare was created within 2 minutes', async () => {
         // Clear all relevant mocks
         logger.editLog.mockClear();
         interaction.options.getSubcommand.mockReturnValue('dare');
+
+        // Mock user to have accepted rules
+        User.mockImplementation(() => ({
+            get: jest.fn().mockResolvedValue(true),
+            canCreate: jest.fn().mockResolvedValue(true),
+            username: 'testUser'
+        }));
+
+        // Mock database to return a recent creation
+        const mockDb = {
+            createdWithin: jest.fn().mockResolvedValue([{}])
+        };
+        Database.mockImplementation(() => mockDb);
+
+        await command.execute(interaction);
+
+        // Verify the correct message was sent
+        expect(interaction.editReply).toHaveBeenCalledWith({
+            content: expect.stringContaining('Aborted creation: User attempted to create a Truth or Dare within 2 minutes'),
+            ephemeral: true
+        });
+
+        // Verify the log contains our abort message using stringMatching
+        expect(logger.editLog).toHaveBeenCalledWith(
+            interaction.logMessage.id,
+            expect.stringMatching(/.*Aborted: User attempted to create a Truth or Dare within 2 minutes.*/)
+        );
+    });
+
+    test('should abort creation if a truth was created within 2 minutes', async () => {
+        // Clear all relevant mocks
+        logger.editLog.mockClear();
+        interaction.options.getSubcommand.mockReturnValue('truth');
 
         // Mock user to have accepted rules
         User.mockImplementation(() => ({
@@ -150,5 +183,62 @@ describe('Create Truth or Dare Command', () => {
         await command.execute(interaction);
 
         expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Aborted creation: Invalid type specified'));
+    });
+
+    test('should handle deferred state correctly', async () => {
+        // Test when not deferred
+        interaction.deferred = false;
+        await command.execute(interaction);
+        expect(interaction.deferReply).toHaveBeenCalledWith({ ephemeral: true });
+
+        // Reset mocks
+        interaction.deferReply.mockClear();
+
+        // Test when already deferred
+        interaction.deferred = true;
+        await command.execute(interaction);
+        expect(interaction.deferReply).not.toHaveBeenCalled();
+    });
+
+    test('should handle creation cooldown based on environment', async () => {
+        interaction.options.getSubcommand.mockReturnValue('dare');
+        
+        // Mock user to have accepted rules
+        User.mockImplementation(() => ({
+            get: jest.fn().mockResolvedValue(true),
+            canCreate: jest.fn().mockResolvedValue(true)
+        }));
+
+        const dareHandlerInstance = { createDare: jest.fn() };
+        DareHandler.mockImplementation(() => dareHandlerInstance);
+
+        // Mock database to return a recent creation
+        const mockDb = {
+            createdWithin: jest.fn().mockResolvedValue([{}]) // Has created within 2 minutes
+        };
+        Database.mockImplementation(() => mockDb);
+
+        // Test production environment
+        global.my = { environment: 'production' };
+        await command.execute(interaction);
+        expect(interaction.editReply).toHaveBeenCalledWith(
+            expect.objectContaining({
+                content: expect.stringContaining('Aborted creation')
+            })
+        );
+
+        // Reset mocks
+        interaction.editReply.mockClear();
+        dareHandlerInstance.createDare.mockClear();
+
+        // Test dev environment
+        global.my = { environment: 'devv' };
+        await command.execute(interaction);
+        expect(dareHandlerInstance.createDare).toHaveBeenCalled();
+        expect(interaction.editReply).not.toHaveBeenCalledWith(
+            expect.objectContaining({
+                content: expect.stringContaining('Aborted creation')
+            })
+        );
     });
 });
