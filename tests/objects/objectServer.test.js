@@ -48,7 +48,6 @@ jest.mock('objects/database', () => {
                 message_id: 'MessageID'
             }),
             set: jest.fn((table, data) => {
-                // Add your console.log here
                 return Promise.resolve(); // Simulate async behavior with a resolved promise
             }),
             end: jest.fn()

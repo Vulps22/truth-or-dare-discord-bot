@@ -120,7 +120,6 @@ describe.skip('Module Tests', () => {
     //TODO: FINISH THIS BY CHECKING THE CONTENT SENT TO DISCORD
     test('updateDare should update an existing dare message', async () => {
         const editMock = jest.fn().mockImplementation((messageId, data) => {
-            console.log('message.edit called with:', { messageId, data });
             return Promise.resolve({ id: messageId });
         });
 
@@ -132,7 +131,6 @@ describe.skip('Module Tests', () => {
 
         // Log when getChannelMock is called
         getChannelMock.mockReturnValue(channelMock);
-        console.log('getChannelMock was called and returned:', channelMock);
 
         const dareMock = new Dare();
         dareMock.messageId = '12345';

@@ -30,13 +30,6 @@ async function generateRankCards() {
         // Generate the card
         let level = userClass.getLevel();
         let levelUpAt = userClass.calculateXpForLevel(level);
-        console.log(`Current XP: ${xp}`);
-        console.log(`Level: ${level}`);
-        console.log(`Level up at: ${levelUpAt}`);
-
-        
-        console.log("======================")
-        // Here you can add additional console.log lines or perform other actions with the attachment
     };
 }
 

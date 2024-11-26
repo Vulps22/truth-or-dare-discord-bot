@@ -52,6 +52,11 @@ module.exports = {
         const reason = interaction.options.getString('reason');
         let offenderId = subcommand === 'server' ? interaction.guildId : interaction.options.getNumber('id');
         
+        if(!reason) {
+            await interaction.editReply("You must specify a reason. Only you can see this message");
+            return;
+        }
+
         //try {
             // Create a new Report instance and save it
             const report = new Report(null, subcommand, interaction.user.id, reason, offenderId);
@@ -61,8 +66,7 @@ module.exports = {
             report.reason = reason;
             report.offenderId = offenderId;
             let reportId = await report.save();
-            console.log("Reported with ", reportId);
-
+            
             // Log the report using the logger
             let questionText = '';
             if (subcommand === 'dare' || subcommand === 'truth') {

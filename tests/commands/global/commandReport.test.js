@@ -2,22 +2,24 @@
 
 const reportCommand = require('commands/global/report');
 const Database = require('objects/database');
-const { WebhookClient } = require('discord.js');
+const logger = require('objects/logger');
+const Report = require('objects/report');
 
 jest.mock('objects/database');
-jest.mock('discord.js', () => {
-  const originalModule = jest.requireActual('discord.js');
-  return {
-    ...originalModule,
-    WebhookClient: jest.fn(),
-  };
-});
+jest.mock('objects/logger');
+jest.mock('objects/report');
 
 describe('report command', () => {
   let interaction;
-  let webhookSendMock;
 
   beforeEach(() => {
+    global.my = {
+      reports_log: 'test-reports-log-id'
+    };
+
+    // Reset all mocks
+    jest.clearAllMocks();
+
     interaction = {
       options: {
         getSubcommand: jest.fn(),
@@ -29,20 +31,32 @@ describe('report command', () => {
       },
       guildId: 'test-guild-id',
       reply: jest.fn(),
+      deferReply: jest.fn().mockResolvedValue(),
+      editReply: jest.fn().mockResolvedValue()
     };
+
+    // Mock Report class methods
+    Report.mockImplementation(() => ({
+      type: null,
+      senderId: null,
+      serverId: null,
+      reason: null,
+      offenderId: null,
+      save: jest.fn().mockResolvedValue('mock-report-id'),
+      loadOffender: jest.fn().mockResolvedValue(null)
+    }));
 
     // Mock the Database class
     Database.mockClear();
     Database.prototype.set = jest.fn().mockResolvedValue();
     Database.prototype.get = jest.fn();
 
-    // Mock the WebhookClient
-    webhookSendMock = jest.fn().mockResolvedValue();
-    WebhookClient.mockImplementation(() => {
-      return {
-        send: webhookSendMock,
-      };
-    });
+    // Mock the logger
+    logger.newReport = jest.fn().mockResolvedValue();
+  });
+
+  afterEach(() => {
+    delete global.my;
   });
 
   test('should handle reporting a dare', async () => {
@@ -50,31 +64,28 @@ describe('report command', () => {
     interaction.options.getString.mockReturnValue('This is a test reason');
     interaction.options.getNumber.mockReturnValue(123);
 
-    Database.prototype.get.mockResolvedValue({ question: 'Test dare question' });
-
     await reportCommand.execute(interaction);
 
-    expect(interaction.options.getSubcommand).toHaveBeenCalled();
-    expect(interaction.options.getString).toHaveBeenCalledWith('reason');
-    expect(interaction.options.getNumber).toHaveBeenCalledWith('id');
+    // Verify Report was constructed correctly
+    expect(Report).toHaveBeenCalledWith(null, "dare", "test-user-id", "This is a test reason", 123);
+    
+    // Get the mock Report instance
+    const mockReport = Report.mock.results[0].value;
+    
+    // Verify Report properties were set
+    expect(mockReport.type).toBe('dare');
+    expect(mockReport.senderId).toBe('test-user-id');
+    expect(mockReport.serverId).toBe('test-guild-id');
+    expect(mockReport.reason).toBe('This is a test reason');
+    expect(mockReport.offenderId).toBe(123);
 
-    expect(Database.prototype.set).toHaveBeenCalledWith('reports', {
-      type: 'dare',
-      sender: 'test-user-id',
-      reason: 'This is a test reason',
-      offenderId: 123,
-    });
+    // Verify save was called
+    expect(mockReport.save).toHaveBeenCalled();
 
-    expect(Database.prototype.get).toHaveBeenCalledWith('dares', 123);
+    // Verify logger was called with the report
+    expect(logger.newReport).toHaveBeenCalledWith(mockReport);
 
-    expect(webhookSendMock).toHaveBeenCalledWith(
-      expect.stringContaining('New report received')
-    );
-
-    expect(interaction.reply).toHaveBeenCalledWith({
-      content: 'Your report has been submitted. Only you can see this message.',
-      ephemeral: true,
-    });
+    expect(interaction.editReply).toHaveBeenCalledWith('Your report has been submitted. Only you can see this message.');
   });
 
   test('should handle reporting a truth', async () => {
@@ -82,27 +93,18 @@ describe('report command', () => {
     interaction.options.getString.mockReturnValue('This is a test reason');
     interaction.options.getNumber.mockReturnValue(456);
 
-    Database.prototype.get.mockResolvedValue({ question: 'Test truth question' });
-
     await reportCommand.execute(interaction);
 
-    expect(Database.prototype.set).toHaveBeenCalledWith('reports', {
-      type: 'truth',
-      sender: 'test-user-id',
-      reason: 'This is a test reason',
-      offenderId: 456,
-    });
+    const mockReport = Report.mock.results[0].value;
+    
+    expect(mockReport.type).toBe('truth');
+    expect(mockReport.senderId).toBe('test-user-id');
+    expect(mockReport.serverId).toBe('test-guild-id');
+    expect(mockReport.reason).toBe('This is a test reason');
+    expect(mockReport.offenderId).toBe(456);
 
-    expect(Database.prototype.get).toHaveBeenCalledWith('truths', 456);
-
-    expect(webhookSendMock).toHaveBeenCalledWith(
-      expect.stringContaining('New report received')
-    );
-
-    expect(interaction.reply).toHaveBeenCalledWith({
-      content: 'Your report has been submitted. Only you can see this message.',
-      ephemeral: true,
-    });
+    expect(mockReport.save).toHaveBeenCalled();
+    expect(logger.newReport).toHaveBeenCalledWith(mockReport);
   });
 
   test('should handle reporting a server', async () => {
@@ -111,21 +113,16 @@ describe('report command', () => {
 
     await reportCommand.execute(interaction);
 
-    expect(Database.prototype.set).toHaveBeenCalledWith('reports', {
-      type: 'server',
-      sender: 'test-user-id',
-      reason: 'Server violation reason',
-      offenderId: 'test-guild-id',
-    });
+    const mockReport = Report.mock.results[0].value;
+    
+    expect(mockReport.type).toBe('server');
+    expect(mockReport.senderId).toBe('test-user-id');
+    expect(mockReport.serverId).toBe('test-guild-id');
+    expect(mockReport.reason).toBe('Server violation reason');
+    expect(mockReport.offenderId).toBe('test-guild-id');
 
-    expect(webhookSendMock).toHaveBeenCalledWith(
-      expect.stringContaining('New report received')
-    );
-
-    expect(interaction.reply).toHaveBeenCalledWith({
-      content: 'Your report has been submitted. Only you can see this message.',
-      ephemeral: true,
-    });
+    expect(mockReport.save).toHaveBeenCalled();
+    expect(logger.newReport).toHaveBeenCalledWith(mockReport);
   });
 
   test('should handle missing reason', async () => {
@@ -134,13 +131,9 @@ describe('report command', () => {
 
     await reportCommand.execute(interaction);
 
-    expect(interaction.reply).toHaveBeenCalledWith({
-      content: 'You must specify a reason. Only you can see this message',
-      ephemeral: true,
-    });
+    expect(Report).not.toHaveBeenCalled();
+    expect(logger.newReport).not.toHaveBeenCalled();
 
-    // Ensure no further actions are taken
-    expect(Database.prototype.set).not.toHaveBeenCalled();
-    expect(webhookSendMock).not.toHaveBeenCalled();
+    expect(interaction.editReply).toHaveBeenCalledWith('You must specify a reason. Only you can see this message');
   });
 });

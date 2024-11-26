@@ -27,7 +27,6 @@ class DareHandler extends Handler {
 	async createDare(interaction) {
 
 		const dare = new Dare();
-		console.log(dare);
 
 		dare.question = interaction.options.getString('text');
 		if (!dare.question) {
@@ -285,7 +284,14 @@ class DareHandler extends Handler {
 		//load the user		
 		/** @type {User} */
 		const user = await userDare.getUser();
-		await user.loadServerUser(interaction.guildId);
+		const serverUserLoaded = await user.loadServerUser(interaction.guildId);
+
+		if (!serverUserLoaded) {
+			await interaction.editReply("Failed to load server user data. Please try again.");
+			logger.error(`Failed to load server user data for user ${user.id} in server ${interaction.guildId}`);
+			return;
+		}
+
 		//load the server
 		const server = new Server(interaction.guildId);
 		await server.load();

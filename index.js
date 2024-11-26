@@ -210,7 +210,6 @@ function delay(ms) {
 }
 
 async function rateLimitedAnnounce(servers, embed, delayTime = 100) {
-    console.log(servers);
     for (const server of servers) {
         if (server.hasAccepted && !server.isBanned && server.announcement_channel) {
             await announce(embed, server.announcement_channel);

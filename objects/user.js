@@ -124,11 +124,8 @@ class User {
     }
 
     async loadServerUser(serverId, orCreate = false) {
-        
         const db = new Database();
-        
         const query = `SELECT * FROM server_users WHERE user_id = ${this.id} AND server_id = ${serverId}`;
-        
         let serverUserRaw = await db.query(query);
         let serverUser = serverUserRaw[0];
 
@@ -139,6 +136,7 @@ class User {
             }
             return false;
         }
+
         this._serverId = serverUser.server_id;
         this._serverLevel = serverUser.server_level;
         this._serverLevelXp = serverUser.server_level_xp;
@@ -162,7 +160,6 @@ class User {
     }
 
     async saveServerUser() {
-        console.log("Registering new server User");
         if (!this._serverUserLoaded) return;
         const db = new Database();
         await db.query(`UPDATE server_users SET server_level = ${this._serverLevel}, server_level_xp = ${this._serverLevelXp} WHERE user_id = ${this.id} AND server_id = ${this._serverId}`);
@@ -320,7 +317,6 @@ class User {
         }
 
         if (didLevelUp) {
-            if (!this._serverUserLoaded) throw Error("Attempted to emit level up before loading server User");
             global.client.emit(Events.LevelUp, this, "global");
         }
 

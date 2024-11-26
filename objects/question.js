@@ -1,6 +1,5 @@
 const Database = require("objects/database");
 const Server = require("objects/server");
-console.log("server", Server);
 const User = require("objects/user");
 
 
