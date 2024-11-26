@@ -285,7 +285,14 @@ class DareHandler extends Handler {
 		//load the user		
 		/** @type {User} */
 		const user = await userDare.getUser();
-		await user.loadServerUser(interaction.guildId);
+		const serverUserLoaded = await user.loadServerUser(interaction.guildId);
+
+		if (!serverUserLoaded) {
+			await interaction.editReply("Failed to load server user data. Please try again.");
+			logger.error(`Failed to load server user data for user ${user.id} in server ${interaction.guildId}`);
+			return;
+		}
+
 		//load the server
 		const server = new Server(interaction.guildId);
 		await server.load();
@@ -358,13 +365,13 @@ class DareHandler extends Handler {
 		let row = this.createActionRow();
 
 		if (userDare.doneCount >= this.vote_count) {
-			row = this.createPassedActionRow();
+			//row = this.createPassedActionRow();
 
 			user.addXP(this.successXp);
 			user.addServerXP(server.dare_success_xp);
 
 		} else if (userDare.failedCount >= this.vote_count) {
-			row = this.createFailedActionRow();
+			//row = this.createFailedActionRow();
 
 			user.subtractXP(this.failXp);
 			user.subtractServerXP(server.dare_fail_xp);
