@@ -136,4 +136,49 @@ describe('report command', () => {
 
     expect(interaction.editReply).toHaveBeenCalledWith('You must specify a reason. Only you can see this message');
   });
+
+  test('should handle error when saving report', async () => {
+    interaction.options.getSubcommand.mockReturnValue('dare');
+    interaction.options.getString.mockReturnValue('Test reason');
+    interaction.options.getNumber.mockReturnValue(123);
+
+    // Mock Report to throw an error on save
+    Report.mockImplementation(() => ({
+      save: jest.fn().mockRejectedValue(new Error('Failed to save')),
+      loadOffender: jest.fn()
+    }));
+
+    await reportCommand.execute(interaction);
+
+    expect(interaction.editReply).toHaveBeenCalledWith(
+      'There was an issue submitting your report. Please try again later.'
+    );
+  });
+
+  test('should load offender data when reporting truth/dare', async () => {
+    interaction.options.getSubcommand.mockReturnValue('dare');
+    interaction.options.getString.mockReturnValue('Test reason');
+    interaction.options.getNumber.mockReturnValue(123);
+
+    const mockReport = {
+      type: 'dare',
+      senderId: 'test-user-id',
+      serverId: 'test-guild-id',
+      reason: 'Test reason',
+      offenderId: 123,
+      save: jest.fn().mockResolvedValue('mock-report-id'),
+      loadOffender: jest.fn().mockResolvedValue({
+        question: 'Do a backflip'
+      })
+    };
+
+    Report.mockImplementation(() => mockReport);
+
+    await reportCommand.execute(interaction);
+
+    // Verify loadOffender was called
+    expect(mockReport.loadOffender).toHaveBeenCalled();
+    // Verify logger was called with the report
+    expect(logger.newReport).toHaveBeenCalledWith(mockReport);
+  });
 });
