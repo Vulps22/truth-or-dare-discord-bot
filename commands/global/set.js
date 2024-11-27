@@ -87,6 +87,7 @@ module.exports = {
                 break;
         }
     },
+    hasPermission: hasPermission
 }
 
 async function setChannel(interaction) {
@@ -97,10 +98,10 @@ async function setChannel(interaction) {
     //Log the parameters that have reached this point
     switch (event) {
         case 'announcements':
-            setAnnouncementChannel(channel, interaction);
+            await setAnnouncementChannel(channel, interaction);
             break;
         case 'levelup':
-            setLevelUpChannel(channel, interaction);
+            await setLevelUpChannel(channel, interaction);
             break;
         default:
             console.log(`Invalid event ${event}`);
@@ -182,7 +183,7 @@ async function setLevelForRole(interaction) {
     const server = new Server(interaction.guildId)
     await server.load();
 
-    if (!server.hasPremium()) {
+    if (!await server.hasPremium()) {
         interaction.editReply("This is a premium command. Premium is not quite ready yet, But I'm working hard to make these commands available for everyone :)")
 
         //interaction.sendPremiumRequired();
