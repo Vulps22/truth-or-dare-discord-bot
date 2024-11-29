@@ -403,6 +403,13 @@ async function questionEmbed(question) {
         )
         .setFooter({ text: `ID: #${question.id}` })
 
+    if (question.isApproved) {
+        const approvedBy = await question.getApprovedByUser();
+        embed.addFields(
+            { name: "Approved By:", value: approvedBy.username ?? ' ' },
+        )
+    }
+
     if (question.isBanned) {
         const bannedBy = await question.getBannedByUser();
         if (bannedBy) {
