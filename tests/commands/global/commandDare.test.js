@@ -6,6 +6,11 @@ jest.mock('handlers/dareHandler');
 describe('Dare Command', () => {
     let interaction;
 
+    beforeAll(() => {
+         // Mock console.log
+         jest.spyOn(console, 'log').mockImplementation(() => {});
+    });
+
     beforeEach(() => {
         interaction = {
             client: {},
@@ -14,6 +19,10 @@ describe('Dare Command', () => {
         };
 
         DareHandler.mockClear();
+    });
+
+    afterAll(() => {
+        console.log.mockRestore();
     });
 
     test('should call DareHandler when the command is executed', async () => {

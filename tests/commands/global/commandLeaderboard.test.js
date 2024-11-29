@@ -26,6 +26,10 @@ logger.error = jest.fn();
 describe('leaderboard command', () => {
     let interaction;
 
+    beforeAll(() => {
+         // Mock console.log
+         jest.spyOn(console, 'log').mockImplementation(() => {});
+    });
 
     beforeEach(() => {
         interaction = {
@@ -53,6 +57,9 @@ describe('leaderboard command', () => {
         logger.error.mockClear();
     });
 
+    afterAll(() => {
+        console.log.mockRestore();
+    });
 
 
     test('should handle global subcommand', async () => {

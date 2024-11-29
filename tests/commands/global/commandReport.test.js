@@ -12,6 +12,11 @@ jest.mock('objects/report');
 describe('report command', () => {
   let interaction;
 
+  beforeAll(() => {
+         // Mock console.log
+         jest.spyOn(console, 'log').mockImplementation(() => {});
+  });
+
   beforeEach(() => {
     global.my = {
       reports_log: 'test-reports-log-id'
@@ -60,6 +65,10 @@ describe('report command', () => {
 
   afterEach(() => {
     delete global.my;
+  });
+
+  afterAll(() => {
+    console.log.mockRestore();
   });
 
   test('should handle reporting a dare', async () => {

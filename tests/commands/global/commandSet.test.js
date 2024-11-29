@@ -31,6 +31,7 @@ const clearMocks = () => {
 describe('set command', () => {
     let interaction;
 
+
     beforeEach(() => {
         interaction = {
             options: {

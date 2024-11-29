@@ -12,6 +12,11 @@ jest.mock('objects/server');
 describe('rank command', () => {
   let interaction;
 
+  beforeAll(() => {
+         // Mock console.log
+         jest.spyOn(console, 'log').mockImplementation(() => {});
+  });
+
   beforeEach(() => {
     interaction = {
       options: {
@@ -40,6 +45,10 @@ describe('rank command', () => {
       hasPremium: jest.fn().mockReturnValue(false)
     };
     Server.mockImplementation(() => serverInstance);
+  });
+
+  afterAll(() => {
+    console.log.mockRestore();
   });
 
   test('should handle when a user is provided', async () => {

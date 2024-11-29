@@ -9,6 +9,11 @@ describe('/help command', () => {
     let client;
     let interaction;
 
+    beforeAll(() => {
+         // Mock console.log
+         jest.spyOn(console, 'log').mockImplementation(() => {});
+    });
+
     beforeEach(() => {
         client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
@@ -16,6 +21,10 @@ describe('/help command', () => {
             guildId: 'testGuildId',
             reply: sinon.spy(),
         };
+    });
+
+    afterAll(() => {
+        console.log.mockRestore();
     });
 
     test('should reply with the help embed without setup info when setup is complete', async () => {
