@@ -52,7 +52,7 @@ class Database {
 				this.connection.end()
 			});
 		} catch(error) {
-			throw new Error("Unexpected Error in database query: ", sql, "\n\n", error);
+			throw new Error(`Unexpected Error in database query: ${sql}\n\n${error}`);
 		}
 	}
 
