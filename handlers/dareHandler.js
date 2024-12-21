@@ -47,7 +47,16 @@ class DareHandler extends Handler {
 				.setDescription(dare.question)
 				.setColor('#00ff00')
 				.setFooter({ text: ' Created by ' + interaction.user.username, iconURL: interaction.user.displayAvatarURL() });
-			interaction.editReply({ content: "Thank you for your submission. A member of the moderation team will review your dare shortly" });
+			
+			//Moderators will be on holiday between 22/12 and 02/01
+			if((now.getMonth() == 11 && now.getDate() >= 22) || (now.getMonth() == 0 && now.getDate() == 1)){
+				//send a christmas message
+				interaction.editReply({ content: "Thank you for your submission. Our excellent and dedicated team of moderators have decided to take christmas off from moderation.\n Your submission will be reviewed when they return on the 2nd of January\n\n Merry Christmas 🎄" });
+
+			} else{
+				//Not Christmas
+				interaction.editReply({ content: "Thank you for your submission. A member of the moderation team will review your dare shortly" });
+			}
 			interaction.channel.send({ embeds: [embed] });
 
 			logger.newDare(createdDare);
