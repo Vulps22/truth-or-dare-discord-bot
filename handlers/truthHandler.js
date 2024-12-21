@@ -46,7 +46,18 @@ class TruthHandler extends Handler {
 				.setDescription(truth.question)
 				.setColor('#00ff00')
 				.setFooter({ text: ' Created by ' + interaction.user.username, iconURL: interaction.user.displayAvatarURL() });
-			interaction.editReply({ content: "Thank you for your submission. A member of the moderation team will review your truth shortly" });
+
+			const now = new Date();
+			//Moderators will be on holiday between 22/12 and 02/01
+			if ((now.getMonth() == 11 && now.getDate() >= 3) || (now.getMonth() == 0 && now.getDate() == 1)) {
+				//send a christmas message
+				interaction.editReply({ content: "Thank you for your submission. Our excellent and dedicated team of moderators have decided to take christmas off from moderation.\n Your submission will be reviewed when they return on the 2nd of January\n\n Merry Christmas 🎄" });
+
+			} else {
+				//Not Christmas
+				interaction.editReply({ content: "Thank you for your submission. A member of the moderation team will review your truth shortly" });
+			}
+
 			interaction.channel.send({ embeds: [embed] });
 
 			logger.newTruth(createdTruth);
@@ -60,7 +71,7 @@ class TruthHandler extends Handler {
 	 */
 	async truth(interaction) {
 		console.log(interaction.deferred);
-		if(!interaction.deferred) await interaction.deferReply();
+		if (!interaction.deferred) await interaction.deferReply();
 		try {
 			const truths = await Question.collect("truth");
 			if (!truths || truths.length === 0) { interaction.editReply("Hmm, I can't find any truths. This might be a bug, try again later"); return; }
@@ -88,7 +99,7 @@ class TruthHandler extends Handler {
 	 * @returns 
 	 */
 	async giveTruth(interaction) {
-		if(!interaction.deferred) await interaction.deferReply({ ephemeral: true })
+		if (!interaction.deferred) await interaction.deferReply({ ephemeral: true })
 		const target = interaction.options.getUser('user');
 		const question = interaction.options.getString('truth');
 		const wager = interaction.options.getInteger('wager');
@@ -145,7 +156,7 @@ class TruthHandler extends Handler {
 	 * @returns 
 	 */
 	async ban(interaction) {
-		if(!interaction.deferred) await interaction.deferReply({ ephemeral: true });
+		if (!interaction.deferred) await interaction.deferReply({ ephemeral: true });
 		let id = interaction.options.getInteger("id");
 		let truth = this.db.get("truths", id);
 		if (!truth) { interaction.editReply("Truth not found"); return; }
@@ -280,7 +291,7 @@ class TruthHandler extends Handler {
 	 * @returns 
 	 */
 	async vote(interaction) {
-		if(!interaction.deferred) await interaction.deferReply({ ephemeral: true });
+		if (!interaction.deferred) await interaction.deferReply({ ephemeral: true });
 		const userTruth = await new UserTruth().load(interaction.message.id, 'truth');
 
 		if (!userTruth) {
@@ -383,7 +394,7 @@ class TruthHandler extends Handler {
  * @param {string<"ban"|"approve">} decision 
  */
 	async setTruth(interaction, decision) {
-		if(!interaction.deferred) await interaction.deferReply({ ephemeral: true });
+		if (!interaction.deferred) await interaction.deferReply({ ephemeral: true });
 		let truth = await new Truth().find(interaction.message.id);
 		switch (decision) {
 			case "ban":
