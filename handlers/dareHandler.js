@@ -48,6 +48,7 @@ class DareHandler extends Handler {
 				.setColor('#00ff00')
 				.setFooter({ text: ' Created by ' + interaction.user.username, iconURL: interaction.user.displayAvatarURL() });
 			
+			const now = new Date();
 			//Moderators will be on holiday between 22/12 and 02/01
 			if((now.getMonth() == 11 && now.getDate() >= 22) || (now.getMonth() == 0 && now.getDate() == 1)){
 				//send a christmas message
