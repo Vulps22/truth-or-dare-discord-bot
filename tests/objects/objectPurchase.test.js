@@ -5,14 +5,31 @@ const Purchase = require('objects/purchase');
 // Mock the database
 jest.mock('objects/database');
 
+// Mock the Entitlement class
+jest.mock('discord.js', () => {
+    const originalModule = jest.requireActual('discord.js');
+    return {
+        ...originalModule,
+        Entitlement: jest.fn().mockImplementation((client, data) => {
+            return {
+                ...data,
+                toJSON: jest.fn().mockReturnValue(data)
+            };
+        })
+    };
+});
+
+my = {
+    client: 'test-client'
+}
 describe('Purchase', () => {
     let purchase;
-    
+
     beforeEach(() => {
         // Clear all mocks before each test
         jest.clearAllMocks();
         Database.mockClear();
-        
+
         purchase = new Purchase('test-id');
     });
 
@@ -36,7 +53,21 @@ describe('Purchase', () => {
                 start_timestamp: '2024-03-20 12:00:00',
                 end_timestamp: '2024-04-20 12:00:00',
                 deleted: false,
-                consumed: false
+                consumed: false,
+                isConsumable: false,
+                entitlement: {
+                    id: 'entitlement-123',
+                    skuId: 'premium-1',
+                    userId: 'user-123',
+                    guildId: 'guild-123',
+                    applicationId: 'app-123',
+                    type: EntitlementType.GuildSubscription,
+                    deleted: false,
+                    startsTimestamp: '2024-03-20 12:00:00',
+                    endsTimestamp: '2024-04-20 12:00:00',
+                    consumed: false,
+                    toJSON: jest.fn().mockReturnValue("entitlement")
+                }
             };
 
             Database.prototype.get.mockResolvedValue(mockData);
@@ -46,6 +77,25 @@ describe('Purchase', () => {
             expect(Database.prototype.get).toHaveBeenCalledWith('entitlements', 'test-id');
             expect(purchase.skuId).toBe(mockData.skuId);
             expect(purchase.userId).toBe(mockData.userId);
+            expect(purchase.guildId).toBe(mockData.guildId);
+            expect(purchase.type).toBe(mockData.type);
+            expect(purchase.startDate).toEqual(new Date(mockData.start_timestamp));
+            expect(purchase.endDate).toEqual(new Date(mockData.end_timestamp));
+            expect(purchase.deleted).toBe(mockData.deleted);
+            expect(purchase.consumed).toBe(mockData.consumed);
+            expect(purchase.isConsumable).toBe(mockData.isConsumable);
+            expect(purchase.entitlement).toEqual(expect.objectContaining({
+                id: mockData.entitlement.id,
+                sku_id: mockData.entitlement.skuId,
+                user_id: mockData.entitlement.userId,
+                guild_id: mockData.entitlement.guildId,
+                application_id: mockData.entitlement.applicationId,
+                type: mockData.entitlement.type,
+                deleted: mockData.entitlement.deleted,
+                starts_timestamp: mockData.entitlement.startsTimestamp,
+                ends_timestamp: mockData.entitlement.endsTimestamp,
+                consumed: mockData.entitlement.consumed
+            }));
             expect(purchase._loaded).toBe(true);
         });
 
@@ -54,6 +104,7 @@ describe('Purchase', () => {
 
             await purchase.load();
 
+            expect(Database.prototype.get).toHaveBeenCalledWith('entitlements', 'test-id');
             expect(purchase._loaded).toBe(false);
         });
     });
@@ -64,6 +115,28 @@ describe('Purchase', () => {
             purchase.userId = 'user-123';
             purchase.guildId = 'guild-123';
             purchase.type = EntitlementType.GuildSubscription;
+            purchase.entitlement = {
+                id: 'test-id',
+                skuId: 'premium-1',
+                userId: 'user-123',
+                guildId: 'guild-123',
+                type: EntitlementType.GuildSubscription,
+                startsTimestamp: Date.now(),
+                endsTimestamp: Date.now() + 1000000,
+                deleted: false,
+                consumed: false,
+                toJSON: jest.fn().mockReturnValue({
+                    id: 'test-id',
+                    skuId: 'premium-1',
+                    userId: 'user-123',
+                    guildId: 'guild-123',
+                    type: EntitlementType.GuildSubscription,
+                    startsTimestamp: Date.now(),
+                    endsTimestamp: Date.now() + 1000000,
+                    deleted: false,
+                    consumed: false
+                })
+            }
 
             await purchase.save();
 
@@ -79,7 +152,18 @@ describe('Purchase', () => {
         test('should retrieve and load existing purchase', async () => {
             const mockData = {
                 skuId: 'premium-1',
-                userId: 'user-123'
+                userId: 'user-123',
+                entitlement: {
+                    id: 'test-id',
+                    skuId: 'premium-1',
+                    userId: 'user-123',
+                    guildId: 'guild-123',
+                    type: EntitlementType.GuildSubscription,
+                    startsTimestamp: Date.now(),
+                    endsTimestamp: Date.now() + 1000000,
+                    deleted: false,
+                    consumed: false
+                }
             };
             Database.prototype.get.mockResolvedValue(mockData);
 
@@ -102,7 +186,18 @@ describe('Purchase', () => {
                 startsTimestamp: Date.now(),
                 endsTimestamp: Date.now() + 1000000,
                 deleted: false,
-                consumed: false
+                consumed: false,
+                toJSON: jest.fn().mockReturnValue({
+                    id: 'test-id',
+                    skuId: 'premium-1',
+                    userId: 'user-123',
+                    guildId: 'guild-123',
+                    type: EntitlementType.GuildSubscription,
+                    startsTimestamp: Date.now(),
+                    endsTimestamp: Date.now() + 1000000,
+                    deleted: false,
+                    consumed: false
+                })
             };
 
             const result = await Purchase.withData(entitlement);
@@ -123,7 +218,18 @@ describe('Purchase', () => {
                 startsTimestamp: Date.now(),
                 endsTimestamp: null,
                 deleted: false,
-                consumed: false
+                consumed: false,
+                toJSON: jest.fn().mockReturnValue({
+                    id: 'test-id',
+                    skuId: 'premium-1',
+                    userId: 'user-123',
+                    guildId: 'guild-123',
+                    type: EntitlementType.GuildSubscription,
+                    startsTimestamp: Date.now(),
+                    endsTimestamp: null,
+                    deleted: false,
+                    consumed: false
+                })
             };
 
             const result = await Purchase.withData(entitlement);
@@ -133,15 +239,17 @@ describe('Purchase', () => {
 
         test('should use current date when startsTimestamp is not provided', async () => {
             const entitlement = {
-                id: 'test-id',
-                skuId: 'premium-1',
-                userId: 'user-123',
-                guildId: 'guild-123',
-                type: EntitlementType.GuildSubscription,
-                startsTimestamp: null,  // Explicitly null
-                endsTimestamp: null,
-                deleted: false,
-                consumed: false
+                toJSON: jest.fn().mockReturnValue({
+                    id: 'test-id',
+                    skuId: 'premium-1',
+                    userId: 'user-123',
+                    guildId: 'guild-123',
+                    type: EntitlementType.GuildSubscription,
+                    startsTimestamp: null,  // Explicitly null
+                    endsTimestamp: null,
+                    deleted: false,
+                    consumed: false
+                })
             };
 
             const result = await Purchase.withData(entitlement);

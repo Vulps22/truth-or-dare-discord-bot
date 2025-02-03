@@ -2,6 +2,10 @@ const { Entitlement, EntitlementType } = require("discord.js");
 const Database = require("objects/database");
 
 class Purchase {
+
+    /** @type {Entitlement} */
+    entitlement = null;
+
     id = null;
     skuId = null;
     userId = null;
@@ -14,7 +18,7 @@ class Purchase {
 
     deleted = false;
     consumed = false;
-
+    isConsumable = false;
     _loaded = false;
 
     constructor(id) {
@@ -23,10 +27,25 @@ class Purchase {
     }
 
     async load() {
+
         const db = new Database();
         const data = await db.get('entitlements', this.id);
 
         if (!data) return;
+
+        const transformedEntitlementData = {
+            id: data.entitlement.id,
+            sku_id: data.entitlement.skuId,
+            user_id: data.entitlement.userId,
+            guild_id: data.entitlement.guildId,
+            application_id: data.entitlement.applicationId,
+            type: data.entitlement.type,
+            deleted: data.entitlement.deleted,
+            starts_timestamp: data.entitlement.startsTimestamp,
+            ends_timestamp: data.entitlement.endsTimestamp,
+            consumed: data.entitlement.consumed
+        };
+
 
         this.skuId = data.skuId;
         this.userId = data.userId;
@@ -36,12 +55,16 @@ class Purchase {
         this.endDate = new Date(data.end_timestamp);
         this.deleted = data.deleted;
         this.consumed = data.consumed;
+        this.isConsumable = data.isConsumable;
+        this.entitlement = new Entitlement(my.client, transformedEntitlementData);
 
         this._loaded = true;
     }
 
     async save() {
         const db = new Database();
+
+        console.log("entitlement: ", JSON.stringify(this.entitlement.toJSON()));
 
         db.set('entitlements', {
             id: this.id,
@@ -50,9 +73,11 @@ class Purchase {
             guildId: this.guildId,
             type: this.type,
             start_timestamp: this.timestampToMySQLDateTime(this.startDate),
-            end_timestamp: this.endDate ? this.timestampToMySQLDateTime(this.endDate) : null,
+            end_timestamp: this.endDate && !isNaN(this.endDate) ? this.timestampToMySQLDateTime(this.endDate) : null,
             deleted: this.deleted,
             consumed: this.consumed,
+            isConsumable: this.isConsumable,
+            entitlement: JSON.stringify(this.entitlement.toJSON()),
         });
     }
 
@@ -61,6 +86,17 @@ class Purchase {
         await purchase.load();
         return purchase;
     }
+
+    async consume() {
+        if (this.consumed) return;
+
+        this.consumed = true;
+        this.endDate = new Date();
+        await this.save();
+
+        this.entitlement.consume();
+    }
+
     /**
      * 
      * @param {Entitlement} entitlement 
@@ -75,6 +111,8 @@ class Purchase {
         purchase.endDate = entitlement.endsTimestamp ? new Date(entitlement.endsTimestamp) : null;
         purchase.deleted = entitlement.deleted;
         purchase.consumed = entitlement.consumed;
+        purchase.isConsumable = isNaN(entitlement.startsTimestamp); //Consumables do not have a start timestamp. This appears to be the most reliable way to determine if an entitlement is consumable.
+        purchase.entitlement = entitlement;
 
         await purchase.save();
 

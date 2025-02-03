@@ -460,12 +460,18 @@ class User {
         await this.save();
     }
 
-    async addVote(count = 1) {
-        if (this.voteCount == 10) return;
+    /**
+     * Add a vote (aka 'skip') to the user's vote count. use force = true to bypass the 10 vote limit (e.g. when a one time purchase is made)
+     * @param {number} count 
+     * @param {boolean} force 
+     * @returns 
+     */
+    async addVote(count = 1, force = false) {
+        if (!force && this.voteCount == 10) return;
 
         this.voteCount += count;
 
-        if (this.voteCount > 10) this.voteCount = 10;
+        if (this.voteCount > 10 && !force) this.voteCount = 10;
 
         await this.save();
     }

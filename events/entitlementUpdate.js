@@ -14,19 +14,24 @@ module.exports = {
         console.log(oldEntitlement, newEntitlement);
 
         const purchase = await Purchase.get(oldEntitlement.id);
+        if (purchase.isConsumable) {
+            console.log("consumable purchase Consumed");
+            purchase.endDate = new Date();
+        } else {
+            console.log("Processing Subscription Renewal");
+            purchase.endDate = new Date(newEntitlement.endsTimestamp);
 
-        purchase.endDate = new Date(newEntitlement.endsTimestamp);
-        purchase.save();
+            purchase.save();
 
-        const server = new Server(purchase.guildId);
-        await server.load();
+            const server = new Server(purchase.guildId);
+            await server.load();
 
-        server.is_entitled = true;
-        server.entitlement_end_date = purchase.endDate;
-        await server.save();
-        console.log(purchase);
+            server.is_entitled = true;
+            server.entitlement_end_date = purchase.endDate;
+            await server.save();
+            console.log(purchase);
 
-        logger.log(`**Entitlement** - ${server.name} has renewed their premium subscription`);
-        
+            logger.log(`**Entitlement** - ${server.name} has renewed their premium subscription`);
+        }
     }
 }
