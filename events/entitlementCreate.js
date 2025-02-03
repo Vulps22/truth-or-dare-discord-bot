@@ -11,7 +11,7 @@ module.exports = {
      */
     async execute(entitlement) {
         console.log("Entitlement Received");
-        
+
         // Commenting out the existing code for premium servers
         /*
         const purchase = await Purchase.withData(entitlement)
@@ -29,7 +29,7 @@ module.exports = {
         // New code to handle a one-time consumable purchase
         const purchase = await Purchase.withData(entitlement);
     
-        if (purchase.isConsumable) {
+        if (purchase.isConsumable()) {
 
             /** @type {User} */
             user = new User(purchase.userId);

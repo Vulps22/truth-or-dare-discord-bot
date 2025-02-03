@@ -36,7 +36,22 @@ module.exports = {
                 botUser = new User(user.id);
                 await botUser.load();
                 skipCount = botUser.voteCount;
-                await user.send(`✅ Thank You :) Your purchase of 10 skips has been successfully processed! You now have ${skipCount} remaining skips available to use.`);
+                await user.send(
+                    `✅ **Purchase Confirmed!** 🎉
+                    
+                    **Item:** ${purchase.purchasable.name}
+                    **Type:** ${purchase.purchasable.isConsumable() ? "One-time (Consumable)" : "Subscription"}
+                    **SKU:** ${purchase.purchasable.skuId}
+                    **Purchased By:** <@${purchase.userId}>
+                    
+                    **Status:** ✅ Payment Successful
+                    **Date of Purchase:** ${purchase.startDate.toLocaleString()}
+                    ${purchase.purchasable.isConsumable() ? `**Remaining Skips:** ${botUser.voteCount}` : ""}
+                    
+                    Thank you for your purchase! If you have any questions, contact support.
+                    `
+                );
+                
             } catch (error) {
                 console.error(`Failed to send DM to ${user.tag}:`, error);
             }

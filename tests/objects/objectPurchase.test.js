@@ -19,9 +19,26 @@ jest.mock('discord.js', () => {
     };
 });
 
+// Mock the Purchasable class
+jest.mock('objects/purchasable', () => {
+    return jest.fn().mockImplementation(() => {
+        return {
+            load: jest.fn().mockResolvedValue(),
+            isConsumable: jest.fn().mockReturnValue(true),
+            isSubscription: jest.fn().mockReturnValue(false),
+            withSKU: jest.fn().mockReturnThis(), // Mock the withSKU method
+            name: 'mock-name',
+            skuId: 'mock-sku-id',
+            type: 'mock-type'
+        };
+    });
+});
+
 my = {
-    client: 'test-client'
+    client: 'test-client',
+    environment: 'test',
 }
+
 describe('Purchase', () => {
     let purchase;
 

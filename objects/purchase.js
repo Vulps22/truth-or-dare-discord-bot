@@ -1,5 +1,7 @@
 const { Entitlement, EntitlementType } = require("discord.js");
 const Database = require("objects/database");
+const Purchasable = require("./purchasable");
+const PurchasableType = require("./types/purchasableType");
 
 class Purchase {
 
@@ -12,18 +14,20 @@ class Purchase {
     guildId = null;
     /** @type {EntitlementType} */
     type = null;
+    /** @type {Purchasable} */
+    purchasable = null;
 
     startDate = null;
     endDate = null;
 
     deleted = false;
     consumed = false;
-    isConsumable = false;
     _loaded = false;
 
     constructor(id) {
         this.id = id;
         this.startDate = new Date()
+        
     }
 
     async load() {
@@ -58,7 +62,12 @@ class Purchase {
         this.isConsumable = data.isConsumable;
         this.entitlement = new Entitlement(my.client, transformedEntitlementData);
 
+        this.purchasable = new Purchasable().withSKU(data.skuId);
+        await this.purchasable.load(); // Get type from database
+
         this._loaded = true;
+
+        return this
     }
 
     async save() {
@@ -87,6 +96,10 @@ class Purchase {
         return purchase;
     }
 
+    isConsumable() {
+        return this.purchasable.type == PurchasableType.CONSUMABLE;
+    }
+
     async consume() {
         if (this.consumed) return;
 
@@ -113,6 +126,8 @@ class Purchase {
         purchase.consumed = entitlement.consumed;
         purchase.isConsumable = entitlement.startsTimestamp == null; //Consumables do not have a start timestamp. This appears to be the most reliable way to determine if an entitlement is consumable.
         purchase.entitlement = entitlement;
+
+        this.purchasable = await new Purchasable().withSKU(entitlement.skuId).load();
 
         await purchase.save();
 

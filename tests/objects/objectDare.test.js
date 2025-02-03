@@ -20,6 +20,6 @@ describe('Dare', () => {
         // Test whatever the parameter does
         // For example, if it sets an ID:
         expect(dare1.id).toBe(123);
-        expect(dare2.id).toBeUndefined();
+        expect(dare2.id).toBeNull();
     });
 });
