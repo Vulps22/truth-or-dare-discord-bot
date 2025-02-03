@@ -11,7 +11,7 @@ module.exports = {
      */
     async execute(entitlement) {
         console.log("Entitlement Received");
-        console.log(entitlement);
+        
         // Commenting out the existing code for premium servers
         /*
         const purchase = await Purchase.withData(entitlement)

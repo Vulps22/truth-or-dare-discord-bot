@@ -111,7 +111,7 @@ class Purchase {
         purchase.endDate = entitlement.endsTimestamp ? new Date(entitlement.endsTimestamp) : null;
         purchase.deleted = entitlement.deleted;
         purchase.consumed = entitlement.consumed;
-        purchase.isConsumable = isNaN(entitlement.startsTimestamp); //Consumables do not have a start timestamp. This appears to be the most reliable way to determine if an entitlement is consumable.
+        purchase.isConsumable = entitlement.startsTimestamp == null; //Consumables do not have a start timestamp. This appears to be the most reliable way to determine if an entitlement is consumable.
         purchase.entitlement = entitlement;
 
         await purchase.save();
