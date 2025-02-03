@@ -1,4 +1,4 @@
-const { Interaction, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, Guild } = require('discord.js');
+const { Interaction, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, Guild, MessageFlags } = require('discord.js');
 
 const Handler = require('handlers/handler.js')
 const UserDare = require('objects/userDare.js');
@@ -331,7 +331,21 @@ class DareHandler extends Handler {
 		}
 
 		if (!user.hasValidVote()) {
-			await interaction.editReply({ content: "Uh oh! You're out of Skips!\nNot to worry, You can earn skips up to 10 by voting for the bot every day on [top.gg](https://top.gg/bot/1079207025315164331/vote)!", ephemeral: true });
+			const row = new ActionRowBuilder().addComponents(
+								new ButtonBuilder()
+									.setLabel('Vote on Top.gg')
+									.setStyle(ButtonStyle.Link)
+									.setURL('https://top.gg/bot/1079207025315164331/vote'),
+								new ButtonBuilder()
+									.setStyle(ButtonStyle.Premium)
+									.setSKUId('1335708253165719572')
+							);
+							interaction.editReply(
+								{ 
+									content: "Uh oh! You're out of Skips!\nNot to worry, You can earn up to 10 skips by voting for the bot every day on [top.gg](https://top.gg/bot/1079207025315164331/vote)!",
+									components: [row],
+									flags: MessageFlags.Ephemeral 
+								});
 			return;
 		}
 

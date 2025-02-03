@@ -27,6 +27,7 @@ class Question {
 		this.question = ' ';
 		this.creator = ' ';
 		this.isApproved = 0;
+		this.approvedBy = ' ';
 		this.isBanned = 0
 		this.banReason = ' ';
 		this.bannedBy = ' ';
@@ -42,6 +43,7 @@ class Question {
 		this.question = question.question;
 		this.creator = question.creator;
 		this.isApproved = question.isApproved;
+		this.approvedBy = question.approvedBy;
 		this.isBanned = question.isBanned;
 		this.banReason = question.banReason;
 		this.bannedBy = question.bannedBy;
@@ -68,8 +70,10 @@ class Question {
 			question.question = data.question || ' ';
 			question.creator = data.creator || ' ';
 			question.isApproved = data.isApproved || 0;
+			question.approvedBy = data.approvedBy || ' ';
 			question.isBanned = data.isBanned || 0;
 			question.banReason = data.banReason || ' ';
+			question.bannedBy = data.bannedBy || ' ';
 			question.messageId = data.messageId || ' ';
 			question.exists = true;
 
@@ -100,6 +104,7 @@ class Question {
 			creator: this.creator,
 			isBanned: this.isBanned,
 			isApproved: this.isApproved,
+			approvedBy: this.approvedBy,
 			banReason: this.banReason,
 			serverId: this.server.id,
 			type: this.type,
@@ -120,12 +125,19 @@ class Question {
 			isApproved: this.isApproved,
 			isBanned: this.isBanned,
 			banReason: this.banReason,
+			bannedBy: this.bannedBy,
 			serverId: this.server.id ?? 'pre-v5',
 			messageId: this.messageId,
 			type: this.type,
 		}
 
 		return await this.db.set('questions', savable)
+	}
+
+	async getApprovedByUser() {
+		if (!this.isApproved) return false;
+		if (this.approvedBy) return await new User(this.approvedBy).get();
+		return "Untracked";
 	}
 
 	async getBannedByUser() {
@@ -186,8 +198,11 @@ class Question {
 		string.id = this.id ?? "No ID";
 		string.question = this.question;
 		string.creator = this.creator;
+		string.isApproved = this.isApproved;
+		string.approvedBy = this.approvedBy;
 		string.isBanned = this.isBanned;
 		string.banReason = this.banReason;
+		string.bannedBy = this.bannedBy;
 		string.type = this.type;
 		return string;
 	}

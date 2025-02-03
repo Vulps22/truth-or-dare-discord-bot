@@ -6,6 +6,11 @@ jest.mock('handlers/truthHandler');
 describe('Truth Command', () => {
     let interaction;
 
+    beforeAll(() => {
+         // Mock console.log
+         jest.spyOn(console, 'log').mockImplementation(() => {});
+    });
+
     beforeEach(() => {
         interaction = {
             client: {},
@@ -14,6 +19,10 @@ describe('Truth Command', () => {
         };
 
         TruthHandler.mockClear();
+    });
+
+    afterAll(() => {
+        console.log.mockRestore();
     });
 
     test('should call TruthHandler when the command is executed', async () => {

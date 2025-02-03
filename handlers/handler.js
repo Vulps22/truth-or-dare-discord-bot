@@ -1,7 +1,6 @@
-
-const { SelectMenuBuilder, ModalBuilder, ActionRowBuilder, TextInputBuilder } = require('@discordjs/builders');
+const { ModalBuilder, ActionRowBuilder, TextInputBuilder } = require('@discordjs/builders');
 const Database = require('objects/database.js');
-const { Interaction, StringSelectMenuOptionBuilder, StringSelectMenuBuilder, ComponentType, ButtonBuilder, ButtonStyle, TextInputStyle } = require('discord.js');
+const { Interaction, StringSelectMenuOptionBuilder, StringSelectMenuBuilder, ComponentType, ButtonBuilder, ButtonStyle, TextInputStyle, EmbedBuilder } = require('discord.js');
 const BanHandler = require('handlers/banHandler.js');
 const logger = require('objects/logger.js');
 const Question = require('objects/question.js');
@@ -27,17 +26,6 @@ class Handler {
 
   }
 
-  async getQuestions(key) {
-    const questions = await this.db.get(key);
-    return questions || [];
-  }
-
-  async addQuestion(key, question) {
-    const questions = await this.getQuestions(key);
-    questions.push(question);
-    await this.db.set(key, questions);
-  }
-
   /**
    * 
    * @param {Interaction} interaction 
@@ -47,7 +35,6 @@ class Handler {
     const reason = interaction.values[0];
     console.log("reason", reason);
   }
-
 
   /**
    * send an ephemeral select to the user with a select menu
@@ -205,25 +192,28 @@ async useCustomBanModal(interaction, id) {
     if(!interaction.deferred) await interaction.deferReply({ephemeral: true});
     await question.load();
     await question.approve();
-    const message = interaction.message;
-    const actionRow = this.createApprovedActionRow();
-    //const newEmbed = getEmbed(question);
-    await message.edit({ components: [actionRow] });
+    question.approvedBy = interaction.user.id;
+    await question.save();
+
+    if (question.type === 'dare') {
+      await logger.updateDare(question);
+    } else {
+      await logger.updateTruth(question); 
+    }
+
     interaction.editReply({ content: 'Question has been approved', ephemeral: true });
   }
 
   getEmbed(question) {
-
     return new EmbedBuilder()
-      .setTitle("New " + this.type === 'truth' ? 'Truth' : "Dare")
-      .addFields(
-        { name: "Content", value: question.question ?? '' },
-        { name: "Author", value: question.creator ?? '' },
-        { name: "Server:", value: question.server.name },
-        { name: "Ban Reason:", value: dare.banReason ?? '' },
-
-      )
-      .setFooter(`#${dare.id}`)
+        .setTitle(`New ${this.type === 'truth' ? 'Truth' : 'Dare'}`)
+        .addFields(
+            { name: "Content", value: question.question ?? '' },
+            { name: "Author", value: question.creator ?? '' },
+            { name: "Server:", value: question.server.name },
+            { name: "Approved By:", value: question.banReason ?? '' }
+        )
+        .setFooter(`#${question.id}`);
   }
 }
 
