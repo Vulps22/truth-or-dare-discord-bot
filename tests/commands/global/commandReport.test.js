@@ -12,6 +12,11 @@ jest.mock('objects/report');
 describe('report command', () => {
   let interaction;
 
+  beforeAll(() => {
+         // Mock console.log
+         jest.spyOn(console, 'log').mockImplementation(() => {});
+  });
+
   beforeEach(() => {
     global.my = {
       reports_log: 'test-reports-log-id'
@@ -53,10 +58,17 @@ describe('report command', () => {
 
     // Mock the logger
     logger.newReport = jest.fn().mockResolvedValue();
+
+    // Add console.error mock
+    console.error = jest.fn();
   });
 
   afterEach(() => {
     delete global.my;
+  });
+
+  afterAll(() => {
+    console.log.mockRestore();
   });
 
   test('should handle reporting a dare', async () => {
@@ -135,5 +147,58 @@ describe('report command', () => {
     expect(logger.newReport).not.toHaveBeenCalled();
 
     expect(interaction.editReply).toHaveBeenCalledWith('You must specify a reason. Only you can see this message');
+  });
+
+  test('should handle error when saving report', async () => {
+    interaction.options.getSubcommand.mockReturnValue('dare');
+    interaction.options.getString.mockReturnValue('Test reason');
+    interaction.options.getNumber.mockReturnValue(123);
+
+    // Mock Report to throw an error on save
+    const mockReport = {
+      type: 'dare',
+      senderId: 'test-user-id',
+      serverId: 'test-guild-id',
+      reason: 'Test reason',
+      offenderId: 123,
+      save: jest.fn().mockRejectedValue(new Error('Failed to save')),
+      loadOffender: jest.fn().mockResolvedValue(null)
+    };
+
+    Report.mockImplementation(() => mockReport);
+
+    await reportCommand.execute(interaction);
+
+    expect(console.error).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to submit report: Error: Failed to save')
+    );
+    expect(interaction.editReply).toHaveBeenCalledWith(
+      'There was an issue submitting your report. Please try again later.'
+    );
+  });
+
+  test('should handle reporting truth/dare', async () => {
+    interaction.options.getSubcommand.mockReturnValue('dare');
+    interaction.options.getString.mockReturnValue('Test reason');
+    interaction.options.getNumber.mockReturnValue(123);
+
+    const mockReport = {
+      type: 'dare',
+      senderId: 'test-user-id',
+      serverId: 'test-guild-id',
+      reason: 'Test reason',
+      offenderId: 123,
+      save: jest.fn().mockResolvedValue('mock-report-id')
+    };
+
+    Report.mockImplementation(() => mockReport);
+
+    await reportCommand.execute(interaction);
+
+    // Verify logger was called with the report
+    expect(logger.newReport).toHaveBeenCalledWith(mockReport);
+    expect(interaction.editReply).toHaveBeenCalledWith(
+      'Your report has been submitted. Only you can see this message.'
+    );
   });
 });

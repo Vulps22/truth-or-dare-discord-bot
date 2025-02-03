@@ -26,6 +26,10 @@ logger.error = jest.fn();
 describe('leaderboard command', () => {
     let interaction;
 
+    beforeAll(() => {
+         // Mock console.log
+         jest.spyOn(console, 'log').mockImplementation(() => {});
+    });
 
     beforeEach(() => {
         interaction = {
@@ -37,6 +41,9 @@ describe('leaderboard command', () => {
             editReply: jest.fn(),
             guildId: 'test-guild-id',
             client: {},
+            user: { id: 'test-user-id' },
+            replied: false,
+            deferred: false
         };
 
         generateLeaderboardMock.mockClear();
@@ -50,6 +57,9 @@ describe('leaderboard command', () => {
         logger.error.mockClear();
     });
 
+    afterAll(() => {
+        console.log.mockRestore();
+    });
 
 
     test('should handle global subcommand', async () => {
@@ -145,5 +155,98 @@ describe('leaderboard command', () => {
 
         expect(undefinedServerMock).toHaveBeenCalled();
         expect(logger.error).toHaveBeenCalledWith("Server was undefined while handling premium checks");
+    });
+
+    test('should log warning when execution time exceeds threshold', async () => {
+        // Mock Date.now to control execution time
+        const originalNow = Date.now;
+        const mockNow = jest.fn()
+            .mockReturnValueOnce(1000)      // Start time
+            .mockReturnValueOnce(7000);     // End time (6 seconds later)
+        Date.now = mockNow;
+
+        interaction.options.getSubcommand.mockReturnValue('global');
+        
+        Leaderboard.mockImplementation(() => ({
+            generateLeaderboard: jest.fn().mockResolvedValue('card-file')
+        }));
+
+        await leaderboardCommand.execute(interaction);
+
+        expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Leaderboard generation exceeded 5000ms threshold!'));
+        
+        // Restore original Date.now
+        Date.now = originalNow;
+    });
+
+    test('should handle errors and log execution time', async () => {
+        // Mock Date.now to control execution time
+        const originalNow = Date.now;
+        const mockNow = jest.fn()
+            .mockReturnValueOnce(1000)      // Start time
+            .mockReturnValueOnce(3000);     // End time (2 seconds later)
+        Date.now = mockNow;
+
+        interaction.options.getSubcommand.mockReturnValue('global');
+        interaction.replied = false;
+        interaction.deferred = false;
+
+        const testError = new Error('Test error');
+        Leaderboard.mockImplementation(() => ({
+            generateLeaderboard: jest.fn().mockRejectedValue(testError)
+        }));
+
+        await leaderboardCommand.execute(interaction);
+
+        expect(logger.error).toHaveBeenCalledWith(
+            expect.stringContaining('Leaderboard command failed after 2000ms')
+        );
+        expect(logger.error).toHaveBeenCalledWith(
+            expect.stringContaining('Error: Error: Test error')
+        );
+
+        // Restore original Date.now
+        Date.now = originalNow;
+    });
+
+    test('should handle all error response scenarios', async () => {
+        const testCases = [
+            { replied: false, deferred: false, expectReply: true, expectEditReply: false },
+            { replied: false, deferred: true, expectReply: false, expectEditReply: true },
+            { replied: true, deferred: true, expectReply: false, expectEditReply: false }
+        ];
+
+        for (const testCase of testCases) {
+            // Reset mocks
+            interaction.reply.mockClear();
+            interaction.editReply.mockClear();
+
+            // Setup test case
+            interaction.replied = testCase.replied;
+            interaction.deferred = testCase.deferred;
+            
+            Leaderboard.mockImplementation(() => ({
+                generateLeaderboard: jest.fn().mockRejectedValue(new Error('Test error'))
+            }));
+
+            await leaderboardCommand.execute(interaction);
+
+            if (testCase.expectReply) {
+                expect(interaction.reply).toHaveBeenCalledWith({
+                    content: 'An error occurred while generating the leaderboard.',
+                    ephemeral: true
+                });
+            } else {
+                expect(interaction.reply).not.toHaveBeenCalled();
+            }
+
+            if (testCase.expectEditReply) {
+                expect(interaction.editReply).toHaveBeenCalledWith({
+                    content: 'An error occurred while generating the leaderboard.'
+                });
+            } else if (!testCase.replied) {
+                expect(interaction.editReply).not.toHaveBeenCalled();
+            }
+        }
     });
 });

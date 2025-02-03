@@ -7,8 +7,17 @@ const startSetupMock = jest.fn();
 
 describe('/setup command', () => {
 
+    beforeAll(() => {
+         // Mock console.log
+         jest.spyOn(console, 'log').mockImplementation(() => {});
+    });
+
     beforeEach(() => {
         SetupHandler.mockClear();
+    });
+
+    afterAll(() => {
+        console.log.mockRestore();
     });
 
     test('should reply with the help embed without setup info when setup is complete', async () => {
