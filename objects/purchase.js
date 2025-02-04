@@ -59,7 +59,6 @@ class Purchase {
         this.endDate = new Date(data.end_timestamp);
         this.deleted = data.deleted;
         this.consumed = data.consumed;
-        this.isConsumable = data.isConsumable;
         this.entitlement = new Entitlement(my.client, transformedEntitlementData);
 
         this.purchasable = new Purchasable().withSKU(data.skuId);
@@ -85,7 +84,6 @@ class Purchase {
             end_timestamp: this.endDate && !isNaN(this.endDate) ? this.timestampToMySQLDateTime(this.endDate) : null,
             deleted: this.deleted,
             consumed: this.consumed,
-            isConsumable: this.isConsumable,
             entitlement: JSON.stringify(this.entitlement.toJSON()),
         });
     }
@@ -97,6 +95,7 @@ class Purchase {
     }
 
     isConsumable() {
+        console.log("purchasable when reading type: ", this.purchasable);
         return this.purchasable.type == PurchasableType.CONSUMABLE;
     }
 
@@ -124,11 +123,10 @@ class Purchase {
         purchase.endDate = entitlement.endsTimestamp ? new Date(entitlement.endsTimestamp) : null;
         purchase.deleted = entitlement.deleted;
         purchase.consumed = entitlement.consumed;
-        purchase.isConsumable = entitlement.startsTimestamp == null; //Consumables do not have a start timestamp. This appears to be the most reliable way to determine if an entitlement is consumable.
         purchase.entitlement = entitlement;
 
-        this.purchasable = await new Purchasable().withSKU(entitlement.skuId).load();
-
+        purchase.purchasable = await new Purchasable().withSKU(entitlement.skuId).load();
+        console.log("purchasable: ", purchase.purchasable);
         await purchase.save();
 
         return purchase;

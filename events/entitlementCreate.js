@@ -29,6 +29,7 @@ module.exports = {
         // New code to handle a one-time consumable purchase
         const purchase = await Purchase.withData(entitlement);
     
+
         if (purchase.isConsumable()) {
 
             /** @type {User} */
@@ -36,12 +37,11 @@ module.exports = {
             await user.load();
             await user.addVote(10, true);
             // Handle the consumable purchase logic here
-            console.log(`Consumable purchase processed for user: ${purchase.userId}`);
             logger.log(`**Entitlement** - Consumable purchase processed for user: ${purchase.userId}`);
             purchase.consume();
         } else {
             console.log("Non-consumable purchase received");
-            logger.log("**Entitlement** - Non-consumable purchase received");
+            logger.error("**Entitlement** - Non-consumable purchase received");
         }
     }
 }

@@ -23,14 +23,25 @@ class Purchasable {
         const db = new Database();
         const environment = my.environment
 
-        const data = await db.query(`SELECT * FROM purchasables WHERE name = '${this.name}' AND environment = '${environment}'`);
+        let identifier = `name = '${this.name}'`;
+        if (this.skuId) {
+            identifier = `sku_id = '${this.skuId}'`;
+        }
+
+        const data = await db.query(`SELECT * FROM purchasables WHERE ${identifier} AND environment = '${environment}'`);
 
         if (!data) {
             throw new Error(`Purchasable ${this.name} not found for environment ${environment}`);
         }
 
-        this.skuId = data.sku_id;
-        this.type = data.type;
+        this.applicationId = data[0].application_id;
+        this.name = data[0].name;
+        this.skuId = data[0].sku_id;
+        this.type = data[0].type;
+        this.environment = data[0].environment;
+        this.createdAt = new Date(data[0].created_at);
+
+        return this;
     }
 
     isConsumable() {
