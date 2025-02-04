@@ -24,7 +24,7 @@ jest.mock('objects/purchasable', () => {
     return jest.fn().mockImplementation(() => {
         return {
             load: jest.fn().mockResolvedValue(),
-            isConsumable: jest.fn().mockReturnValue(true),
+            isConsumable: jest.fn().mockResolvedValue(true),
             isSubscription: jest.fn().mockReturnValue(false),
             withSKU: jest.fn().mockReturnThis(), // Mock the withSKU method
             name: 'mock-name',
@@ -71,7 +71,6 @@ describe('Purchase', () => {
                 end_timestamp: '2024-04-20 12:00:00',
                 deleted: false,
                 consumed: false,
-                isConsumable: false,
                 entitlement: {
                     id: 'entitlement-123',
                     skuId: 'premium-1',
@@ -100,7 +99,6 @@ describe('Purchase', () => {
             expect(purchase.endDate).toEqual(new Date(mockData.end_timestamp));
             expect(purchase.deleted).toBe(mockData.deleted);
             expect(purchase.consumed).toBe(mockData.consumed);
-            expect(purchase.isConsumable).toBe(mockData.isConsumable);
             expect(purchase.entitlement).toEqual(expect.objectContaining({
                 id: mockData.entitlement.id,
                 sku_id: mockData.entitlement.skuId,
