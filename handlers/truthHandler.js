@@ -8,6 +8,7 @@ const Truth = require('objects/truth.js');
 const logger = require('objects/logger.js');
 const Question = require('objects/question.js');
 const GivenQuestion = require('objects/givenQuestion.js');
+const Purchasable = require('objects/purchasable');
 let client = null;
 
 class TruthHandler extends Handler {
@@ -332,7 +333,14 @@ class TruthHandler extends Handler {
 			return;
 		}
 
+
 		if (!user.hasValidVote()) {
+
+			/**
+			 * @type {Purchasable}
+			 */
+			const purchasable = await new Purchasable(Purchasable.SKIP10).load();
+
 			const row = new ActionRowBuilder().addComponents(
 				new ButtonBuilder()
 					.setLabel('Vote on Top.gg')
@@ -340,7 +348,7 @@ class TruthHandler extends Handler {
 					.setURL('https://top.gg/bot/1079207025315164331/vote'),
 				new ButtonBuilder()
 					.setStyle(ButtonStyle.Premium)
-					.setSKUId('1335708253165719572')
+					.setSKUId(purchasable.skuId)
 			);
 			interaction.editReply(
 				{

@@ -7,7 +7,8 @@ const Server = require('objects/server.js');
 const Dare = require('objects/dare.js');
 const logger = require('objects/logger.js');
 const Question = require('objects/question.js');
-const GivenQuestion = require('objects/givenQuestion.js')
+const GivenQuestion = require('objects/givenQuestion.js');
+const Purchasable = require('objects/purchasable');
 let client = null
 class DareHandler extends Handler {
 
@@ -47,14 +48,14 @@ class DareHandler extends Handler {
 				.setDescription(dare.question)
 				.setColor('#00ff00')
 				.setFooter({ text: ' Created by ' + interaction.user.username, iconURL: interaction.user.displayAvatarURL() });
-			
+
 			const now = new Date();
 			//Moderators will be on holiday between 22/12 and 02/01
-			if((now.getMonth() == 11 && now.getDate() >= 22) || (now.getMonth() == 0 && now.getDate() == 1)){
+			if ((now.getMonth() == 11 && now.getDate() >= 22) || (now.getMonth() == 0 && now.getDate() == 1)) {
 				//send a christmas message
 				interaction.editReply({ content: "Thank you for your submission. Our excellent and dedicated team of moderators have decided to take christmas off from moderation.\n Your submission will be reviewed when they return on the 2nd of January\n\n Merry Christmas 🎄" });
 
-			} else{
+			} else {
 				//Not Christmas
 				interaction.editReply({ content: "Thank you for your submission. A member of the moderation team will review your dare shortly" });
 			}
@@ -71,7 +72,7 @@ class DareHandler extends Handler {
 	 */
 
 	async dare(interaction) {
-		if(!interaction.deferred) await interaction.deferReply();
+		if (!interaction.deferred) await interaction.deferReply();
 		try {
 			const dares = await Question.collect('dare');
 			if (!dares || dares.length === 0) {
@@ -102,7 +103,7 @@ class DareHandler extends Handler {
 	 * @returns 
 	 */
 	async giveDare(interaction) {
-		if(!interaction.deferred) await interaction.deferReply();
+		if (!interaction.deferred) await interaction.deferReply();
 		const target = interaction.options.getUser('user');
 		const question = interaction.options.getString('dare');
 		const wager = interaction.options.getInteger('wager');
@@ -282,7 +283,7 @@ class DareHandler extends Handler {
 	 * @returns 
 	 */
 	async vote(interaction) {
-		if(!interaction.deferred) await interaction.deferReply({ content: "Registering your vote", ephemeral: true })
+		if (!interaction.deferred) await interaction.deferReply({ content: "Registering your vote", ephemeral: true })
 		const userDare = await new UserDare().load(interaction.message.id, 'dare');
 
 		if (!userDare) {
@@ -331,21 +332,27 @@ class DareHandler extends Handler {
 		}
 
 		if (!user.hasValidVote()) {
+
+			/**
+			* @type {Purchasable}
+			*/
+			const purchasable = await new Purchasable(Purchasable.SKIP10).load();
+
 			const row = new ActionRowBuilder().addComponents(
-								new ButtonBuilder()
-									.setLabel('Vote on Top.gg')
-									.setStyle(ButtonStyle.Link)
-									.setURL('https://top.gg/bot/1079207025315164331/vote'),
-								new ButtonBuilder()
-									.setStyle(ButtonStyle.Premium)
-									.setSKUId('1335708253165719572')
-							);
-							interaction.editReply(
-								{ 
-									content: "Uh oh! You're out of Skips!\nNot to worry, You can earn up to 10 skips by voting for the bot every day on [top.gg](https://top.gg/bot/1079207025315164331/vote)!",
-									components: [row],
-									flags: MessageFlags.Ephemeral 
-								});
+				new ButtonBuilder()
+					.setLabel('Vote on Top.gg')
+					.setStyle(ButtonStyle.Link)
+					.setURL('https://top.gg/bot/1079207025315164331/vote'),
+				new ButtonBuilder()
+					.setStyle(ButtonStyle.Premium)
+					.setSKUId(purchasable.skuId)
+			);
+			interaction.editReply(
+				{
+					content: "Uh oh! You're out of Skips!\nNot to worry, You can earn up to 10 skips by voting for the bot every day on [top.gg](https://top.gg/bot/1079207025315164331/vote)!",
+					components: [row],
+					flags: MessageFlags.Ephemeral
+				});
 			return;
 		}
 
@@ -411,7 +418,7 @@ class DareHandler extends Handler {
 	 * @param {string<"ban"|"approve"} decision 
 	 */
 	async setDare(interaction, decision) {
-		if(!interaction.deferred) await interaction.deferReply({ ephemeral: true })
+		if (!interaction.deferred) await interaction.deferReply({ ephemeral: true })
 		let dare = await new Dare().find(interaction.message.id);
 		switch (decision) {
 			case "ban":
