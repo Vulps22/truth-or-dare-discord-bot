@@ -1,4 +1,4 @@
-const { Interaction, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, Client } = require('discord.js');
+const { Interaction, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, Client, MessageFlags } = require('discord.js');
 
 const Handler = require('handlers/handler.js')
 const UserTruth = require('objects/userTruth.js');
@@ -333,7 +333,21 @@ class TruthHandler extends Handler {
 		}
 
 		if (!user.hasValidVote()) {
-			await interaction.editReply({ content: "Uh oh! You're out of Skips!\nNot to worry, You can earn skips up to 10 by voting for the bot every day on [top.gg](https://top.gg/bot/1079207025315164331/vote)!", ephemeral: true });
+			const row = new ActionRowBuilder().addComponents(
+				new ButtonBuilder()
+					.setLabel('Vote on Top.gg')
+					.setStyle(ButtonStyle.Link)
+					.setURL('https://top.gg/bot/1079207025315164331/vote'),
+				new ButtonBuilder()
+					.setStyle(ButtonStyle.Premium)
+					.setSKUId('1335708253165719572')
+			);
+			interaction.editReply(
+				{
+					content: "Uh oh! You're out of Skips!\nNot to worry, You can earn up to 10 skips by voting for the bot every day on [top.gg](https://top.gg/bot/1079207025315164331/vote)! \n\nYou can also buy 10 skips right now by clicking the button below! (the 10 skip limit does not apply to purchased skips)",
+					components: [row],
+					flags: MessageFlags.Ephemeral
+				});
 			return;
 		}
 
