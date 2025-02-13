@@ -13,6 +13,7 @@ module.exports = {
         console.log("Entitlement Recieved");
         console.log(entitlement);
 
+        logger.error("Attempted to delete an entitlement before the feature was implemented. Entitlement ID: " + entitlement.id);
         const purchase = await Purchase.get(entitlement.id);
 
         purchase.deleted = true;

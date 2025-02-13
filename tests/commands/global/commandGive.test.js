@@ -12,6 +12,11 @@ jest.mock('objects/server');
 describe('Give Command', () => {
     let interaction;
 
+    beforeAll(() => {
+         // Mock console.log
+         jest.spyOn(console, 'log').mockImplementation(() => {});
+    });
+
     beforeEach(() => {
         interaction = {
             options: {
@@ -31,6 +36,10 @@ describe('Give Command', () => {
         Server.mockClear();
         TruthHandler.mockClear();
         DareHandler.mockClear();
+    });
+
+    afterAll(() => {
+        console.log.mockRestore();
     });
 
     test('should defer reply', async () => {

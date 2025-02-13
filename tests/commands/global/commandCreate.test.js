@@ -28,6 +28,11 @@ User.mockImplementation(() => ({
 describe('Create Truth or Dare Command', () => {
     let interaction;
 
+    beforeAll(() => {
+         // Mock console.log
+         jest.spyOn(console, 'log').mockImplementation(() => {});
+    });
+
     beforeEach(() => {
         applyGlobals();
         interaction = {
@@ -50,6 +55,10 @@ describe('Create Truth or Dare Command', () => {
         TruthHandler.mockClear();
         User.mockClear();
         logger.error.mockClear();
+    });
+
+    afterAll(() => {
+        console.log.mockRestore();
     });
 
     test('should defer reply', async () => {

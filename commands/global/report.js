@@ -57,7 +57,7 @@ module.exports = {
             return;
         }
 
-        //try {
+        try {
             // Create a new Report instance and save it
             const report = new Report(null, subcommand, interaction.user.id, reason, offenderId);
             report.type = subcommand;
@@ -66,20 +66,13 @@ module.exports = {
             report.reason = reason;
             report.offenderId = offenderId;
             let reportId = await report.save();
-            
-            // Log the report using the logger
-            let questionText = '';
-            if (subcommand === 'dare' || subcommand === 'truth') {
-                const question = await report.loadOffender();
-                questionText = question ? `Question: ${question.question}` : '';
-            }
 
             await logger.newReport(report);
 
             await interaction.editReply("Your report has been submitted. Only you can see this message.");
-        //} catch (error) {
-           // console.error(`Failed to submit report: ${error}`);
-           // await interaction.editReply("There was an issue submitting your report. Please try again later.");
-        //}
+        } catch (error) {
+            console.error(`Failed to submit report: ${error}`);
+            await interaction.editReply("There was an issue submitting your report. Please try again later.");
+        }
     }
 };

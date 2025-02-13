@@ -12,6 +12,11 @@ jest.mock('objects/server');
 describe('rank command', () => {
   let interaction;
 
+  beforeAll(() => {
+         // Mock console.log
+         jest.spyOn(console, 'log').mockImplementation(() => {});
+  });
+
   beforeEach(() => {
     interaction = {
       options: {
@@ -26,6 +31,7 @@ describe('rank command', () => {
       guildId: 'test-guild-id',
       deferReply: jest.fn(),
       editReply: jest.fn(),
+      deferred: false
     };
 
     // Clear all mocks before each test
@@ -39,6 +45,10 @@ describe('rank command', () => {
       hasPremium: jest.fn().mockReturnValue(false)
     };
     Server.mockImplementation(() => serverInstance);
+  });
+
+  afterAll(() => {
+    console.log.mockRestore();
   });
 
   test('should handle when a user is provided', async () => {
@@ -118,5 +128,125 @@ describe('rank command', () => {
     expect(interaction.editReply).toHaveBeenCalledWith(
       "Hmm, I can't find your user data. This might be a bug, try again later"
     );
+  });
+
+  test('should throw error when execution time exceeds threshold', async () => {
+    // Mock Date.now to simulate long execution time
+    const originalNow = Date.now;
+    const mockNow = jest.fn()
+      .mockReturnValueOnce(1000)      // Start time
+      .mockReturnValueOnce(7000);     // End time (6 seconds later)
+    Date.now = mockNow;
+
+    interaction.options.getUser.mockReturnValue(null);
+
+    const userInstance = {
+      loadServerUser: jest.fn().mockResolvedValue(),
+      getImage: jest.fn().mockResolvedValue('user-image'),
+      _server: null
+    };
+
+    const rankCardInstance = {
+      generateCard: jest.fn().mockResolvedValue('rank-card'),
+    };
+
+    const userHandlerInstance = {
+      getUser: jest.fn().mockResolvedValue(userInstance),
+    };
+
+    UserHandler.mockImplementation(() => userHandlerInstance);
+    RankCard.mockImplementation(() => rankCardInstance);
+
+    // Expect the command to throw an error
+    await expect(rankCommand.execute(interaction)).rejects.toThrow(
+      'Rank command took too long to execute: 6000ms'
+    );
+
+    // Restore original Date.now
+    Date.now = originalNow;
+  });
+
+  test('should defer reply when not already deferred', async () => {
+    interaction.deferred = false;  // Explicitly set to false
+    
+    const userInstance = {
+      loadServerUser: jest.fn().mockResolvedValue(),
+      getImage: jest.fn().mockResolvedValue('user-image'),
+      _server: null
+    };
+
+    const userHandlerInstance = {
+      getUser: jest.fn().mockResolvedValue(userInstance),
+    };
+
+    UserHandler.mockImplementation(() => userHandlerInstance);
+
+    await rankCommand.execute(interaction);
+    expect(interaction.deferReply).toHaveBeenCalled();
+  });
+
+  test('should skip deferring reply when already deferred', async () => {
+    interaction.deferred = true;  // Explicitly set to true
+    
+    const userInstance = {
+      loadServerUser: jest.fn().mockResolvedValue(),
+      getImage: jest.fn().mockResolvedValue('user-image'),
+      _server: null
+    };
+
+    const userHandlerInstance = {
+      getUser: jest.fn().mockResolvedValue(userInstance),
+    };
+
+    UserHandler.mockImplementation(() => userHandlerInstance);
+
+    await rankCommand.execute(interaction);
+    expect(interaction.deferReply).not.toHaveBeenCalled();
+  });
+
+  test('should create new server instance when user._server is null', async () => {
+    const userInstance = {
+      loadServerUser: jest.fn().mockResolvedValue(),
+      getImage: jest.fn().mockResolvedValue('user-image'),
+      _server: null  // Explicitly set to null
+    };
+
+    const userHandlerInstance = {
+      getUser: jest.fn().mockResolvedValue(userInstance),
+    };
+
+    UserHandler.mockImplementation(() => userHandlerInstance);
+
+    await rankCommand.execute(interaction);
+
+    // Verify that a new Server instance was created
+    expect(Server).toHaveBeenCalledWith('test-guild-id');
+    expect(userInstance._server.load).toHaveBeenCalled();
+  });
+
+  test('should use existing server instance when user._server exists', async () => {
+    const existingServer = {
+      load: jest.fn().mockResolvedValue(),
+      hasPremium: jest.fn().mockReturnValue(false)
+    };
+
+    const userInstance = {
+      loadServerUser: jest.fn().mockResolvedValue(),
+      getImage: jest.fn().mockResolvedValue('user-image'),
+      _server: existingServer  // Provide existing server
+    };
+
+    const userHandlerInstance = {
+      getUser: jest.fn().mockResolvedValue(userInstance),
+    };
+
+    UserHandler.mockImplementation(() => userHandlerInstance);
+
+    await rankCommand.execute(interaction);
+
+    // Verify that no new Server instance was created
+    expect(Server).not.toHaveBeenCalled();
+    // Existing server's load method should not be called
+    expect(existingServer.load).not.toHaveBeenCalled();
   });
 });

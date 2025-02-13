@@ -1,4 +1,4 @@
-const { Interaction, Message, InteractionResponse } = require("discord.js");
+const { Interaction, Message, InteractionResponse, ButtonStyle, MessageFlags } = require("discord.js");
 const DareHandler = require("handlers/dareHandler");
 const TruthHandler = require("handlers/truthHandler");
 const BanHandler = require("handlers/banHandler");
@@ -191,7 +191,22 @@ async function handleGivenQuestion(interaction, idComponents) {
                 await target.burnVote();
                 await given.skip();
             } else {
-                interaction.reply({ content: "Uh oh! You're out of Skips!\nNot to worry, You can earn up to 10 skips by voting for the bot every day on [top.gg](https://top.gg/bot/1079207025315164331/vote)!", ephemeral: true });
+                const row = new ActionRowBuilder().addComponents(
+                    new ButtonBuilder()
+                        .setLabel('Vote on Top.gg')
+                        .setStyle(ButtonStyle.Link)
+                        .setURL('https://top.gg/bot/1079207025315164331/vote'),
+                    new ButtonBuilder()
+                        .setLabel('Buy 10')
+                        .setStyle(ButtonStyle.Premium)
+                        .setURL(`https://discord.com/application-directory/${my.client}/store/1335708253165719572`)
+                );
+                interaction.reply(
+                    { 
+                        content: "Uh oh! You'rrrrrrrrrrrrrrrrrre out of Skips!\nNot to worry, You can earn up to 10 skips by voting for the bot every day on [top.gg](https://top.gg/bot/1079207025315164331/vote)!",
+                        components: [row],
+                        flags: MessageFlags.Ephemeral 
+                    });
                 return;
             }
             break;

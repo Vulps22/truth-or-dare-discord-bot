@@ -31,6 +31,7 @@ const clearMocks = () => {
 describe('set command', () => {
     let interaction;
 
+
     beforeEach(() => {
         interaction = {
             options: {
@@ -57,6 +58,9 @@ describe('set command', () => {
             },
         };
         clearMocks(); // Clear mocks before each test
+
+        // Mock console.log
+        console.log = jest.fn();
     });
 
     test('Interaction is deferred', async () => {
@@ -196,6 +200,95 @@ describe('set command', () => {
                 'This is a premium command. Premium is not quite ready yet, But I\'m working hard to make these commands available for everyone :)'
             );
         });
+
+        test('should handle insufficient channel permissions', async () => {
+            interaction.options.getSubcommand.mockReturnValue('channel');
+            interaction.options.getString.mockReturnValue('announcements');
+            const mockChannel = {
+                id: 'channel-id',
+                guildId: 'test-guild-id',
+                guild: {
+                    members: {
+                        me: {
+                            permissionsIn: jest.fn().mockReturnValue({
+                                has: jest.fn().mockReturnValue(false), // No permissions
+                            }),
+                        },
+                    },
+                },
+            };
+            interaction.options.getChannel.mockReturnValue(mockChannel);
+
+            await setCommand.execute(interaction);
+
+            expect(interaction.editReply).toHaveBeenCalledWith(
+                'I need permission to view, send messages, and attach files in that channel'
+            );
+        });
+
+        test('should set level-up channel when premium is active', async () => {
+            interaction.options.getSubcommand.mockReturnValue('channel');
+            interaction.options.getString.mockReturnValue('levelup');
+            const mockChannel = {
+                id: 'channel-id',
+                guildId: 'test-guild-id',
+                guild: {
+                    members: {
+                        me: {
+                            permissionsIn: jest.fn().mockReturnValue({
+                                has: jest.fn().mockReturnValue(true),
+                            }),
+                        },
+                    },
+                },
+                send: jest.fn().mockResolvedValue()
+            };
+            interaction.options.getChannel.mockReturnValue(mockChannel);
+
+            Server.mockImplementation(() => ({
+                load: serverLoadMock,
+                save: serverSaveMock,
+                hasPremium: serverHasPremiumTrueMock,
+                level_up_channel: null
+            }));
+
+            await setCommand.execute(interaction);
+
+            expect(mockChannel.send).toHaveBeenCalledWith('Level up notifications will be sent here');
+            expect(interaction.editReply).toHaveBeenCalledWith('Level up notifications will be sent to <#channel-id>');
+        });
+
+        test('should check channel permissions in setLevelUpChannel', async () => {
+            interaction.options.getSubcommand.mockReturnValue('channel');
+            interaction.options.getString.mockReturnValue('levelup');
+            
+            const mockChannel = {
+                id: 'channel-id',
+                guildId: 'test-guild-id',
+                guild: {
+                    members: {
+                        me: {
+                            permissionsIn: jest.fn().mockReturnValue({
+                                has: jest.fn().mockReturnValue(false), // Missing permissions
+                            }),
+                        },
+                    },
+                },
+            };
+            interaction.options.getChannel.mockReturnValue(mockChannel);
+
+            Server.mockImplementation(() => ({
+                load: serverLoadMock,
+                hasPremium: serverHasPremiumTrueMock,
+                save: serverSaveMock
+            }));
+
+            await setCommand.execute(interaction);
+
+            expect(interaction.editReply).toHaveBeenCalledWith(
+                'I need permission to view, send messages, and attach files in that channel'
+            );
+        });
     });
 
     describe('setXP function', () => {
@@ -231,5 +324,191 @@ describe('set command', () => {
 
             expect(interaction.editReply).toHaveBeenCalledWith('You cannot set negative XP');
         });
+    });
+
+    test('should handle insufficient role management permissions', async () => {
+        interaction.options.getSubcommand.mockReturnValue('level-for-role');
+        interaction.guild.members.me.permissions.has.mockReturnValue(false); // No manage roles permission
+        
+        // Mock the role object
+        interaction.options.getRole.mockReturnValue({ id: 'test-role-id' });
+        interaction.options.getNumber.mockReturnValue(10);
+
+        Server.mockImplementation(() => ({
+            load: serverLoadMock,
+            hasPremium: serverHasPremiumTrueMock,
+            setLevelRole: serverSetLevelRoleMock,
+            save: serverSaveMock
+        }));
+
+        await setCommand.execute(interaction);
+
+        expect(interaction.editReply).toHaveBeenCalledWith(
+            'Unable to set the role to the level. I require the Manage Roles permission to give and take roles when players level up'
+        );
+    });
+
+    test('should handle invalid channel event', async () => {
+        // Mock console.log
+        const originalConsoleLog = console.log;
+        console.log = jest.fn();
+
+        interaction.options.getSubcommand.mockReturnValue('channel');
+        interaction.options.getString.mockReturnValue('invalid_event');
+        
+        const mockChannel = {
+            id: 'channel-id',
+            guildId: 'test-guild-id',
+            guild: {
+                members: {
+                    me: {
+                        permissionsIn: jest.fn().mockReturnValue({
+                            has: jest.fn().mockReturnValue(true),
+                        }),
+                    },
+                },
+            },
+        };
+        interaction.options.getChannel.mockReturnValue(mockChannel);
+
+        await setCommand.execute(interaction);
+
+        // Should log invalid event
+        expect(console.log).toHaveBeenCalledWith('Invalid event invalid_event');
+
+        // Restore original console.log
+        console.log = originalConsoleLog;
+    });
+
+    describe('setLevelForRole function', () => {
+        test('should successfully set level for role with proper permissions', async () => {
+            interaction.options.getSubcommand.mockReturnValue('level-for-role');
+            interaction.guild.members.me.permissions.has.mockReturnValue(true); // Has manage roles permission
+            
+            // Mock the role object
+            interaction.options.getRole.mockReturnValue({ id: 'test-role-id' });
+            interaction.options.getNumber.mockReturnValue(10);
+
+            Server.mockImplementation(() => ({
+                load: serverLoadMock,
+                hasPremium: serverHasPremiumTrueMock,
+                setLevelRole: serverSetLevelRoleMock,
+                save: serverSaveMock
+            }));
+
+            await setCommand.execute(interaction);
+
+            expect(serverSetLevelRoleMock).toHaveBeenCalledWith('test-role-id', 10);
+            expect(serverSaveMock).toHaveBeenCalled();
+            expect(interaction.editReply).toHaveBeenCalledWith('Set <@&test-role-id> to level 10');
+        });
+
+        test('should check required channel permissions until one fails', async () => {
+            interaction.options.getSubcommand.mockReturnValue('channel');
+            interaction.options.getString.mockReturnValue('announcements');
+            
+            const mockChannel = {
+                id: 'channel-id',
+                guildId: 'test-guild-id',
+                guild: {
+                    members: {
+                        me: {
+                            permissionsIn: jest.fn().mockReturnValue({
+                                has: jest.fn()
+                                    .mockReturnValueOnce(true)   // ViewChannel passes
+                                    .mockReturnValueOnce(false)  // SendMessages fails
+                            }),
+                        },
+                    },
+                },
+            };
+            interaction.options.getChannel.mockReturnValue(mockChannel);
+
+            await setCommand.execute(interaction);
+
+            // Should check ViewChannel and SendMessages
+            expect(mockChannel.guild.members.me.permissionsIn().has).toHaveBeenCalledWith('ViewChannel');
+            expect(mockChannel.guild.members.me.permissionsIn().has).toHaveBeenCalledWith('SendMessages');
+            // Should not check AttachFiles because SendMessages failed
+            expect(mockChannel.guild.members.me.permissionsIn().has).toHaveBeenCalledTimes(2);
+            
+            expect(interaction.editReply).toHaveBeenCalledWith(
+                'I need permission to view, send messages, and attach files in that channel'
+            );
+        });
+
+        test('should handle premium check for level-for-role', async () => {
+            interaction.options.getSubcommand.mockReturnValue('level-for-role');
+            interaction.guild.members.me.permissions.has.mockReturnValue(true);
+            interaction.options.getRole.mockReturnValue({ id: 'test-role-id' });
+            interaction.options.getNumber.mockReturnValue(10);
+
+            Server.mockImplementation(() => ({
+                load: serverLoadMock,
+                hasPremium: jest.fn().mockResolvedValue(false),
+                save: serverSaveMock,
+                setLevelRole: serverSetLevelRoleMock
+            }));
+
+            await setCommand.execute(interaction);
+
+            expect(interaction.editReply).toHaveBeenCalledWith(
+                "This is a premium command. Premium is not quite ready yet, But I'm working hard to make these commands available for everyone :)"
+            );
+        });
+
+        test('should handle missing ManageRoles permission', async () => {
+            interaction.options.getSubcommand.mockReturnValue('level-for-role');
+            interaction.guild.members.me.permissions.has.mockReturnValue(false); // No ManageRoles permission
+            interaction.options.getRole.mockReturnValue({ id: 'test-role-id' });
+            interaction.options.getNumber.mockReturnValue(10);
+
+            Server.mockImplementation(() => ({
+                load: serverLoadMock,
+                hasPremium: jest.fn().mockResolvedValue(true),
+                save: serverSaveMock,
+                setLevelRole: serverSetLevelRoleMock
+            }));
+
+            await setCommand.execute(interaction);
+
+            expect(interaction.editReply).toHaveBeenCalledWith(
+                "Unable to set the role to the level. I require the Manage Roles permission to give and take roles when players level up"
+            );
+        });
+    });
+
+    test('should verify all channel permissions when all pass', async () => {
+        const mockChannel = {
+            guild: {
+                members: {
+                    me: {
+                        permissionsIn: jest.fn().mockReturnValue({
+                            has: jest.fn()
+                                .mockReturnValueOnce(true)  // ViewChannel
+                                .mockReturnValueOnce(true)  // SendMessages
+                                .mockReturnValueOnce(true)  // AttachFiles
+                        }),
+                    },
+                },
+            },
+        };
+
+        const result = setCommand.hasPermission(mockChannel);
+
+        expect(result).toBe(true);
+        expect(mockChannel.guild.members.me.permissionsIn().has).toHaveBeenCalledWith('ViewChannel');
+        expect(mockChannel.guild.members.me.permissionsIn().has).toHaveBeenCalledWith('SendMessages');
+        expect(mockChannel.guild.members.me.permissionsIn().has).toHaveBeenCalledWith('AttachFiles');
+    });
+
+    test('should not defer reply when interaction is already deferred', async () => {
+        // Set interaction as already deferred
+        interaction.deferred = true;
+
+        await setCommand.execute(interaction);
+
+        // Verify deferReply was not called
+        expect(interaction.deferReply).not.toHaveBeenCalled();
     });
 });
