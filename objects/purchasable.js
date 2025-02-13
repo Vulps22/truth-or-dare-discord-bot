@@ -12,6 +12,7 @@ class Purchasable {
         this.type = null;
     }
 
+
     /** Sets SKU manually instead of using name */
     withSKU(sku) {
         this.skuId = sku;
