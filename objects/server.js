@@ -2,6 +2,9 @@ const { Message, TextChannel } = require("discord.js");
 const Database = require("objects/database");
 const logger = require("objects/logger");
 
+/** @typedef {import("objects/user")} User */
+
+
 class Server {
 
     _db;
@@ -59,7 +62,7 @@ class Server {
 
         if (!serverData) {
             this.name = 'Server Data No Longer Exists';
-            this._loaded = true;
+            this._loaded = false;
             return;
         };
 
@@ -81,7 +84,7 @@ class Server {
         this.entitlement_end_date = serverData.entitlement_end_date;
         this.message_id = serverData.message_id;
 
-        this._loaded = true;
+        this._loaded = this.name ? true : false;
 
         return this;
     }
@@ -231,6 +234,8 @@ class Server {
      * @returns {Promise<User[]>} The list of User objects.
      */
     async getUsers() {
+        const { userFromObject } = require("./loader");
+
         const db = new Database();
         const userRecords = await db.query(`
             SELECT * 
@@ -245,7 +250,7 @@ class Server {
         }
         console.log(`Found ${userRecords.length} server_users`);
         // Convert the plain objects into User instances
-        return userRecords.map(userRecord => User.fromObject(userRecord));
+        return userRecords.map(userRecord => userFromObject(userRecord));
     }
 
     /**
