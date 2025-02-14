@@ -62,7 +62,7 @@ class Server {
 
         if (!serverData) {
             this.name = 'Server Data No Longer Exists';
-            this._loaded = true;
+            this._loaded = false;
             return;
         };
 
@@ -84,7 +84,7 @@ class Server {
         this.entitlement_end_date = serverData.entitlement_end_date;
         this.message_id = serverData.message_id;
 
-        this._loaded = true;
+        this._loaded = this.name ? true : false;
 
         return this;
     }
