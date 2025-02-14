@@ -1,8 +1,13 @@
 const Server = require("objects/server");
 const Handler = require("handlers/handler");
 const embedder = require('embedder.js');
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelSelectMenuBuilder, ChannelType, ComponentType, Interaction } = require("discord.js");
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelSelectMenuBuilder, ChannelType, ComponentType, Interaction, PermissionFlagsBits } = require("discord.js");
 const logger = require("objects/logger.js");
+
+
+const officialServerId = '1079206786021732412';
+const announcementChannelId = '1162082471366627468';
+const botUpdateChannelId = '1162081820179959838';
 
 class SetupHandler extends Handler {
     constructor() {
@@ -14,7 +19,7 @@ class SetupHandler extends Handler {
      * @param {Interaction} interaction 
      */
     async startSetup(interaction) {
-        if(!interaction.deferred) await interaction.deferReply();
+        if (!interaction.deferred) await interaction.deferReply();
         let server = new Server(interaction.guildId);
         await server.load();
         if (!server.exists) {  // Assuming there is a property to check if the server is loaded
@@ -35,10 +40,10 @@ class SetupHandler extends Handler {
 
         await interaction.editReply({ embeds: [embedder.terms()], components: [actionRow] });
     }
-/**
- * 
- * @param {Interaction} interaction 
- */
+    /**
+     * 
+     * @param {Interaction} interaction 
+     */
     async action_1(interaction) {
         let server = new Server(interaction.guildId);
         await server.load();
@@ -57,7 +62,7 @@ class SetupHandler extends Handler {
                         .setDisabled(true)
                 );
 
-                
+
 
             const channelMenu = new ChannelSelectMenuBuilder()
                 .setCustomId('setup_2_channel')
@@ -93,32 +98,81 @@ class SetupHandler extends Handler {
         }
     }
     /**
-     * 
-     * @param {Interaction} interaction 
-     * @returns 
-     */
+ * Triggered when the user chooses a channel to receive announcements in the /setup command
+ * @param {Interaction} interaction 
+ * @returns 
+ */
     async action_2(interaction) {
-        let server = new Server(interaction.guildId);
-        await server.load();
+
         let channelId = interaction.values[0];
+
         if (!hasPermission(interaction.guildId, channelId)) {
             interaction.reply('I need permission to view, send messages, embed links, and attach files in that channel');
             return;
         }
 
-        server.announcement_channel = channelId;
-        await server.save();
-
-        //SEND A MESSAGE TO THE CHANNEL
+        // Fetch the guild and channel
         const guild = global.client.guilds.cache.get(interaction.guildId);
-        const channel = guild.channels.cache.get(channelId);
-        //channel.send({ embeds: [embedder.v5()] })
+        const targetChannel = guild.channels.cache.get(channelId);
 
-        await interaction.reply(`Announcement channel set to ${channel}`);
+        if (!targetChannel) {
+            await interaction.reply("I couldn't find the selected channel. Please try again.");
+            return;
+        }
 
-        interaction.followUp('Setup complete');
+        // Check if the bot has MANAGE_WEBHOOKS permission
+        if (!targetChannel.permissionsFor(global.client.user).has(PermissionFlagsBits.ManageWebhooks)) {
+            await interaction.reply("I need the `MANAGE_WEBHOOKS` permission in this channel to set up announcements properly. Please grant the permission and try again.");
+            return;
+        }
 
+        // Check if the bot is in the official server and can access the announcement channels
+        const officialGuild = global.client.guilds.cache.get(officialServerId);
+        if (officialGuild) {
+            const announcementChannel = officialGuild.channels.cache.get(announcementChannelId);
+            const updateChannel = officialGuild.channels.cache.get(botUpdateChannelId);
+
+            if (announcementChannel && updateChannel) {
+                try {
+                    await announcementChannel.addFollower(targetChannel.id, 'Subscribed via /setup');
+                    await updateChannel.addFollower(targetChannel.id, 'Subscribed via /setup');
+
+                    await targetChannel.send("✅ This channel has been subscribed to the official announcement and bot update channels.");
+                    logger.log(`✅ Subscribed ${guild.name} to announcements and bot updates.`);
+                } catch (error) {
+                    logger.error(`Failed to subscribe ${guild.name}:`, error);
+                    await interaction.reply("An error occurred while subscribing to announcements. Please try again later.");
+                    return;
+                }
+            } else {
+                await interaction.reply("I couldn't access the official announcement channels. Please try again later.");
+                return;
+            }
+        } else {
+            // Request another shard to handle the subscription
+            await global.client.shard.broadcastEval(async (c, { targetChannelId, serverId }) => {
+                const officialGuild = c.guilds.cache.get(officialServerId);
+                if (officialGuild) {
+                    const announcementChannel = officialGuild.channels.cache.get(announcementChannelId);
+                    const updateChannel = officialGuild.channels.cache.get(botUpdateChannelId);
+                    if (announcementChannel && updateChannel) {
+                        try {
+                            await announcementChannel.addFollower(targetChannelId, 'Subscribed via /setup');
+                            await updateChannel.addFollower(targetChannelId, 'Subscribed via /setup');
+                            await c.channels.cache.get(targetChannelId).send("✅ This channel has been subscribed to the official announcement and bot update channels.");
+                            logger.log(`✅ Subscribed ${serverId} to announcements and bot updates.`);
+                            return true;
+                        } catch (error) {
+                            logger.error(`IPC Subscription Failed for ${serverId}:`, error);
+                            await interaction.reply("An error occurred while subscribing to announcements. Please try again later.");
+                        }
+                    }
+                }
+                return false;
+            }, { context: { targetChannelId: channelId, serverId: interaction.guildId } });
+        }
     }
+
 
 }
 
