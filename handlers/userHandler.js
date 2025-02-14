@@ -7,6 +7,7 @@ const Database = require('objects/database');
 const embedder = require('embedder.js');
 const Server = require('objects/server.js'); // Import the Server class
 const logger = require('objects/logger.js');
+const { userFromObject } = require('objects/loader');
 
 
 class UserHandler extends Handler {
@@ -84,7 +85,7 @@ class UserHandler extends Handler {
         let deletedUsers = 0;
         // Loop through and delete each user
         for (const userRecord of usersToDelete) {
-            const user = User.fromObject(userRecord); // Create a User instance using fromObject
+            const user = userFromObject(userRecord); // Create a User instance using fromObject
             const servers = user.getServerList();
             if(servers > 0) {
                 user.deleteDate = null;

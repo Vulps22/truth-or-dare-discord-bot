@@ -2,6 +2,9 @@ const { Message, TextChannel } = require("discord.js");
 const Database = require("objects/database");
 const logger = require("objects/logger");
 
+/** @typedef {import("objects/user")} User */
+
+
 class Server {
 
     _db;
@@ -231,6 +234,8 @@ class Server {
      * @returns {Promise<User[]>} The list of User objects.
      */
     async getUsers() {
+        const { userFromObject } = require("./loader");
+
         const db = new Database();
         const userRecords = await db.query(`
             SELECT * 
@@ -245,7 +250,7 @@ class Server {
         }
         console.log(`Found ${userRecords.length} server_users`);
         // Convert the plain objects into User instances
-        return userRecords.map(userRecord => User.fromObject(userRecord));
+        return userRecords.map(userRecord => userFromObject(userRecord));
     }
 
     /**

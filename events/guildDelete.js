@@ -29,7 +29,7 @@ module.exports = {
             const users = await server.getUsers();
 
             users.forEach(user => {
-                user.deleteServerUser();
+                user.deleteServerUser(guild.id);
             });
 
             // Delete the server and its server-user relationships

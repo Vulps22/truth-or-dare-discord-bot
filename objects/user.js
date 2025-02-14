@@ -124,6 +124,7 @@ class User {
     }
 
     async loadServerUser(serverId, orCreate = false) {
+        if(!serverId) return false;
         const db = new Database();
         const query = `SELECT * FROM server_users WHERE user_id = ${this.id} AND server_id = ${serverId}`;
         let serverUserRaw = await db.query(query);
@@ -193,6 +194,7 @@ class User {
      * Creates a User instance from a plain object without needing to reload from the database.
      * @param {object} data - The object containing user data.
      * @returns {User} The instantiated User object.
+     * @deprecated Use userFromObject instead
      */
     static fromObject(data) {
         const user = new User(data.id, data.username);
