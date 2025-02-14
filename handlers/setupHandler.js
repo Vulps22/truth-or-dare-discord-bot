@@ -103,17 +103,13 @@ class SetupHandler extends Handler {
  * @returns 
  */
     async action_2(interaction) {
-        let server = new Server(interaction.guildId);
-        await server.load();
+
         let channelId = interaction.values[0];
 
         if (!hasPermission(interaction.guildId, channelId)) {
             interaction.reply('I need permission to view, send messages, embed links, and attach files in that channel');
             return;
         }
-
-        server.announcement_channel = channelId;
-        await server.save();
 
         // Fetch the guild and channel
         const guild = global.client.guilds.cache.get(interaction.guildId);
