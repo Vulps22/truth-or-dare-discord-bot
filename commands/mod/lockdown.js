@@ -1,4 +1,4 @@
-const { SlashCommandStringOption, SlashCommandBuilder, SlashCommandBooleanOption, SlashCommandSubcommandBuilder } = require("discord.js");
+const { SlashCommandStringOption, SlashCommandBuilder, SlashCommandSubcommandBuilder } = require("discord.js");
 const Database = require("objects/database");
 
 module.exports = {
@@ -17,28 +17,38 @@ module.exports = {
         .addSubcommand(new SlashCommandSubcommandBuilder()
             .setName("disable")
             .setDescription("Disable Lockdown Mode")
-
         ),
 
     /**
      * 
-     * @param {import("discord.js").Interaction} interaction 
+     * @param {import("discord.js").ChatInputCommandInteraction} interaction 
      */
     async execute(interaction) {
         const subCommand = interaction.options.getSubcommand();
         const db = new Database();
 
+        let maintenance_mode, maintenance_reason;
+
         if (subCommand === "enable") {
-            const message = interaction.options.getString('message');
-            my.maintenance_mode = true;
-            my.maintenance_reason = message;
-            await interaction.reply(`Lockdown mode enabled with message: ${message}`);
+            maintenance_mode = true;
+            maintenance_reason = interaction.options.getString('message');
+            await interaction.reply(`Lockdown mode enabled with message: ${maintenance_reason}`);
         } else if (subCommand === "disable") {
-            my.maintenance_mode = false;
-            my.maintenance_reason = "";
+            maintenance_mode = false;
+            maintenance_reason = "";
             await interaction.reply("Lockdown mode disabled.");
         }
-        
+
+        my.maintenance_mode = maintenance_mode;
+        my.maintenance_reason = maintenance_reason;
+
+        // Store in database
         await db.set('config', my);
+
+        // Broadcast update to all shards
+        await interaction.client.shard.broadcastEval(async (client, {maintenance_mode, maintenance_reason}) => {
+            my.maintenance_mode = maintenance_mode;
+            my.maintenance_reason = maintenance_reason;
+        }, { context: { maintenance_mode, maintenance_reason } });
     },
-}
+};
