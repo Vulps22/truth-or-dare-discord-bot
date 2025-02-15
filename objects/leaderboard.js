@@ -97,90 +97,21 @@ class Leaderboard {
 
     async fetchTopPlayers(global = true) {
         let query;
-    
+
         if (global) {
             // Global query, only counting user_questions from the last 30 days
-            query = `
-                WITH RankedUsers AS (
-                    SELECT 
-                        u.id,
-                        u.username,
-                        u.globalLevel,
-                        u.globalLevelXp,
-                        ROW_NUMBER() OVER (
-                            ORDER BY u.globalLevel DESC, u.globalLevelXp DESC
-                        ) AS position
-                    FROM users u
-                ),
-                QuestionCounts AS (
-                    SELECT 
-                        userId,
-                        SUM(CASE WHEN type = 'dare' AND doneCount >= 1 THEN 1 ELSE 0 END) AS dares_done,
-                        SUM(CASE WHEN type = 'truth' AND doneCount >= 1 THEN 1 ELSE 0 END) AS truths_done
-                    FROM user_questions
-                    WHERE datetime_created >= NOW() - INTERVAL 90 DAY
-                    GROUP BY userId
-                )
-                SELECT 
-                    ru.id,
-                    ru.username,
-                    COALESCE(qc.dares_done, 0) AS dares_done,
-                    COALESCE(qc.truths_done, 0) AS truths_done,
-                    ru.globalLevel,
-                    ru.globalLevelXp,
-                    ru.position
-                FROM RankedUsers ru
-                LEFT JOIN QuestionCounts qc 
-                    ON ru.id = qc.userId
-                WHERE ru.position <= 10
-                ORDER BY ru.position;
-            `;
+            query = `SELECT * FROM global_leaderboard_top10 ORDER BY position;`;
         } else {
             // Server-specific query, only counting user_questions from the last 30 days
             query = `
-                WITH RankedUsers AS (
-                    SELECT 
-                        su.user_id AS id,
-                        u.username,
-                        su.server_level AS globalLevel,
-                        su.server_level_xp AS globalLevelXp,
-                        ROW_NUMBER() OVER (
-                            ORDER BY su.server_level DESC, su.server_level_xp DESC
-                        ) AS position
-                    FROM server_users su
-                    JOIN users u ON u.id = su.user_id
-                    WHERE su.server_id = '${this.interaction.guild.id}'
-                ),
-                QuestionCounts AS (
-                    SELECT 
-                        userId,
-                        SUM(CASE WHEN type = 'dare' AND doneCount >= 1 THEN 1 ELSE 0 END) AS dares_done,
-                        SUM(CASE WHEN type = 'truth' AND doneCount >= 1 THEN 1 ELSE 0 END) AS truths_done
-                    FROM user_questions
-                    WHERE serverId = '${this.interaction.guild.id}'
-                      AND datetime_created >= NOW() - INTERVAL 90 DAY
-                    GROUP BY userId
-                )
-                SELECT 
-                    ru.id,
-                    ru.username,
-                    COALESCE(qc.dares_done, 0) AS dares_done,
-                    COALESCE(qc.truths_done, 0) AS truths_done,
-                    ru.globalLevel,
-                    ru.globalLevelXp,
-                    ru.position
-                FROM RankedUsers ru
-                LEFT JOIN QuestionCounts qc 
-                    ON ru.id = qc.userId
-                WHERE ru.position <= 10
-                ORDER BY ru.position;
+                SELECT * FROM tord.server_leaderboard_top10 WHERE server_id = '${this.interaction.guild.id}' ORDER BY position;
             `;
         }
-    
+
         const db = new Database();
         return await db.query(query);
     }
-    
+
 
     async drawPlayer(ctx, player, global, y, position, playerPos) {
         try {
@@ -261,28 +192,25 @@ class Leaderboard {
     async drawUserPosition(ctx, global = true) {
         const db = new Database();
         const userQuery = global ? `
-            SELECT u.id, u.username, 
-                   (SELECT COUNT(*) FROM user_questions ud WHERE ud.userId = u.id AND ud.type = 'dare' AND ud.doneCount >= ${my.required_votes}) AS dares_done,
-                   (SELECT COUNT(*) FROM user_questions ut WHERE ut.userId = u.id AND ut.type = 'truth' AND ut.doneCount >= ${my.required_votes}) AS truths_done,
-                   u.globalLevel, u.globalLevelXp,
-                   (SELECT (SELECT COUNT(*) FROM users u2 WHERE u2.globalLevel > u.globalLevel OR (u2.globalLevel = u.globalLevel AND u2.globalLevelXp > u.globalLevelXp)) + 1) AS position
-            FROM users u
-            WHERE u.id = '${this.interaction.user.id}'
+            SELECT * FROM global_leaderboard_user_position
+            WHERE id = '${this.interaction.user.id}'
         ` : `
-            SELECT su.user_id AS id, u.username,
-                   (SELECT COUNT(*) FROM user_questions ud WHERE ud.userId = su.user_id AND ud.type = 'dare' AND ud.doneCount >= ${my.required_votes} AND ud.serverId = '${this.interaction.guild.id}') AS dares_done,
-                   (SELECT COUNT(*) FROM user_questions ut WHERE ut.userId = su.user_id AND ut.type = 'truth' AND ut.doneCount >= ${my.required_votes} AND ut.serverId = '${this.interaction.guild.id}') AS truths_done,
-                   su.server_level AS globalLevel, su.server_level_xp AS globalLevelXp,
-                   (SELECT (SELECT COUNT(*) FROM server_users su2 WHERE su2.server_level > su.server_level OR (su2.server_level = su.server_level AND su2.server_level_xp > su.server_level_xp)) + 1) AS position
-            FROM server_users su
-            JOIN users u ON u.id = su.user_id
-            WHERE su.user_id = '${this.interaction.user.id}' AND su.server_id = '${this.interaction.guild.id}'
+            SELECT * FROM server_leaderboard_top10
+            WHERE id = '${this.interaction.user.id}' AND server_id = '${this.interaction.guild.id}'
         `;
         let user = await db.query(userQuery);
         user = user[0];
         await this.drawPlayer(ctx, user, global, this.baseCanvasHeight * 10, 11, user.position);
     }
 
+    /**
+ * Draws the level circle on the leaderboard.
+ * 
+ * @param {CanvasRenderingContext2D} ctx - The canvas context used for drawing.
+ * @param {number} level - The level to display inside the circle.
+ * @param {boolean} global - Whether the level is global or server-specific. Determines the circle's color.
+ * @param {number} yPosition - The y-coordinate position where the circle should be drawn.
+ */
     drawLevel(ctx, level, global, yPosition) {
         const levelCircle = {
             x: this.canvasWidth - 130,
