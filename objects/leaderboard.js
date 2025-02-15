@@ -96,79 +96,91 @@ class Leaderboard {
     }
 
     async fetchTopPlayers(global = true) {
-
         let query;
-
+    
         if (global) {
-
-            query = `WITH RankedUsers AS (
+            // Global query, only counting user_questions from the last 30 days
+            query = `
+                WITH RankedUsers AS (
+                    SELECT 
+                        u.id,
+                        u.username,
+                        u.globalLevel,
+                        u.globalLevelXp,
+                        ROW_NUMBER() OVER (
+                            ORDER BY u.globalLevel DESC, u.globalLevelXp DESC
+                        ) AS position
+                    FROM users u
+                ),
+                QuestionCounts AS (
+                    SELECT 
+                        userId,
+                        SUM(CASE WHEN type = 'dare' AND doneCount >= 1 THEN 1 ELSE 0 END) AS dares_done,
+                        SUM(CASE WHEN type = 'truth' AND doneCount >= 1 THEN 1 ELSE 0 END) AS truths_done
+                    FROM user_questions
+                    WHERE datetime_created >= NOW() - INTERVAL 90 DAY
+                    GROUP BY userId
+                )
                 SELECT 
-                    u.id,
-                    u.username,
-                    u.globalLevel,
-                    u.globalLevelXp,
-        ROW_NUMBER() OVER (ORDER BY u.globalLevel DESC, u.globalLevelXp DESC) as position
-            FROM users u
-        ),
-        QuestionCounts AS (
-            SELECT 
-                userId,
-                SUM(CASE WHEN type = 'dare' AND doneCount >= 1 THEN 1 ELSE 0 END) as dares_done,
-                SUM(CASE WHEN type = 'truth' AND doneCount >= 1 THEN 1 ELSE 0 END) as truths_done
-            FROM user_questions
-            GROUP BY userId
-        )
-        SELECT 
-            ru.id,
-            ru.username,
-            COALESCE(qc.dares_done, 0) as dares_done,
-            COALESCE(qc.truths_done, 0) as truths_done,
-            ru.globalLevel,
-            ru.globalLevelXp,
-            ru.position
-        FROM RankedUsers ru
-        LEFT JOIN QuestionCounts qc ON ru.id = qc.userId
-        WHERE ru.position <= 10
-        ORDER BY ru.position;`;
+                    ru.id,
+                    ru.username,
+                    COALESCE(qc.dares_done, 0) AS dares_done,
+                    COALESCE(qc.truths_done, 0) AS truths_done,
+                    ru.globalLevel,
+                    ru.globalLevelXp,
+                    ru.position
+                FROM RankedUsers ru
+                LEFT JOIN QuestionCounts qc 
+                    ON ru.id = qc.userId
+                WHERE ru.position <= 10
+                ORDER BY ru.position;
+            `;
         } else {
-
-            query = `WITH RankedUsers AS (
-            SELECT 
-                su.user_id as id,
-                u.username,
-                su.server_level as globalLevel,
-                su.server_level_xp as globalLevelXp,
-                ROW_NUMBER() OVER (ORDER BY su.server_level DESC, su.server_level_xp DESC) as position
-            FROM server_users su
-            JOIN users u ON u.id = su.user_id
-            WHERE su.server_id = '${this.interaction.guild.id}'
-        ),
-        QuestionCounts AS (
-            SELECT 
-                userId,
-                SUM(CASE WHEN type = 'dare' AND doneCount >= 1 THEN 1 ELSE 0 END) as dares_done,
-                SUM(CASE WHEN type = 'truth' AND doneCount >= 1 THEN 1 ELSE 0 END) as truths_done
-            FROM user_questions
-            WHERE serverId = '${this.interaction.guild.id}'
-            GROUP BY userId
-        )
-        SELECT 
-            ru.id,
-            ru.username,
-            COALESCE(qc.dares_done, 0) as dares_done,
-            COALESCE(qc.truths_done, 0) as truths_done,
-            ru.globalLevel,
-            ru.globalLevelXp,
-            ru.position
-        FROM RankedUsers ru
-        LEFT JOIN QuestionCounts qc ON ru.id = qc.userId
-        WHERE ru.position <= 10
-        ORDER BY ru.position;`;
+            // Server-specific query, only counting user_questions from the last 30 days
+            query = `
+                WITH RankedUsers AS (
+                    SELECT 
+                        su.user_id AS id,
+                        u.username,
+                        su.server_level AS globalLevel,
+                        su.server_level_xp AS globalLevelXp,
+                        ROW_NUMBER() OVER (
+                            ORDER BY su.server_level DESC, su.server_level_xp DESC
+                        ) AS position
+                    FROM server_users su
+                    JOIN users u ON u.id = su.user_id
+                    WHERE su.server_id = '${this.interaction.guild.id}'
+                ),
+                QuestionCounts AS (
+                    SELECT 
+                        userId,
+                        SUM(CASE WHEN type = 'dare' AND doneCount >= 1 THEN 1 ELSE 0 END) AS dares_done,
+                        SUM(CASE WHEN type = 'truth' AND doneCount >= 1 THEN 1 ELSE 0 END) AS truths_done
+                    FROM user_questions
+                    WHERE serverId = '${this.interaction.guild.id}'
+                      AND datetime_created >= NOW() - INTERVAL 90 DAY
+                    GROUP BY userId
+                )
+                SELECT 
+                    ru.id,
+                    ru.username,
+                    COALESCE(qc.dares_done, 0) AS dares_done,
+                    COALESCE(qc.truths_done, 0) AS truths_done,
+                    ru.globalLevel,
+                    ru.globalLevelXp,
+                    ru.position
+                FROM RankedUsers ru
+                LEFT JOIN QuestionCounts qc 
+                    ON ru.id = qc.userId
+                WHERE ru.position <= 10
+                ORDER BY ru.position;
+            `;
         }
-
+    
         const db = new Database();
         return await db.query(query);
     }
+    
 
     async drawPlayer(ctx, player, global, y, position, playerPos) {
         try {
