@@ -98,6 +98,7 @@ class Question {
 		this.server = new Server(serverId);
 		await this.server.load();
 
+		throw new Error("Test BROKEN MOTHER FUCKER!");
 
 		const newQuestionId = await this.db.set('questions', {
 			question: this.question,
