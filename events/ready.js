@@ -19,7 +19,7 @@ module.exports = {
 
         // Fetch all subscribed servers from the database
         const subscribedServers = await db.query(
-            `SELECT id AS serverId, announcement_channel AS channelId FROM servers WHERE id='${my.guildId}' AND announcement_channel IS NOT NULL`
+            `SELECT id AS serverId, announcement_channel AS channelId FROM servers WHERE AND announcement_channel IS NOT NULL`
         );
 
         console.log(subscribedServers);
