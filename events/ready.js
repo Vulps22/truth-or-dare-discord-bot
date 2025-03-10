@@ -18,7 +18,7 @@ module.exports = {
 		const db = new Database();
 
         // Fetch all subscribed servers from the database
-        const subscribedServers = await db.query("SELECT id AS serverId, announcement_channel AS channelId FROM servers WHERE announcement_channel IS NOT NULL");
+        const subscribedServers = await db.query(`SELECT id AS serverId, announcement_channel AS channelId FROM servers WHERE id='${my.guildId}' AND announcement_channel IS NOT NULL`);
 
 		console.log(subscribedServers);
 
@@ -57,7 +57,7 @@ module.exports = {
                 }
             } else {
                 // Send an IPC request to a shard that has the official server
-                client.shard.broadcastEval(async (c, { targetChannelId, serverId }) => {
+                client.shard.broadcastEval(async (c, { targetChannelId, serverId, logger }) => {
                     const officialGuild = c.guilds.cache.get(my.guildId);
                     if (officialGuild) {
                         const announcementChannel = officialGuild.channels.cache.get(my.announcementChannelId);
