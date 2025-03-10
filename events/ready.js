@@ -22,7 +22,7 @@ module.exports = {
 		const db = new Database();
 
         // Fetch all subscribed servers from the database
-        const subscribedServers = await db.query("SELECT id AS serverId, announcement_channel AS channelId FROM servers WHERE owner = '914368203482890240' AND announcement_channel IS NOT NULL");
+        const subscribedServers = await db.query("SELECT id AS serverId, announcement_channel AS channelId FROM servers WHERE announcement_channel IS NOT NULL");
 
 		console.log(subscribedServers);
 
