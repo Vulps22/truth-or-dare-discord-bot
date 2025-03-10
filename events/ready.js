@@ -34,9 +34,9 @@ module.exports = {
                 if (!targetChannel.permissionsFor(client.user).has(PermissionFlagsBits.ManageWebhooks)) {
                     logger.log(`Skipping ${guild.name} - missing MANAGE_WEBHOOKS permission.`);
                     try {
-                        await targetChannel.send(
-                            "I have tried to update the announcement process to take advantage of Discord's 'Follow' feature. Please give me MANAGE_WEBHOOKS permission and run /setup to continue receiving announcements."
-                        );
+                        //await targetChannel.send(
+                          //  "I have tried to update the announcement process to take advantage of Discord's 'Follow' feature. Please give me MANAGE_WEBHOOKS permission and run /setup to continue receiving announcements."
+                      // );
                     } catch (error) {
                         logger.error(`Failed to send permission request message to ${guild.name}:`, error);
                     }
