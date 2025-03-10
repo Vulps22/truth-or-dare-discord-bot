@@ -2,9 +2,6 @@ const { Events, TextChannel, Client, PermissionFlagsBits } = require('discord.js
 const Database = require('../objects/database');
 const logger = require('objects/logger');
 
-const announcementChannelId = '1162082471366627468';
-const botUpdateChannelId = '1162081820179959838';
-
 module.exports = {
     name: Events.ClientReady,
     once: true,
@@ -45,8 +42,8 @@ module.exports = {
             // Check if the official announcement and bot update channels are in this shard
             const officialGuild = client.guilds.cache.get(my.guildId);
             if (officialGuild) {
-                const announcementChannel = officialGuild.channels.cache.get(announcementChannelId);
-                const updateChannel = officialGuild.channels.cache.get(botUpdateChannelId);
+                const announcementChannel = officialGuild.channels.cache.get(my.announcementChannelId);
+                const updateChannel = officialGuild.channels.cache.get(my.updateChannelId);
                 if (announcementChannel && updateChannel) {
                     try {
                         await announcementChannel.addFollower(targetChannel.id, 'Migrated from old method');
@@ -63,8 +60,8 @@ module.exports = {
                 client.shard.broadcastEval(async (c, { targetChannelId, serverId }) => {
                     const officialGuild = c.guilds.cache.get(my.guildId);
                     if (officialGuild) {
-                        const announcementChannel = officialGuild.channels.cache.get(announcementChannelId);
-                        const updateChannel = officialGuild.channels.cache.get(botUpdateChannelId);
+                        const announcementChannel = officialGuild.channels.cache.get(my.announcementChannelId);
+                        const updateChannel = officialGuild.channels.cache.get(my.updateChannelId);
                         if (announcementChannel && updateChannel) {
                             try {
                                 await announcementChannel.addFollower(targetChannelId, 'Migrated from old method');
