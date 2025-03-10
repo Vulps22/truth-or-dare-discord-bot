@@ -51,7 +51,9 @@ async function main() {
 
     const manager = new ShardingManager('./bot.js', {
         token: my.secret,
-    })
+        totalShards: my.environment === 'dev' ? 2 : 'auto' // Force 2 shards in dev, auto in prod
+    });
+    
 
     manager.on('shardCreate', shard => console.log(`Launched shard ${shard.id}`));
 

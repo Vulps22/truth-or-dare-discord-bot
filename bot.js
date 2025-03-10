@@ -4,7 +4,7 @@ const path = require('node:path');
 const { Client, GatewayIntentBits, Collection, SlashCommandRoleOption, EmbedBuilder } = require('discord.js');
 const Database = require('objects/database.js'); // Import Database class
 const util = require('util');
-
+const logger = require('objects/logger.js');
 overrideConsoleLog();
 
 console.log('Initialising Bot....');
@@ -12,6 +12,7 @@ console.log('Initialising Bot....');
 process.on('uncaughtException', (err, origin) => {
     console.error(err);
     console.error(origin);
+    logger.error(err.name + "\n" + err.message + "\n" + err.stack);
 });
 
 global.client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });

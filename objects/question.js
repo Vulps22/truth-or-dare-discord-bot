@@ -98,7 +98,6 @@ class Question {
 		this.server = new Server(serverId);
 		await this.server.load();
 
-
 		const newQuestionId = await this.db.set('questions', {
 			question: this.question,
 			creator: this.creator,
