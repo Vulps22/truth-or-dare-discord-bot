@@ -68,7 +68,7 @@ class BanHandler {
             let embed = embedder.rules();
 
             client.users.send(userId, {
-                content: `Your ${type} has been banned: \n- **ID**: ${question.id}\n- **Question**: ${question.question}\n- **Reason**: ${reason}\n\nIf you feel this was in error you may appeal the ban by opening a ticket on our [Official Server](https://discord.gg/${env.DISCORD_INVITE_CODE})\n\n`,
+                content: `Your ${type} has been banned: \n- **ID**: ${question.id}\n- **Question**: ${question.question}\n- **Reason**: ${reason}\n\nIf you feel this was in error you may appeal the ban by opening a ticket on our [Official Server](https://discord.gg/${my.discord_invite_code})\n\n`,
                 embeds: [embed]
             }).catch(async (error) => {
                 if (error.code === 50007) {

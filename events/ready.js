@@ -17,9 +17,11 @@ module.exports = {
 
         const db = new Database();
 
+        devCondition = my.environment === 'dev' ? 'AND owner = \'914368203482890240\'' : '';
+
         // Fetch all subscribed servers from the database
         const subscribedServers = await db.query(
-            `SELECT id AS serverId, announcement_channel AS channelId FROM servers WHERE announcement_channel IS NOT NULL`
+            `SELECT id AS serverId, announcement_channel AS channelId FROM servers WHERE announcement_channel IS NOT NULL ${devCondition}`
         );
 
         console.log(subscribedServers);
