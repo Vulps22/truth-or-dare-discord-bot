@@ -4,11 +4,6 @@ const embedder = require('embedder.js');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelSelectMenuBuilder, ChannelType, ComponentType, Interaction, PermissionFlagsBits } = require("discord.js");
 const logger = require("objects/logger.js");
 
-
-const officialServerId = '1079206786021732412';
-const announcementChannelId = '1162082471366627468';
-const botUpdateChannelId = '1162081820179959838';
-
 class SetupHandler extends Handler {
     constructor() {
         super("setup");
@@ -127,10 +122,10 @@ class SetupHandler extends Handler {
         }
 
         // Check if the bot is in the official server and can access the announcement channels
-        const officialGuild = global.client.guilds.cache.get(officialServerId);
+        const officialGuild = global.client.guilds.cache.get(my.guildId);
         if (officialGuild) {
-            const announcementChannel = officialGuild.channels.cache.get(announcementChannelId);
-            const updateChannel = officialGuild.channels.cache.get(botUpdateChannelId);
+            const announcementChannel = officialGuild.channels.cache.get(my.announcementChannelId);
+            const updateChannel = officialGuild.channels.cache.get(my.updateChannelId);
 
             if (announcementChannel && updateChannel) {
                 try {
@@ -151,10 +146,11 @@ class SetupHandler extends Handler {
         } else {
             // Request another shard to handle the subscription
             await global.client.shard.broadcastEval(async (c, { targetChannelId, serverId }) => {
-                const officialGuild = c.guilds.cache.get(officialServerId);
+                const logger = require('objects/logger');
+                const officialGuild = c.guilds.cache.get(my.guildId);
                 if (officialGuild) {
-                    const announcementChannel = officialGuild.channels.cache.get(announcementChannelId);
-                    const updateChannel = officialGuild.channels.cache.get(botUpdateChannelId);
+                    const announcementChannel = officialGuild.channels.cache.get(my.announcementChannelId);
+                    const updateChannel = officialGuild.channels.cache.get(my.updateChannelId);
                     if (announcementChannel && updateChannel) {
                         try {
                             await announcementChannel.addFollower(targetChannelId, 'Subscribed via /setup');

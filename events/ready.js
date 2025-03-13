@@ -17,9 +17,11 @@ module.exports = {
 
         const db = new Database();
 
+        devCondition = my.environment === 'dev' ? 'AND owner = \'914368203482890240\'' : '';
+
         // Fetch all subscribed servers from the database
         const subscribedServers = await db.query(
-            `SELECT id AS serverId, announcement_channel AS channelId FROM servers WHERE AND announcement_channel IS NOT NULL`
+            `SELECT id AS serverId, announcement_channel AS channelId FROM servers WHERE announcement_channel IS NOT NULL ${devCondition}`
         );
 
         console.log(subscribedServers);
@@ -34,9 +36,9 @@ module.exports = {
                 if (!targetChannel.permissionsFor(client.user).has(PermissionFlagsBits.ManageWebhooks)) {
                     logger.log(`Skipping ${guild.name} - missing MANAGE_WEBHOOKS permission.`);
                     try {
-                        await targetChannel.send(
-                            "I have tried to update the announcement process to take advantage of Discord's 'Follow' feature. Please give me MANAGE_WEBHOOKS permission and run /setup to continue receiving announcements."
-                        );
+                        //await targetChannel.send(
+                          //  "I have tried to update the announcement process to take advantage of Discord's 'Follow' feature. Please give me MANAGE_WEBHOOKS permission and run /setup to continue receiving announcements."
+                      // );
                     } catch (error) {
                         logger.error(`Failed to send permission request message to ${guild.name}:`, error);
                     }
