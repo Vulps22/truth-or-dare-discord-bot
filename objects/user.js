@@ -172,6 +172,8 @@ class User {
      * @returns 
      */
     async deleteServerUser(serverId) {
+        const logger = require('objects/logger');
+        
         const didLoad = this.loadServerUser(serverId);
 
         if (!didLoad) return false;
@@ -185,7 +187,7 @@ class User {
         }
 
         this.markForDeletion();
-        const logger = require('logger');
+
         logger.log(`**User** ${this.id} is no longer using the bot and Will be deleted in 30 days...`)
         return true;
     }
