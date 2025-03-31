@@ -51,7 +51,7 @@ class ButtonEventHandler {
         
         let type = await db.query(`SELECT type from user_questions WHERE messageId = '${this.interaction.message.id}'`);
         type = type[0].type;
-        
+
         let buttonId = this.interaction.customId;
         /** @type {Array<string>} */
         let idComponents = buttonId.split('_')
@@ -117,10 +117,9 @@ async function handleContentResponse(interaction, idComponents) {
 
     switch (type) {
         case "dare":
-            new DareHandler(interaction.client).setDare(interaction, decision);
-            break;
         case "truth":
-            new TruthHandler(interaction.client).setTruth(interaction, decision);
+        case "question":
+            new Handler().setQuestion(interaction, decision);
             break;
         case "server":
             new ServerHandler(interaction.client).banServer(interaction, decision)

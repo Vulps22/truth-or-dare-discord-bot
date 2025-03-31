@@ -641,6 +641,30 @@ async useCustomBanModal(interaction, id) {
 			);
 	}
 
+  /**
+	 * mark the question as approved or banned
+	 * @param {Interaction} interaction 
+	 * @param {string<"ban"|"approve"} decision
+	 */
+	async setQuestion(interaction, decision) {
+		if (!interaction.deferred) await interaction.deferReply({ ephemeral: true })
+		let question = await new Question().find(interaction.message.id);
+		switch (decision) {
+			case "ban":
+				this.getBanReason(interaction, question.id);
+				break;
+			case 'unban':
+				await question.unBan();
+				logger.updateQuestion(question);
+				interaction.editReply("Question has been Unbanned");
+				break;
+			case "approve":
+				this.approve(interaction, question);
+				break;
+		}
+
+	}
+
 }
 
 
