@@ -15,12 +15,13 @@ jobs:
     - name: Set up Docker
       uses: docker/setup-buildx-action@v3
 
-    # Step 2: Read version from package.json
-    - name: Get version from package.json
+    # Step 2: Get version from GitHub Tag
+    - name: Get version from GitHub Tag
       id: version
       run: |
-        version=$(jq -r '.version' package.json)
-        echo "VERSION=$version" >> $GITHUB_ENV
+        # Strip the "refs/tags/" prefix from GITHUB_REF to get the tag name
+        TAG=${GITHUB_REF#refs/tags/}
+        echo "VERSION=$TAG" >> $GITHUB_ENV
 
     # Step 3: Log in to Docker Hub
     - name: Log in to Docker Hub
