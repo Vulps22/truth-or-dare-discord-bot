@@ -6,6 +6,6 @@ import js from "@eslint/js";
 export default defineConfig([
   { files: ["**/*.{js,mjs,cjs}"] },
   { files: ["**/*.js"], languageOptions: { sourceType: "commonjs" } },
-  { files: ["**/*.{js,mjs,cjs}"], languageOptions: { globals: { ...globals.browser, my: "writable" } } },
+  { files: ["**/*.{js,mjs,cjs}"], languageOptions: { globals: { ...globals.browser, my: "writable", process: "writable" } } },
   { files: ["**/*.{js,mjs,cjs}"], plugins: { js }, extends: ["js/recommended"] },
 ]);
