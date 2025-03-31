@@ -171,7 +171,6 @@ class UserQuestion {
      * Use the message ID as the primary key for the UserDare object
      * It will be ID in the UserQuestion class and on the table
      * @param {string} messageId 
-     * @param {"truth" | "dare"} type 
      */
    async load(messageId) {
       const db = new Database();
