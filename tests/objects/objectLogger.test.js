@@ -697,7 +697,7 @@ describe('Logger', () => {
         });
 
         test('creates action row for banned server with banned owner', () => {
-            const actionRow = Logger.createActionRow('server', true, true);
+            const actionRow = Logger.createActionRow('server', false, true, true);
             
             // Verify the Banned button setup
             expect(mockButton.setCustomId).toHaveBeenCalledWith('new_server_ban');
@@ -712,7 +712,7 @@ describe('Logger', () => {
 
             // Verify the Ban Owner button setup
             expect(mockButton.setCustomId).toHaveBeenCalledWith('user_server_ban');
-            expect(mockButton.setLabel).toHaveBeenCalledWith('Creator is Banned');
+            expect(mockButton.setLabel).toHaveBeenCalledWith('Owner is Banned');
             expect(mockButton.setDisabled).toHaveBeenCalledWith(true);
         });
     });

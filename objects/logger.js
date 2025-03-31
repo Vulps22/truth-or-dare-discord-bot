@@ -264,7 +264,7 @@ module.exports = {
 
             const channelId = my.servers_log;
             const embed = this.serverEmbed(server);
-            const actionRow = this.createActionRow("server", server.isBanned, userBan);
+            const actionRow = this.createActionRow("server", false, server.isBanned, userBan);
 
             const success = await this.editMessageInChannel(channelId, server.message_id, { embeds: [embed], components: [actionRow] });
 
@@ -546,7 +546,7 @@ module.exports = {
                             .setStyle(ButtonStyle.Danger),
                         new ButtonBuilder()
                             .setCustomId(`user_server_ban`)
-                            .setLabel(userBanned ? 'Creator is Owner' : 'Ban Owner')
+                            .setLabel(userBanned ? 'Owner is Banned' : 'Ban Owner')
                             .setStyle(ButtonStyle.Secondary)
                             .setDisabled(userBanned),
                     );
