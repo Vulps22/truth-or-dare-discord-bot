@@ -1,7 +1,9 @@
+// eslint-disable-next-line no-unused-vars
 const { Interaction, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, Guild, MessageFlags } = require('discord.js');
 
 const Handler = require('handlers/handler.js')
 const UserDare = require('objects/userDare.js');
+// eslint-disable-next-line no-unused-vars
 const User = require('objects/user.js');
 const Server = require('objects/server.js');
 const Dare = require('objects/dare.js');
@@ -9,6 +11,7 @@ const logger = require('objects/logger.js');
 const Question = require('objects/question.js');
 const GivenQuestion = require('objects/givenQuestion.js');
 const Purchasable = require('objects/purchasable');
+// eslint-disable-next-line no-unused-vars
 let client = null
 class DareHandler extends Handler {
 
@@ -127,11 +130,16 @@ class DareHandler extends Handler {
 			interaction.editReply('You must offer a wager');
 			return;
 		}
-		const given = GivenQuestion.create(interaction, question, interaction.user.id, target.id, interaction.guildId, wager, xpType, "dare");
+		GivenQuestion.create(interaction, question, interaction.user.id, target.id, interaction.guildId, wager, xpType, "dare");
 		interaction.editReply({ content: "Your dare has been sent", ephemeral: true });
 	}
 
+	/**
+	 * 
+	 * @param {*} interaction 
+	 */
 	async listAll(interaction) {
+		/* eslint-disable */
 		await this.db.list("dares").then((dares) => {
 
 			for (let i = 0; i < dares.length; i++) {
@@ -164,11 +172,12 @@ class DareHandler extends Handler {
 	}
 
 	/**
-	 * @deprecated Use createQuestionEmbed instead
+	 
 	 * @param {Dare} dare
 	 * @param {Interaction} interaction
 	 * @param {string} username
 	 * @returns {EmbedBuilder}
+	 * @deprecated Use createQuestionEmbed instead
 	 */
 	createDareEmbed(dare, interaction, username) {
 

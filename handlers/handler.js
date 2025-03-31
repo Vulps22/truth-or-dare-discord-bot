@@ -1,4 +1,5 @@
-const { 
+const {
+  /* eslint-disable no-unused-vars */ 
   Interaction,
   StringSelectMenuOptionBuilder, 
   StringSelectMenuBuilder, 
@@ -279,7 +280,7 @@ async useCustomBanModal(interaction, id) {
   
       try {
         // Fetch the user from the guild
-        const creator = await interaction.guild.members.fetch(dare.creator);
+        const creator = await interaction.guild.members.fetch(question.creator);
         return creator.user;
       } catch (error) {
         // Handle cases where the user cannot be fetched (e.g., not in guild, API error)
@@ -301,15 +302,17 @@ async useCustomBanModal(interaction, id) {
      * @param {Snowflake} serverId 
      * @param {string} username 
      * @param {*} image 
+     * @returns {Promise<bool>}
      */
     async saveQuestionMessageId(messageId, userId, questionId, serverId, username, image) {
 
       if (!messageId) {
-        await interaction.channel.send("I'm sorry, I couldn't save the question to track votes. This is a brain fart. Please reach out for support on the official server.");
         logger.error(`Brain Fart: Couldn't save question to track votes. Message ID missing`);
+        return false;
       } else {
         const userQuestion = new UserQuestion(messageId, userId, questionId, serverId, username, image, 0, 0, this.type);
         await userQuestion.save();
+        return true;
 
       }
     }
@@ -341,7 +344,10 @@ async useCustomBanModal(interaction, id) {
 			const row = this.createActionRow();
 
 			const message = await interaction.editReply({ content: `Here's your ${this.type == "truth" ? "Truth" : "Dare"}!`, embeds: [embed], components: [row], fetchReply: true });
-			await this.saveQuestionMessageId(message.id, interaction.user.id, question.id, interaction.guildId, interaction.user.username, interaction.user.displayAvatarURL());
+			const didSave = await this.saveQuestionMessageId(message.id, interaction.user.id, question.id, interaction.guildId, interaction.user.username, interaction.user.displayAvatarURL());
+      if (!didSave) {
+        await interaction.channel.send("I'm sorry, I couldn't save the question to track votes. This is a brain fart. Please reach out for support on the official server.");
+      }
 		} catch (error) {
 			console.error('Error in handler.getQuestion function:', error);
 			interaction.editReply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:");

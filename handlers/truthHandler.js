@@ -1,4 +1,13 @@
-const { Interaction, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, Client, MessageFlags } = require('discord.js');
+const { 
+	/* eslint-disable no-unused-vars */
+	Interaction, 
+	EmbedBuilder, 
+	ActionRowBuilder, 
+	ButtonBuilder, 
+	ButtonStyle, 
+	Client, 
+	MessageFlags
+} = require('discord.js');
 
 const Handler = require('handlers/handler.js')
 const UserTruth = require('objects/userTruth.js');
@@ -133,6 +142,7 @@ class TruthHandler extends Handler {
 	 * @param {Interaction} interaction 
 	 */
 	async listAll(interaction) {
+		/* eslint-disable no-undef */
 		await this.db.list("truths").then((truths) => {
 
 			for (let i = 0; i < truths.length; i++) {

@@ -1,6 +1,5 @@
 const User = require("objects/user");
 const Database = require("objects/database");
-const Question = require("objects/question");
 
 class UserQuestion {
    id; // message_id
@@ -62,6 +61,10 @@ class UserQuestion {
       return this.serverId;
    }
 
+   /**
+    * 
+    * @returns {Question}
+    */
    async getQuestion() {
       const db = new Database();
       return await db.get('questions', this.questionId)
