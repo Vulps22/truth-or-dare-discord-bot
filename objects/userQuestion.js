@@ -12,7 +12,7 @@ class UserQuestion {
    failedCount;
    type;
 
-   constructor(id, userId, questionId, serverId, username, image, doneCount, failedCount) {
+   constructor(id, userId, questionId, serverId, username, image, doneCount, failedCount, type) {
       this.id = id;
       this.userId = userId;
       this.questionId = questionId;
@@ -21,6 +21,7 @@ class UserQuestion {
       this.image = image;
       this.doneCount = doneCount;
       this.failedCount = failedCount;
+      this.type = type;
    }
 
    getId() {
