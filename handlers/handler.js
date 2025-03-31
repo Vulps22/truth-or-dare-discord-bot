@@ -8,7 +8,8 @@ const {
   ButtonStyle, 
   TextInputStyle, 
   EmbedBuilder, 
-  Snowflake 
+  Snowflake, 
+  MessageFlags
 } = require('discord.js');
 const { ModalBuilder, ActionRowBuilder, TextInputBuilder } = require('@discordjs/builders');
 const Database = require('objects/database.js');
@@ -17,6 +18,9 @@ const logger = require('objects/logger.js');
 const Question = require('objects/question.js');
 const UserQuestion = require('objects/userQuestion');
 const GivenQuestion = require('objects/givenQuestion');
+const Server = require('objects/server');
+const Purchasable = require('objects/purchasable');
+const User = require('objects/user');
 
 class Handler {
   /**
@@ -27,6 +31,17 @@ class Handler {
    * @type {string<"dare"|"truth">}
    */
   type;
+
+  xpValues = {
+    dare: {
+      success: 50,
+      fail: 25,
+    },
+    truth: {
+      success: 30,
+      fail: 15,
+    }
+  };
 
   vote_count;
   ALPHA = false;
@@ -428,6 +443,202 @@ async useCustomBanModal(interaction, id) {
 		}
 		const given = GivenQuestion.create(interaction, question, interaction.user.id, target.id, interaction.guildId, wager, xpType, this.type);
 		interaction.editReply({ content: `Your ${type} has been sent`, ephemeral: true });
+	}
+
+
+  /**
+	 * 
+	 * @param {Interaction} interaction 
+	 * @returns 
+	 */
+	async vote(interaction) {
+		if (!interaction.deferred) await interaction.deferReply({ content: "Registering your vote", ephemeral: true })
+
+		const userQuestion = await new UserQuestion().load(interaction.message.id);
+
+		if (!userQuestion) {
+			await interaction.editReply("I'm sorry, I couldn't find the dare to track votes. This is a brain fart. Please reach out for support on the official server.");
+			logger.error(`Brain Fart: Couldn't find dare to track votes. Message ID missing`);
+			return;
+		}
+
+		//load the user		
+		/** @type {User} */
+		const user = await userQuestion.getUser();
+		const serverUserLoaded = await user.loadServerUser(interaction.guildId);
+
+		if (!serverUserLoaded) {
+			await interaction.editReply("Failed to load server user data. Please try again.");
+			logger.error(`Failed to load server user data for user ${user.id} in server ${interaction.guildId}`);
+			return;
+		}
+
+		//load the server
+		const server = new Server(interaction.guildId);
+		await server.load();
+
+		const dareUser = userQuestion.getUserId();
+
+		if (interaction.customId === 'question_skip') {
+			this.doSkip(interaction, userQuestion, dareUser, user);
+		} else {
+			this.doVote(interaction, userQuestion, dareUser, user, server)
+		}
+
+	}
+	/**
+	 * 
+	 * @param {Interaction} interaction 
+	 * @param {UserQuestion} userQuestion 
+	 * @param {string} questionUser 
+	 * @param {User} user 
+	 * @returns 
+	 */
+	async doSkip(interaction, userQuestion, questionUser, user) {
+
+		if (questionUser != interaction.user.id) {
+			interaction.editReply({ content: `You can't skip someone else's ${this.type}!`, ephemeral: true });
+			return;
+		}
+
+		if (!user.hasValidVote()) {
+
+			/**
+			* @type {Purchasable}
+			*/
+			const purchasable = await new Purchasable(Purchasable.SKIP10).load();
+
+			const row = new ActionRowBuilder().addComponents(
+				new ButtonBuilder()
+					.setLabel('Vote on Top.gg')
+					.setStyle(ButtonStyle.Link)
+					.setURL('https://top.gg/bot/1079207025315164331/vote'),
+				new ButtonBuilder()
+					.setStyle(ButtonStyle.Premium)
+					.setSKUId(purchasable.skuId)
+			);
+			interaction.editReply(
+				{
+					content: "Uh oh! You're out of Skips!\nNot to worry, You can earn up to 10 skips by voting for the bot every day on [top.gg](https://top.gg/bot/1079207025315164331/vote)!",
+					components: [row],
+					flags: MessageFlags.Ephemeral
+				});
+			return;
+		}
+
+		const embed = await this.createUpdatedQuestionEmbed(userQuestion, interaction);
+		const row = await this.createSkippedActionRow();
+
+		//use the userQuestion.messageId to edit the embed in the message
+		await interaction.message.edit({ embeds: [embed], components: [row] });
+		//await user.burnVote();
+    console.log(this.type)
+		await interaction.editReply({ content: `Your ${this.type} has been skipped! You have ${user.voteCount} skips remaining!`, ephemeral: true });
+
+	}
+
+	/**
+	 * 
+	 * @param {Interaction} interaction 
+	 * @param {UserQuestion} userQuestion 
+	 * @param {String} questionUser 
+	 * @param {User} user 
+	 * @param {Server} server 
+	 * @returns 
+	 */
+	async doVote(interaction, userQuestion, questionUser, user, server) {
+
+		if (questionUser == interaction.user.id && !this.ALPHA) {
+			interaction.editReply({ content: "You can't vote on your own dare!", ephemeral: true });
+			return;
+		}
+
+		const vote = interaction.customId === 'question_done' ? 'done' : 'failed';
+
+		const couldVote = await userQuestion.vote(interaction.user.id, vote);
+		if (!couldVote && !this.ALPHA) {
+			await interaction.editReply({ content: "You've already voted on this dare!", ephemeral: true });
+			return;
+		}
+
+		const embed = await this.createUpdatedQuestionEmbed(userQuestion, interaction);
+
+		let row = this.createActionRow();
+
+		if (userQuestion.doneCount >= this.vote_count) {
+      console.log(1)
+			row = this.createPassedActionRow();
+      console.log(2)
+			user.addXP(this.xpValues[userQuestion.type].success);
+      console.log(3)
+      user.addServerXP(server[`${userQuestion.type}_success_xp`]);
+      console.log(4)
+
+		} else if (userQuestion.failedCount >= this.vote_count) {
+      console.log(5)
+			row = this.createFailedActionRow();
+      console.log(6)
+			user.subtractXP(this.xpValues[userQuestion.type].fail);
+      console.log(7)
+      user.addServerXP(server[`${userQuestion.type}_fail_xp`]);
+
+      console.log(8)
+		}
+
+		//use the userDare.messageId to edit the embed in the message
+		await interaction.message.edit({ embeds: [embed], components: [row] });
+		await interaction.editReply({ content: "Your vote has been recorded!", ephemeral: true });
+	}
+
+  createActionRow() {
+		return new ActionRowBuilder()
+			.addComponents(
+				new ButtonBuilder()
+					.setCustomId('question_done')
+					.setLabel('DONE')
+					.setStyle(ButtonStyle.Success), // Green button
+				new ButtonBuilder()
+					.setCustomId('question_failed')
+					.setLabel('FAILED')
+					.setStyle(ButtonStyle.Danger), // Red button
+				new ButtonBuilder()
+					.setCustomId('question_skip')
+					.setLabel('SKIP')
+					.setStyle(ButtonStyle.Secondary), // Red button
+			);
+	}
+
+	createPassedActionRow() {
+		return new ActionRowBuilder()
+			.addComponents(
+				new ButtonBuilder()
+					.setCustomId('question_done')
+					.setLabel('PASSED')
+					.setDisabled(true)
+					.setStyle(ButtonStyle.Success), // Green button
+			);
+	}
+
+	createFailedActionRow() {
+		return new ActionRowBuilder()
+			.addComponents(
+				new ButtonBuilder()
+					.setCustomId('question_failed')
+					.setLabel('FAILED')
+					.setDisabled(true)
+					.setStyle(ButtonStyle.Danger), // Red button
+			);
+	}
+
+	createSkippedActionRow() {
+		return new ActionRowBuilder()
+			.addComponents(
+				new ButtonBuilder()
+					.setCustomId('question_skipped')
+					.setLabel('SKIPPED')
+					.setDisabled(true)
+					.setStyle(ButtonStyle.Secondary), // Red button
+			);
 	}
 
 }
