@@ -102,7 +102,7 @@ module.exports = {
         console.log("Updating dare message", dare.id, dare.isApproved);
         const channelId = my.dares_log;
         const embed = await this.getDareEmbed(dare);
-        const actionRow = dare.isApproved ? this.createApprovedActionRow("dare") : this.createActionRow("dare", dare.isApproved, dare.isBanned, userBan);
+        const actionRow = dare.isApproved && !dare.isBanned ? this.createApprovedActionRow("dare") : this.createActionRow("dare", dare.isApproved, dare.isBanned, userBan);
 
         try {
             if (dare.messageId !== 'pre-v5') {
@@ -175,7 +175,7 @@ module.exports = {
 
         const channelId = my.truths_log;
         const embed = await this.getTruthEmbed(truth);
-        const actionRow = this.createActionRow("truth", truth.isApproved, truth.isBanned, userBan);
+        const actionRow = truth.isApproved && !truth.isBanned ? this.createApprovedActionRow("truth") : this.createActionRow("truth", truth.isApproved, truth.isBanned, userBan);
 
         try {
             if (truth.messageId !== 'pre-v5') {

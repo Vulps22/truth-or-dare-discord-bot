@@ -175,8 +175,8 @@ async useCustomBanModal(interaction, id) {
   async approve(interaction, question) {
     if(!interaction.deferred) await interaction.deferReply({ephemeral: true});
     await question.load();
-    await question.approve();
-    question.approvedBy = interaction.user.id;
+    await question.approve(interaction.user.id);
+    
     await question.save();
 
     if (question.type === 'dare') {
