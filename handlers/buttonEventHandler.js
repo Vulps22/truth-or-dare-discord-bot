@@ -42,7 +42,13 @@ class ButtonEventHandler {
             this.interaction.reply("A recent Update has changed how I identify bots. I am unable to register any votes on messages created before <t:1725855060:F>")
         }
 
+        //get the type from the question using the messageId as the key
+        const db = new Database();
         
+        let type = await db.query(`SELECT * from user_questions WHERE messageId = '${this.interaction.message.id}'`);
+        console.log(type);
+        type = type[0].type;
+
         let buttonId = this.interaction.customId;
         /** @type {Array<string>} */
         let idComponents = buttonId.split('_')
