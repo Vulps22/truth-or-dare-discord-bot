@@ -293,23 +293,23 @@ async useCustomBanModal(interaction, id) {
     }
 
   /**
-	 * 
-   * @param { "truth" | "dare" } type
+	 * gets a random question from the database and sends it to the user
+   * uses the type to determine if it's a truth or dare
 	 * @param {Interaction} interaction 
 	 * @returns 
 	 */
 
-	async getQuestion(type, interaction) {
+	async getQuestion(interaction) {
 
 		if (!interaction.deferred) await interaction.deferReply();
 		try {
-			const questions = await Question.collect(type);
+			const questions = await Question.collect(this.type);
 			if (!questions || questions.length === 0) {
-				return interaction.editReply(`Hmm, I can't find any ${type}s. This might be a bug, try again later`);
+				return interaction.editReply(`Hmm, I can't find any ${this.type}s. This might be a bug, try again later`);
 			}
 
 			const unBannedQuestions = questions.filter(q => !q.isBanned && q.isApproved);
-			if (unBannedQuestions.length === 0) { interaction.editReply(`There are no approved ${type}s to give`); return; }
+			if (unBannedQuestions.length === 0) { interaction.editReply(`There are no approved ${this.type}s to give`); return; }
 			const question = this.selectRandom(unBannedQuestions);
 
 			const creator = await this.getCreator(question, interaction);
@@ -318,7 +318,7 @@ async useCustomBanModal(interaction, id) {
 			const embed = this.createQuestionEmbed(question, interaction, username);
 			const row = this.createActionRow();
 
-			const message = await interaction.editReply({ content: `Here's your ${type == "truth" ? "Truth" : "Dare"}!`, embeds: [embed], components: [row], fetchReply: true });
+			const message = await interaction.editReply({ content: `Here's your ${this.type == "truth" ? "Truth" : "Dare"}!`, embeds: [embed], components: [row], fetchReply: true });
 			await this.saveQuestionMessageId(message.id, interaction.user.id, question.id, interaction.guildId, interaction.user.username, interaction.user.displayAvatarURL());
 		} catch (error) {
 			console.error('Error in handler.getQuestion function:', error);
