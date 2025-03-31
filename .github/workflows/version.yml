@@ -3,7 +3,7 @@ name: Update Release Version in Project
 on:
   push:
     branches:
-      - main
+      #- main
 
 jobs:
   update_project_field:
