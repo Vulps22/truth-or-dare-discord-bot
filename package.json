@@ -8,7 +8,8 @@
     "test": "cross-env NODE_PATH=./ jest --verbose --bail",
     "coverage": "cross-env NODE_PATH=./ jest --coverage",
     "start": "cross-env NODE_PATH=./ node index.js",
-    "deploy-global": "cross-env NODE_PATH=./ node deploy-commands-global.js"
+    "deploy-global": "cross-env NODE_PATH=./ node deploy-commands-global.js",
+    "deploy-mod": "cross-env NODE_PATH=./ node deploy-commands-mod.js"
   },
   "keywords": [],
   "author": "",
