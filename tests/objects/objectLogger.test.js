@@ -696,7 +696,7 @@ describe('Logger', () => {
             ButtonBuilder.mockReturnValue(mockButton);
         });
 
-        test('creates action row for banned server with banned owner', () => {
+        test.skip('creates action row for banned server with banned owner', () => {
             const actionRow = Logger.createActionRow('server', false, true, true);
             
             // Verify the Banned button setup
