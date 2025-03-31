@@ -69,6 +69,7 @@ class DareHandler extends Handler {
 	 * 
 	 * @param {Interaction} interaction 
 	 * @returns 
+	 * @deprecated Use getQuestion instead
 	 */
 
 	async dare(interaction) {
@@ -81,16 +82,16 @@ class DareHandler extends Handler {
 
 			const unBannedQuestions = dares.filter(q => !q.isBanned && q.isApproved);
 			if (unBannedQuestions.length === 0) { interaction.editReply("There are no approved truths to give"); return; }
-			const dare = this.selectRandomDare(unBannedQuestions);
+			const dare = this.selectRandom(unBannedQuestions);
 
 			const creator = await this.getCreator(dare, interaction);
 			const username = creator.username ?? "Somebody";
 
-			const embed = this.createDareEmbed(dare, interaction, username);
+			const embed = this.createQuestionEmbed(dare, interaction, username);
 			const row = this.createActionRow();
 
 			const message = await interaction.editReply({ content: "Here's your Dare!", embeds: [embed], components: [row], fetchReply: true });
-			await this.saveDareMessageId(message.id, interaction.user.id, dare.id, interaction.guildId, interaction.user.username, interaction.user.displayAvatarURL());
+			await this.saveQuestionMessageId(message.id, interaction.user.id, dare.id, interaction.guildId, interaction.user.username, interaction.user.displayAvatarURL());
 		} catch (error) {
 			console.error('Error in dare function:', error);
 			interaction.editReply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:");
@@ -150,40 +151,24 @@ class DareHandler extends Handler {
 		})
 	}
 
+	/**
+	 * 
+	 * @param {Dare[]} dares 
+	 * @returns 
+	 * @deprecated Use selectRandom instead
+	 */
 	selectRandomDare(dares) {
 		const random = Math.floor(Math.random() * dares.length);
 		return dares[random];
 	}
+
 	/**
-	 * Asynchronously gets the creator of a dare from an interaction within a guild.
-	 * 
-	 * @param {Dare} dare - The dare object with a 'creator' property holding the user ID.
-	 * @param {Interaction} interaction - The interaction from which the guild and users are accessed.
-	 * @returns {Promise<User>} The user object of the creator or a default user object if not found.
+	 * @deprecated Use createQuestionEmbed instead
+	 * @param {Dare} dare
+	 * @param {Interaction} interaction
+	 * @param {string} username
+	 * @returns {EmbedBuilder}
 	 */
-	async getCreator(dare, interaction) {
-		// Check if the interaction has a guild and the guild is properly fetched
-		if (!interaction.guild) {
-			console.error("Guild is undefined. Ensure this function is used within a guild context.");
-			return { username: "Somebody" };
-		}
-
-		try {
-			// Fetch the user from the guild
-			const creator = await interaction.guild.members.fetch(dare.creator);
-			return creator.user;
-		} catch (error) {
-			// Handle cases where the user cannot be fetched (e.g., not in guild, API error)
-			if (error.code !== 10007) {
-				// Log other errors
-				logger.error('Unexpectedly failed to fetch username in dareHandler: ', error)
-			}
-
-			return { username: "Somebody" };
-		}
-	}
-
-
 	createDareEmbed(dare, interaction, username) {
 
 		let dareText = `${dare.question}\n\n **Votes:** 0 Done | 0 Failed`;
@@ -266,6 +251,16 @@ class DareHandler extends Handler {
 			);
 	}
 
+	/**
+	 * 
+	 * @param {*} messageId 
+	 * @param {*} userId 
+	 * @param {*} dareId 
+	 * @param {*} serverId 
+	 * @param {*} username 
+	 * @param {*} image 
+	 * @deprecated use saveQuestionMessageId instead
+	 */
 	async saveDareMessageId(messageId, userId, dareId, serverId, username, image) {
 		if (!messageId) {
 			await interaction.channel.send("I'm sorry, I couldn't save the dare to track votes. This is a brain fart. Please reach out for support on the official server.");

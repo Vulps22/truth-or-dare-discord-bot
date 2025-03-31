@@ -69,6 +69,7 @@ class TruthHandler extends Handler {
 	 * 
 	 * @param {Interaction} interaction 
 	 * @returns 
+	 * @deprecated use getQuestion instead
 	 */
 	async truth(interaction) {
 		console.log(interaction.deferred);
@@ -171,20 +172,11 @@ class TruthHandler extends Handler {
 	 * 
 	 * @param {Truth[]} truths 
 	 * @returns 
+	 * @deprecated use selectRandom instead
 	 */
 	selectRandomTruth(truths) {
 		const random = Math.floor(Math.random() * truths.length);
 		return truths[random];
-	}
-	/**
-	 * 
-	 * @param {Truth} truth 
-	 * @param {Client} client 
-	 * @returns 
-	 */
-	getCreator(truth, client) {
-		let creator = client.users.cache.get(truth.creator);
-		return creator || { username: "Somebody" };
 	}
 
 	/**
@@ -193,6 +185,7 @@ class TruthHandler extends Handler {
 	 * @param {Interaction} interaction 
 	 * @param {User} creator 
 	 * @returns {EmbedBuilder}
+	 * @deprecated use createQuestionEmbed instead
 	 */
 	createTruthEmbed(truth, interaction, creator) {
 		let truthText = `${truth.question}\n\n **Votes:** 0 Done | 0 Failed`;
@@ -275,6 +268,16 @@ class TruthHandler extends Handler {
 			);
 	}
 
+	/**
+	 * 
+	 * @param {*} messageId 
+	 * @param {*} userId 
+	 * @param {*} truthId 
+	 * @param {*} serverId 
+	 * @param {*} username 
+	 * @param {*} image 
+	 * @deprecated use saveQuestionMessageId instead
+	 **/
 	async saveTruthMessageId(messageId, userId, truthId, serverId, username, image) {
 		if (!messageId) {
 			await interaction.channel.send("I'm sorry, I couldn't save the truth to track votes. This is a brain fart. Please reach out for support on the official server.");
