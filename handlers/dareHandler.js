@@ -27,6 +27,7 @@ class DareHandler extends Handler {
 	 * 
 	 * @param {Interaction} interaction 
 	 * @returns 
+	 * @deprecated Use createQuestion instead
 	 */
 	async createDare(interaction) {
 

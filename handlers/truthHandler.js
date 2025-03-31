@@ -33,6 +33,7 @@ class TruthHandler extends Handler {
 	 * 
 	 * @param {Interaction} interaction 
 	 * @returns 
+	 * @deprecated use createQuestion instead
 	 */
 	async createTruth(interaction) {
 		const truth = new Truth();

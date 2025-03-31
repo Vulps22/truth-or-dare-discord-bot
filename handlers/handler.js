@@ -38,6 +38,52 @@ class Handler {
     this.vote_count = my.required_votes
 
   }
+
+  /**
+	 * 
+	 * @param {Interaction} interaction 
+	 * @returns 
+	 */
+	async createQuestion(interaction) {
+		const question = new Question(null, this.type);
+
+		question.question = interaction.options.getString('text');
+		if (!question.question) {
+			interaction.editReply(`You need to give me a ${this.type}!`);
+			logger.error('Aborted Question creation: Nothing Given');
+			return;
+		}
+
+		let questions = await this.db.list("questions", `type = '${this.type}'`);
+		if (questions.some(q => q.question === question.question)) {
+			interaction.editReply(`This ${this.type} already exists!`);
+			logger.log(`Aborted Question creation: Already exists`);
+			return;
+		} else {
+			let createdQuestion = await question.create(interaction.options.getString('text'), interaction.user.id, interaction.guildId);
+
+			const embed = new EmbedBuilder()
+				.setTitle(`New ${ this.type == "truth" ? "Truth" : "Dare" } Created!`)
+				.setDescription(question.question)
+				.setColor('#00ff00')
+				.setFooter({ text: ' Created by ' + interaction.user.username, iconURL: interaction.user.displayAvatarURL() });
+
+			const now = new Date();
+			//Moderators will be on holiday between 22/12 and 02/01
+			if ((now.getMonth() == 11 && now.getDate() >= 3) || (now.getMonth() == 0 && now.getDate() == 1)) {
+				//send a christmas message
+				interaction.editReply({ content: "Thank you for your submission. Our excellent and dedicated team of moderators have decided to take christmas off from moderation.\n Your submission will be reviewed when they return on the 2nd of January\n\n Merry Christmas 🎄" });
+
+			} else {
+				//Not Christmas
+				interaction.editReply({ content: `Thank you for your submission. A member of the moderation team will review your ${ this.type } shortly`});
+			}
+
+			interaction.channel.send({ embeds: [embed] });
+
+			logger.newQuestion(createdQuestion);
+		}
+	}
   
   /**
    * 
@@ -192,11 +238,7 @@ async useCustomBanModal(interaction, id) {
     
     await question.save();
 
-    if (question.type === 'dare') {
-      await logger.updateDare(question);
-    } else {
-      await logger.updateTruth(question); 
-    }
+    logger.updateQuestion(question, false);
 
     interaction.editReply({ content: 'Question has been approved', ephemeral: true });
   }

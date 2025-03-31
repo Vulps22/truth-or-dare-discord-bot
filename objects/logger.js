@@ -1,4 +1,5 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, Message, } = require('discord.js');
+const Question = require('./question');
 
 module.exports = {
 
@@ -144,7 +145,10 @@ module.exports = {
      * @param {Truth} truth 
      */
     async newTruth(truth) {
-        if (truth.server && truth.server.name) serverName = truth.server.name;
+        /* eslint-disable no-unused-vars */
+        if (truth.server && truth.server.name) {
+            let serverName = truth.server.name;
+        }
 
         const channelId = my.truths_log;
         const embed = await this.getTruthEmbed(truth);
@@ -168,6 +172,7 @@ module.exports = {
     /**
      * @param {Truth} truth 
      * @param {boolean} [userBan] 
+     * @deprecated use updateQuestion instead
      */
     async updateTruth(truth, userBan = false) {
         let serverName = 'pre-v5';
@@ -191,6 +196,58 @@ module.exports = {
             }
         } catch (error) {
             console.log(`Error updating truth message with ID ${truth.messageId}:`, error);
+            return false;
+        }
+    },
+
+    /**
+     * @param {Question} question 
+     */
+    async newQuestion(question) {
+
+        const channelId = (question.type == "truth") ? my.truths_log : my.dares_log;
+        const embed = await this.questionEmbed(question);
+        const actionRow = this.createActionRow(question.type);
+
+        try {
+            const messageId = await this.sendTo({ embeds: [embed], components: [actionRow] }, channelId);
+
+            if (messageId) {
+                console.log("Logged message with ID:", messageId);
+                question.messageId = messageId;
+                await question.save();
+            } else {
+                console.log("Failed to log the question message.");
+            }
+        } catch (error) {
+            console.log("Error logging new question:", error);
+        }
+    },
+
+    /**
+     * @param {Question} question 
+     * @param {boolean} [userBan] 
+     */
+    async updateQuestion(question, userBan = false) {
+
+        const channelId = (question.type == "truth") ? my.truths_log : my.dares_log;
+        const embed = await this.questionEmbed(question);
+        const actionRow = question.isApproved && !question.isBanned ? this.createApprovedActionRow(question.type) : this.createActionRow(question.type, question.isApproved, question.isBanned, userBan);
+
+        try {
+            if (question.messageId !== 'pre-v5') {
+                const success = await this.editMessageInChannel(channelId, question.messageId, { embeds: [embed], components: [actionRow] });
+
+                if (success) {
+                    console.log("Updated message with ID:", question.messageId);
+                    return true;
+                } else {
+                    console.log(`Failed to update question message with ID: ${question.messageId}`);
+                    return false;
+                }
+            }
+        } catch (error) {
+            console.log(`Error updating question message with ID ${question.messageId}:`, error);
             return false;
         }
     },
@@ -374,6 +431,7 @@ module.exports = {
      * 
      * @param {Dare} dare 
      * @returns {Promise<EmbedBuilder>}
+     * @deprecated use questionEmbed instead
      */
     async getDareEmbed(dare) {
         if (!dare.server || !dare.server.name) dare.server = { name: 'Pre-V5' };
@@ -387,6 +445,7 @@ module.exports = {
      * 
      * @param {Truth} truth 
      * @returns {Promise<EmbedBuilder>}
+     * @deprecated use questionEmbed instead
      */
     async getTruthEmbed(truth) {
         if (!truth.server || !truth.server.name) truth.server = { name: 'Pre-V5' };
@@ -511,8 +570,9 @@ module.exports = {
      * Creates an action row with buttons
      * @param {string<truth|dare>} type 
      * @param {boolean} isBanned
-     * @param {boolean} userBanned
+     * @param {boolean} userBanned - Whether the user is banned or not
      * @returns {ActionRowBuilder}
+     * TODO: isApproved is sitting her for no reason? why??
      */
     createActionRow(type, isApproved = false, isBanned = false, userBanned = false) {
         console.log("Creating action row", type, isBanned, userBanned);
