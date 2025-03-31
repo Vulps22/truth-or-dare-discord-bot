@@ -1,7 +1,4 @@
 const { Interaction, Message, InteractionResponse, ButtonStyle, MessageFlags } = require("discord.js");
-const DareHandler = require("handlers/dareHandler");
-const TruthHandler = require("handlers/truthHandler");
-const BanHandler = require("handlers/banHandler");
 const logger = require("objects/logger");
 const SetupHandler = require("handlers/setupHandler");
 const ServerHandler = require("handlers/serverHandler");
