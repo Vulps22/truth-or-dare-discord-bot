@@ -186,7 +186,6 @@ class UserQuestion {
       this.failedCount = question.failedCount;
 
       const theQuestion = await db.get('questions', question.questionId, "id")
-      console.log(theQuestion);
       
       this.type = theQuestion.type;
       if (!this.type) {
