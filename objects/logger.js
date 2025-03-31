@@ -69,61 +69,6 @@ module.exports = {
         }
     },
 
-
-    /**
- * @param {Dare} dare 
- */
-    async newDare(dare) {
-
-        const channelId = my.dares_log;
-        const embed = await this.getDareEmbed(dare);
-        const actionRow = this.createActionRow("dare");
-
-        try {
-            const messageId = await this.sendTo({ embeds: [embed], components: [actionRow] }, channelId);
-
-            if (messageId) {
-                console.log("Logged:", messageId);
-                dare.messageId = messageId;
-                await dare.save();
-            } else {
-                console.log("Failed to log the dare message.");
-            }
-        } catch (error) {
-            console.log("Error logging new dare:", error);
-        }
-    },
-
-
-    /**
-     * @param {Dare} dare 
-     * @param {boolean} userBan
-     */
-    async updateDare(dare, userBan = false) {
-        console.log("Updating dare message", dare.id, dare.isApproved);
-        const channelId = my.dares_log;
-        const embed = await this.getDareEmbed(dare);
-        const actionRow = dare.isApproved && !dare.isBanned ? this.createApprovedActionRow("dare") : this.createActionRow("dare", dare.isApproved, dare.isBanned, userBan);
-
-        try {
-            if (dare.messageId !== 'pre-v5') {
-                const success = await this.editMessageInChannel(channelId, dare.messageId, { embeds: [embed], components: [actionRow] });
-
-                if (success) {
-                    console.log("Updated message with ID:", dare.messageId);
-                    return true;
-                } else {
-                    console.log(`Failed to update dare message with ID: ${dare.messageId}`);
-                    return false;
-                }
-            }
-        } catch (error) {
-            console.log(`Error updating dare message with ID ${dare.messageId}:`, error);
-            return false;
-        }
-    },
-
-
     createApprovedActionRow(type) {
         return new ActionRowBuilder()
           .addComponents(
@@ -139,66 +84,6 @@ module.exports = {
               .setDisabled(false),
           );
       },
-
-
-    /**
-     * @param {Truth} truth 
-     */
-    async newTruth(truth) {
-        /* eslint-disable no-unused-vars */
-        if (truth.server && truth.server.name) {
-            let serverName = truth.server.name;
-        }
-
-        const channelId = my.truths_log;
-        const embed = await this.getTruthEmbed(truth);
-        const actionRow = this.createActionRow("truth");
-
-        try {
-            const messageId = await this.sendTo({ embeds: [embed], components: [actionRow] }, channelId);
-
-            if (messageId) {
-                console.log("Logged message with ID:", messageId);
-                truth.messageId = messageId;
-                await truth.save();
-            } else {
-                console.log("Failed to log the truth message.");
-            }
-        } catch (error) {
-            console.log("Error logging new truth:", error);
-        }
-    },
-
-    /**
-     * @param {Truth} truth 
-     * @param {boolean} [userBan] 
-     * @deprecated use updateQuestion instead
-     */
-    async updateTruth(truth, userBan = false) {
-        let serverName = 'pre-v5';
-        if (truth.server && truth.server.name) serverName = truth.server.name;
-
-        const channelId = my.truths_log;
-        const embed = await this.getTruthEmbed(truth);
-        const actionRow = truth.isApproved && !truth.isBanned ? this.createApprovedActionRow("truth") : this.createActionRow("truth", truth.isApproved, truth.isBanned, userBan);
-
-        try {
-            if (truth.messageId !== 'pre-v5') {
-                const success = await this.editMessageInChannel(channelId, truth.messageId, { embeds: [embed], components: [actionRow] });
-
-                if (success) {
-                    console.log("Updated message with ID:", truth.messageId);
-                    return true;
-                } else {
-                    console.log(`Failed to update truth message with ID: ${truth.messageId}`);
-                    return false;
-                }
-            }
-        } catch (error) {
-            console.log(`Error updating truth message with ID ${truth.messageId}:`, error);
-            return false;
-        }
-    },
 
     /**
      * @param {Question} question 

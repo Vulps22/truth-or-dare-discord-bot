@@ -195,11 +195,9 @@ class BanHandler {
             await question.save();
 
             let didUpdate = null;
-            if (question.type == 'dare') {
-                didUpdate = await logger.updateDare(question, userBan);
-            } else {
-                didUpdate = await logger.updateTruth(question, userBan);
-            }
+            
+                didUpdate = await logger.updateQuestion(question, userBan);
+            
             if (!didUpdate) {
                 if (notify) interaction.followUp(`Banned: Failed to update Action Row: Pre-V5 Question\n\nId: ${question.id} \n\n Question: ${question.question}\n\nReason: ${reason}`);
             }
