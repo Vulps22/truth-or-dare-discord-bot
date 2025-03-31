@@ -82,7 +82,7 @@ module.exports = {
 				didBan = await new BanHandler().banServer(id, interaction.options.getString('reason'), interaction);
 				break;
 			case 'user':
-				id = 
+				id = interaction.options.getString('id')
 				didBan = await new BanHandler().banUser(id, interaction.options.getString('reason'), interaction);
 				break;
 			default:
