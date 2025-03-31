@@ -168,19 +168,6 @@ class BanHandler {
         }
         return str.slice(0, num - 3) + '...'
     }
-    /**
-     * @deprecated Use banQuestion Instead
-     */
-    banDare() {
-        throw new Error("Use BanQuestion instead");
-    }
-
-    /**
-    * @deprecated Use banQuestion Instead
-    */
-    banTruth() {
-        throw new Error("Use BanQuestion instead");
-    }
 
     /**
      * 
