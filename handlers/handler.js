@@ -513,9 +513,10 @@ async useCustomBanModal(interaction, id) {
 					.setLabel('Vote on Top.gg')
 					.setStyle(ButtonStyle.Link)
 					.setURL('https://top.gg/bot/1079207025315164331/vote'),
-				new ButtonBuilder()
-					.setStyle(ButtonStyle.Premium)
-					.setSKUId(purchasable.skuId)
+          // TODO: Fix and reimplement the purchasable button - See #50
+				//new ButtonBuilder()
+				//	.setStyle(ButtonStyle.Premium)
+				//	.setSKUId(purchasable.skuId)
 			);
 			interaction.editReply(
 				{
@@ -531,7 +532,7 @@ async useCustomBanModal(interaction, id) {
 
 		//use the userQuestion.messageId to edit the embed in the message
 		await interaction.message.edit({ embeds: [embed], components: [row] });
-		//await user.burnVote();
+		await user.burnVote();
     console.log(this.type)
 		await interaction.editReply({ content: `Your ${this.type} has been skipped! You have ${user.voteCount} skips remaining!`, ephemeral: true });
 
@@ -566,23 +567,15 @@ async useCustomBanModal(interaction, id) {
 		let row = this.createActionRow();
 
 		if (userQuestion.doneCount >= this.vote_count) {
-      console.log(1)
 			row = this.createPassedActionRow();
-      console.log(2)
 			user.addXP(this.xpValues[userQuestion.type].success);
-      console.log(3)
       user.addServerXP(server[`${userQuestion.type}_success_xp`]);
-      console.log(4)
 
 		} else if (userQuestion.failedCount >= this.vote_count) {
-      console.log(5)
 			row = this.createFailedActionRow();
-      console.log(6)
 			user.subtractXP(this.xpValues[userQuestion.type].fail);
-      console.log(7)
       user.addServerXP(server[`${userQuestion.type}_fail_xp`]);
 
-      console.log(8)
 		}
 
 		//use the userDare.messageId to edit the embed in the message

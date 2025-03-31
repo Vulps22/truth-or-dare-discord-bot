@@ -208,7 +208,7 @@ async function handleGivenQuestion(interaction, idComponents) {
                 );
                 interaction.reply(
                     { 
-                        content: "Uh oh! You'rrrrrrrrrrrrrrrrrre out of Skips!\nNot to worry, You can earn up to 10 skips by voting for the bot every day on [top.gg](https://top.gg/bot/1079207025315164331/vote)!",
+                        content: "Uh oh! You're out of Skips!\nNot to worry, You can earn up to 10 skips by voting for the bot every day on [top.gg](https://top.gg/bot/1079207025315164331/vote)!",
                         components: [row],
                         flags: MessageFlags.Ephemeral 
                     });
