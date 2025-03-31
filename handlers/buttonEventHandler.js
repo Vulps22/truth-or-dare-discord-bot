@@ -47,7 +47,7 @@ class ButtonEventHandler {
         const db = new Database();
         
         let type = await db.query(`SELECT * from user_questions WHERE messageId = '${this.interaction.message.id}'`);
-        console.log(type);
+        if(type == []) type = await db.query(`SELECT * from questions WHERE messageId = '${this.interaction.message.id}'`);
         type = type[0].type;
 
         let buttonId = this.interaction.customId;
