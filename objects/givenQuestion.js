@@ -59,7 +59,7 @@ class GivenQuestion {
 	}
 
 	/**
-	 * 
+	 * create a new given question and send it to the specified user on the interaction channel
 	 * @param {Interaction} interaction 
 	 * @param {string} question 
 	 * @param {string} senderId 
