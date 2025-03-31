@@ -38,7 +38,7 @@ class Handler {
     this.vote_count = my.required_votes
 
   }
-
+  
   /**
    * 
    * @param {Interaction} interaction 
