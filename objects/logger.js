@@ -95,12 +95,14 @@ module.exports = {
 
 
     /**
- * @param {Dare} dare 
- */
+     * @param {Dare} dare 
+     * @param {boolean} userBan
+     */
     async updateDare(dare, userBan = false) {
+        console.log("Updating dare message", dare.id, dare.isApproved);
         const channelId = my.dares_log;
         const embed = await this.getDareEmbed(dare);
-        const actionRow = this.createActionRow("dare", dare.isBanned, userBan);
+        const actionRow = dare.isApproved ? this.createApprovedActionRow("dare") : this.createActionRow("dare", dare.isBanned, userBan);
 
         try {
             if (dare.messageId !== 'pre-v5') {
@@ -119,6 +121,23 @@ module.exports = {
             return false;
         }
     },
+
+
+    createApprovedActionRow(type) {
+        return new ActionRowBuilder()
+          .addComponents(
+            new ButtonBuilder()
+              .setCustomId(`new_${type}_approve`)
+              .setLabel('Approved')
+              .setStyle(ButtonStyle.Success)
+              .setDisabled(true),
+            new ButtonBuilder()
+              .setCustomId(`new_${type}_ban`)
+              .setLabel("Ban")
+              .setStyle(ButtonStyle.Danger)
+              .setDisabled(false),
+          );
+      },
 
 
     /**
@@ -491,17 +510,23 @@ module.exports = {
     /**
      * Creates an action row with buttons
      * @param {string<truth|dare>} type 
+     * @param {boolean} isBanned
+     * @param {boolean} userBanned
      * @returns {ActionRowBuilder}
      */
-    createActionRow(type, isBanned = false, userBanned = false) {
+    createActionRow(type, isApproved = false, isBanned = false, userBanned = false) {
+        console.log("Creating action row", type, isBanned, userBanned);
+
+        const approvedButton = new ButtonBuilder()
+            .setCustomId(`new_${type}_approve`)
+            .setLabel('Approve')
+            .setStyle(ButtonStyle.Success);
+
         if (!isBanned) {
             if (type !== 'server') {
                 return new ActionRowBuilder()
                     .addComponents(
-                        new ButtonBuilder()
-                            .setCustomId(`new_${type}_approve`)
-                            .setLabel('Approve')
-                            .setStyle(ButtonStyle.Success),
+                        approvedButton,
                         new ButtonBuilder()
                             .setCustomId(`new_${type}_ban`)
                             .setLabel('Ban')

@@ -167,22 +167,6 @@ async useCustomBanModal(interaction, id) {
     }
 }
 
-
-  createApprovedActionRow() {
-    return new ActionRowBuilder()
-      .addComponents(
-        new ButtonBuilder()
-          .setCustomId(`new_${this.type}_approve`)
-          .setLabel('Approved')
-          .setStyle(ButtonStyle.Success)
-          .setDisabled(true),
-        new ButtonBuilder()
-          .setCustomId(`new_${this.type}_ban`)
-          .setLabel("Ban")
-          .setStyle(ButtonStyle.Danger)
-          .setDisabled(false),
-      );
-  }
   /**
    * 
    * @param {Interaction} interaction 
