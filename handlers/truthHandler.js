@@ -99,6 +99,7 @@ class TruthHandler extends Handler {
 	 * 
 	 * @param {Interaction} interaction 
 	 * @returns 
+	 * @deprecated use giveQuestion instead
 	 */
 	async giveTruth(interaction) {
 		if (!interaction.deferred) await interaction.deferReply({ ephemeral: true })
@@ -202,6 +203,7 @@ class TruthHandler extends Handler {
 	 * @param {UserTruth} userTruth 
 	 * @param {Interaction} interaction 
 	 * @returns Promise<EmbedBuilder>
+	 * @deprecated use createUpdatedQuestionEmbed instead
 	 */
 	async createUpdatedTruthEmbed(userTruth, interaction) {
 		let truth = await userTruth.getQuestion();

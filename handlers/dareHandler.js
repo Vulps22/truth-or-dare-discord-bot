@@ -102,6 +102,7 @@ class DareHandler extends Handler {
 	 * 
 	 * @param {Interaction} interaction 
 	 * @returns 
+	 * @deprecated Use giveQuestion instead
 	 */
 	async giveDare(interaction) {
 		if (!interaction.deferred) await interaction.deferReply();
@@ -184,6 +185,7 @@ class DareHandler extends Handler {
 	 * @param {UserDare} userDare 
 	 * @param {Interaction} interaction 
 	 * @returns 
+	 * @deprecated Use createUpdatedQuestionEmbed instead
 	 */
 	async createUpdatedDareEmbed(userDare, interaction) {
 		let dare = await userDare.getQuestion();

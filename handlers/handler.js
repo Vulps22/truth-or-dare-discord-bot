@@ -15,6 +15,7 @@ const BanHandler = require('handlers/banHandler.js');
 const logger = require('objects/logger.js');
 const Question = require('objects/question.js');
 const UserQuestion = require('objects/userQuestion');
+const GivenQuestion = require('objects/givenQuestion');
 
 class Handler {
   /**
@@ -232,6 +233,27 @@ async useCustomBanModal(interaction, id) {
 	}
 
   /**
+	 * Creates an embed for the question, updasted with the latest vote counts.
+	 * @param {UserQuestion} userQuestion 
+	 * @param {Interaction} interaction 
+	 * @returns 
+	 */
+	async createUpdatedQuestionEmbed(userQuestion, interaction) {
+		let question = await userQuestion.getQuestion();
+		let questionText = question.question;
+		let creator = this.getCreator(question, interaction);
+		const username = (await creator).username;
+
+		let questionEmbedText = `${questionText}\n\n **Votes:** ${userQuestion.doneCount} Done | ${userQuestion.failedCount} Failed`;
+
+		return new EmbedBuilder()
+			.setTitle('Dare!')
+			.setDescription(questionEmbedText)
+			.setColor('#6A5ACD')
+			.setFooter({ text: `Requested by ${userQuestion.username} | Created By ${username} | #${question.id}`, iconURL: userQuestion.image });
+	}
+
+  /**
    * Selects a random question from the provided array.
    * @param {Question[]} questions 
    * @returns {Question} A random question from the provided array.
@@ -326,6 +348,40 @@ async useCustomBanModal(interaction, id) {
 			logger.error(`Brain Fart: Error in getQuestion function: ${error}`);
 		}
 	}
+
+  /**
+	 * 
+	 * @param {Interaction} interaction 
+	 * @returns 
+	 */
+	async giveQuestion(interaction) {
+		if (!interaction.deferred) await interaction.deferReply({ ephemeral: true })
+    const type = this.type === 'truth' ? 'Truth' : 'Dare';
+		const target = interaction.options.getUser('user');
+		const question = interaction.options.getString('truth');
+		const wager = interaction.options.getInteger('wager');
+		const xpType = interaction.options.getString('type');
+
+		// Send an error message if no user was mentioned
+		if (!target) {
+			interaction.editReply(`Please mention a user to give a ${type} to!`);
+			return;
+		}
+
+		// Send an error message if no dare was provided
+		if (!question) {
+			interaction.editReply('Please provide a question!');
+			return;
+		}
+
+		if (wager < 1) {
+			interaction.editReply('You must offer a wager');
+			return;
+		}
+		const given = GivenQuestion.create(interaction, question, interaction.user.id, target.id, interaction.guildId, wager, xpType, this.type);
+		interaction.editReply({ content: `Your ${type} has been sent`, ephemeral: true });
+	}
+
 }
 
 
