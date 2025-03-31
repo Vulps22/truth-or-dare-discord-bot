@@ -263,7 +263,7 @@ async useCustomBanModal(interaction, id) {
         // Handle cases where the user cannot be fetched (e.g., not in guild, API error)
         if (error.code !== 10007) {
           // Log other errors
-          logger.error('Unexpectedly failed to fetch username in dareHandler: ', error)
+          logger.error('Unexpectedly failed to fetch username in questionHandler: ', error)
         }
   
         return { username: "Somebody" };
