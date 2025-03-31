@@ -572,7 +572,7 @@ module.exports = {
      * @param {boolean} isBanned
      * @param {boolean} userBanned - Whether the user is banned or not
      * @returns {ActionRowBuilder}
-     * TODO: isApproved is sitting her for no reason? why??
+     * TODO: isApproved is sitting here for no reason? why??
      */
     createActionRow(type, isApproved = false, isBanned = false, userBanned = false) {
         console.log("Creating action row", type, isBanned, userBanned);
