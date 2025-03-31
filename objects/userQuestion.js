@@ -173,10 +173,8 @@ class UserQuestion {
      * @param {string} messageId 
      * @param {"truth" | "dare"} type 
      */
-   async load(messageId, type) {
+   async load(messageId) {
       const db = new Database();
-      if (!type) throw new Error("Type must be provided for UserQuestion load");
-      this.type = type;
       let question = await db.get('user_questions', messageId, "messageId");
       this.id = question.messageId;
       this.userId = question.userId;
@@ -187,6 +185,13 @@ class UserQuestion {
       this.doneCount = question.doneCount;
       this.failedCount = question.failedCount;
 
+      const theQuestion = await db.get('questions', question.questionId, "id")
+      console.log(theQuestion);
+      
+      this.type = theQuestion.type;
+      if (!this.type) {
+         throw new Error("Question type not found in database. Please check the question ID.");
+      }
 
       return this;
    }
