@@ -286,7 +286,7 @@ async useCustomBanModal(interaction, id) {
         await interaction.channel.send("I'm sorry, I couldn't save the question to track votes. This is a brain fart. Please reach out for support on the official server.");
         logger.error(`Brain Fart: Couldn't save question to track votes. Message ID missing`);
       } else {
-        const userQuestion = new UserQuestion(messageId, userId, questionId, serverId, username, image, 0, 0);
+        const userQuestion = new UserQuestion(messageId, userId, questionId, serverId, username, image, 0, 0, this.type);
         await userQuestion.save();
 
       }
@@ -300,6 +300,7 @@ async useCustomBanModal(interaction, id) {
 	 */
 
 	async getQuestion(type, interaction) {
+
 		if (!interaction.deferred) await interaction.deferReply();
 		try {
 			const questions = await Question.collect(type);
