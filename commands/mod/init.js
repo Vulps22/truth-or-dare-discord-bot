@@ -1,3 +1,6 @@
+
+// Scheduled for deletion in issue #62
+
 const { SlashCommandStringOption, SlashCommandBuilder, SlashCommandBooleanOption, SlashCommandSubcommandBuilder } = require("discord.js");
 const Database = require("objects/database");
 const Truth = require("objects/truth");
