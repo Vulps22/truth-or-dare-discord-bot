@@ -1,14 +1,21 @@
-Copyright (2022-2025) JAMIE MCALLISTER.
+# Copyright (2022-2025) JAMIE MCALLISTER.
+**All rights reserved.**
 
-All rights reserved.
+## 1. Permitted Activities
+- You may view and inspect the source code in this repository for informational purposes only.
+- You may clone and modify the repository **solely** for the purpose of preparing improvements to the code.
+- You may execute the code **only in a controlled testing environment** with access limited to a maximum of 5 individuals.
 
-You may view the source code in this repository, but you may NOT:
-- Use it in any way.
-- Copy, clone, or distribute it.
-- Modify or create derivative works based on it.
-- Claim ownership of any part of it.
-- Execute any part of the code for any reason.
+## 2. Prohibited Activities
+Without prior written authorization from JAMIE MCALLISTER, you may NOT:
+- Use or deploy the code for any purpose beyond testing or contributing improvements.
+- Copy, distribute, sublicense, or otherwise share the code or any derivative works beyond what is necessary for making improvements.
+- Claim any ownership or assert any rights over the code, in whole or in part.
 
-without prior written authorisation.
+## 3. Conditions for Contributions
+- If you modify or create derivative works, you must submit those changes back to this repository via a branch and pull request.
+- You must ensure that any execution of the code remains strictly limited as specified above.
+- Any use of the code outside these limits is expressly forbidden.
 
+## 4. Enforcement
 Any violation of these terms may result in legal action.
