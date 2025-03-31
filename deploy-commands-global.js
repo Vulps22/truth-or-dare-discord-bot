@@ -9,7 +9,8 @@ async function deployCommands() {
 
     let config;
     try {
-        config = await db.get('config', 3); // Assuming 'config' table has an id column
+        console.log(`loading config from database with key: ${process.env.ENVIRONMENT_KEY}`);
+        config = await db.get('config', process.env.ENVIRONMENT_KEY); // Assuming 'config' table has an id column
         console.log("Configuration loaded:", config.environment);
     } catch (error) {
         console.error('Error loading config from database:', error);

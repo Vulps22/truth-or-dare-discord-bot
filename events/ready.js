@@ -20,9 +20,7 @@ module.exports = {
         devCondition = my.environment === 'dev' ? 'AND owner = \'914368203482890240\'' : '';
 
         // Fetch all subscribed servers from the database
-        const subscribedServers = await db.query(
-            `SELECT id AS serverId, announcement_channel AS channelId FROM servers WHERE announcement_channel IS NOT NULL ${devCondition}`
-        );
+        /*const subscribedServers = await db.query("SELECT id AS serverId, announcement_channel AS channelId FROM servers WHERE owner = '914368203482890240' AND announcement_channel IS NOT NULL");
 
         console.log(subscribedServers);
         try {
@@ -100,23 +98,13 @@ module.exports = {
                             } catch (error) {
                                 const logger = require('objects/logger');
                                 logger.error(`IPC Subscription Failed for ${serverId}:`, error);
-                                throw error;
                             }
-                        },
-                        { context: { targetChannelId: channelId, serverId } }
-                    );
-
-                    if (!results.every(result => result === true)) {
-                        throw new Error(`IPC subscription failed for server ${serverId}`);
+                        }
                     }
-                }
+                    return false;
+                }, { context: { targetChannelId: channelId, serverId } });
             }
-
-            logger.log("Migration process completed successfully.");
-        } catch (error) {
-            logger.error("Migration process aborted due to an error:", error);
-            // Optionally, perform any additional cleanup or rollback here
-        }
+        }*/
     }
 };
 

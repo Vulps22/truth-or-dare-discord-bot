@@ -1,8 +1,7 @@
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandUserOption, SlashCommandStringOption, SlashCommandIntegerOption, Interaction } = require("discord.js");
-const TruthHandler = require("handlers/truthHandler");
-const DareHandler = require("handlers/dareHandler");
 const User = require("objects/user");
 const Server = require("objects/server");
+const Handler = require("handlers/handler");
 
 const XP_TYPES = {
     GLOBAL: 'global',
@@ -83,11 +82,7 @@ module.exports = {
 
 		if (!(await hasEnoughXP(user, xpType, wager, interaction))) return;
 
-		if (subcommand === 'truth') {
-			new TruthHandler(interaction.client).giveTruth(interaction);
-		} else if (subcommand === 'dare') {
-			new DareHandler(interaction.client).giveDare(interaction);
-		}
+		new Handler(subcommand).giveQuestion(interaction);
 	}
 };
 

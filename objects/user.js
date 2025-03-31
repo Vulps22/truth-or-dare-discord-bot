@@ -506,6 +506,8 @@ class User {
         const now = new Date();
         const deleteDate = new Date(now.setDate(now.getDate() + 30)).toISOString().split('T')[0];
 
+        const db = new Database();
+
         await db.query(`
                 UPDATE users
                 SET deleteDate = '${deleteDate}'

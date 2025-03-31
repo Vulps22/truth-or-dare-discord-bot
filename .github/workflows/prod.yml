@@ -2,8 +2,8 @@ name: Test, Package, And Deploy
 
 on:
     push:
-        branches:
-          - current-release
+        tags:
+        - 'v*'
 
 jobs:
     test:

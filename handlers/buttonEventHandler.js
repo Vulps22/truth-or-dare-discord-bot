@@ -1,7 +1,4 @@
 const { Interaction, Message, InteractionResponse, ButtonStyle, MessageFlags } = require("discord.js");
-const DareHandler = require("handlers/dareHandler");
-const TruthHandler = require("handlers/truthHandler");
-const BanHandler = require("handlers/banHandler");
 const logger = require("objects/logger");
 const SetupHandler = require("handlers/setupHandler");
 const ServerHandler = require("handlers/serverHandler");
@@ -11,6 +8,9 @@ const Truth = require("objects/truth");
 const Server = require("objects/server");
 const UserHandler = require("handlers/userHandler");
 const GivenQuestion = require("objects/givenQuestion");
+const Handler = require("./handler");
+const { ButtonBuilder, ActionRowBuilder } = require("node_modules/@discordjs/builders/dist");
+const Database = require("objects/database");
 
 class ButtonEventHandler {
     /**
@@ -30,6 +30,7 @@ class ButtonEventHandler {
 
         // Message creation date
         const messageTimestamp = this.interaction.message.createdAt;
+
 
         // Check if the message was created before the target date
         if (messageTimestamp < targetDate) {
@@ -58,11 +59,10 @@ class ButtonEventHandler {
         console.log(commandName);
 
         switch (commandName) {
-            case 'dare':
-                await new DareHandler(this.interaction.client).vote(this.interaction);
-                break;
-            case 'truth':
-                await new TruthHandler(this.interaction.client).vote(this.interaction);
+            case 'truth': //TODO: Remove this in a future update -- It is here to support old buttons
+            case 'dare': //TODO: Remove this in a future update - -It is here to support old buttons
+            case 'question':
+                await new Handler(type).vote(this.interaction);
                 break;
             case 'setup':
                 handleSetupButton(this.interaction, idComponents[1]);
@@ -76,7 +76,7 @@ class ButtonEventHandler {
             case 'given':
                 handleGivenQuestion(this.interaction, idComponents);
                 break;
-            case 'rules':
+            case 'rules': {
                 let user = new User(this.interaction.user.id);
                 await user.get();
                 user.rulesAccepted = true;
@@ -84,6 +84,7 @@ class ButtonEventHandler {
                 this.interaction.editReply('Rules Accepted.')
                 logger.editLog(this.interaction.logMessage, `${this.interaction.logInteraction} User has Accepted the Rules and can now create new Truths or Dares`);
                 break;
+            }
             default:
                 await logger.error(`**Failed to find Button Command** | **server**: ${this.interaction.guild.name} \n\n**Button ID**: ${buttonId}`);
                 this.interaction.reply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:");
@@ -114,10 +115,9 @@ async function handleContentResponse(interaction, idComponents) {
 
     switch (type) {
         case "dare":
-            new DareHandler(interaction.client).setDare(interaction, decision);
-            break;
         case "truth":
-            new TruthHandler(interaction.client).setTruth(interaction, decision);
+        case "question":
+            new Handler().setQuestion(interaction, decision);
             break;
         case "server":
             new ServerHandler(interaction.client).banServer(interaction, decision)
@@ -209,7 +209,7 @@ async function handleGivenQuestion(interaction, idComponents) {
                 );
                 interaction.reply(
                     { 
-                        content: "Uh oh! You'rrrrrrrrrrrrrrrrrre out of Skips!\nNot to worry, You can earn up to 10 skips by voting for the bot every day on [top.gg](https://top.gg/bot/1079207025315164331/vote)!",
+                        content: "Uh oh! You're out of Skips!\nNot to worry, You can earn up to 10 skips by voting for the bot every day on [top.gg](https://top.gg/bot/1079207025315164331/vote)!",
                         components: [row],
                         flags: MessageFlags.Ephemeral 
                     });

@@ -122,6 +122,7 @@ class Question {
 			question: this.question,
 			creator: this.creator,
 			isApproved: this.isApproved,
+			approvedBy: this.approvedBy,
 			isBanned: this.isBanned,
 			banReason: this.banReason,
 			bannedBy: this.bannedBy,
@@ -180,8 +181,13 @@ class Question {
 		return this.save();
 	}
 
-	async approve() {
+	/**
+	 * Approves the question and sets the approver's ID.
+	 * @param {string} userId 
+	 */
+	async approve(userId) {
 		this.isApproved = 1;
+		this.approvedBy = userId;
 		await this.save();
 	}
 

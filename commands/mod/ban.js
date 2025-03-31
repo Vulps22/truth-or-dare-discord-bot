@@ -1,26 +1,9 @@
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandNumberOption, SlashCommandStringOption, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, Message } = require("discord.js");
 const Database = require("objects/database")
 const { env } = require("process");
-const Dare = require("objects/dare");
 const BanHandler = require("handlers/banHandler");
 
-banReasonList = [
-	{ name: "1 - Breaches Discord T&C or Community Guidelines", value: "Breaches Discord T&C or Community Guidelines" },
-	{ name: "2 - Childish Content", value: "Childish Content" },
-	{ name: "3 - Dangerous Or Illegal Content", value: "Dangerous Or Illegal Content" },
-	{ name: "4 - Giver Dare", value: "Giver Dare" },
-	{ name: "5 - Mentions A Specific Person", value: "Mentions A Specific Person" },
-	{ name: "6 - Nonsense Content", value: "Nonsense Content" },
-	{ name: "7 - Not In English", value: "Not In English" },
-	{ name: "8 - Poor Spelling Or Grammar", value: "Poor Spelling Or Grammar - Feel Free to Resubmit with proper Spelling and Grammer" },
-	{ name: "9 - Requires More Than One Person", value: "Requires More Than One Person" },
-	{ name: "10 - Shoutout Content", value: "Shoutout Content" },
-	{ name: "11 - Suspected U-18 Server", value: "Suspected U-18 Server" }
-]
-
-
 module.exports = {
-	banReasons: banReasonList,
 	data: new SlashCommandBuilder()
 		.setName('ban')
 		.setDescription('Ban a Dare|Truth|Server')
@@ -36,6 +19,7 @@ module.exports = {
 			.addStringOption(new SlashCommandStringOption()
 				.setName('reason')
 				.setDescription('Why are you banning this?')
+				.setAutocomplete(true)
 			)
 		)
 		.addSubcommand(new SlashCommandSubcommandBuilder()
@@ -49,6 +33,7 @@ module.exports = {
 			.addStringOption(new SlashCommandStringOption()
 				.setName('reason')
 				.setDescription('Why are you banning this?')
+				.setAutocomplete(true)
 			)
 		)
 		.addSubcommand(new SlashCommandSubcommandBuilder()
@@ -62,6 +47,7 @@ module.exports = {
 			.addStringOption(new SlashCommandStringOption()
 				.setName('reason')
 				.setDescription('Why are you banning this?')
+				.setAutocomplete(true)
 			)
 		)
 		.addSubcommand(new SlashCommandSubcommandBuilder()
@@ -75,47 +61,60 @@ module.exports = {
 			.addStringOption(new SlashCommandStringOption()
 				.setName('reason')
 				.setDescription('Why are you banning this?')
+				.setAutocomplete(true)
 			)
 		),
 	async execute(interaction) {
 
+		if(!interaction.deferred) await interaction.deferReply({ ephemeral: true });
+
 		const subcommand = interaction.options.getSubcommand();
+		let id;
 		let didBan = false;
 		switch (subcommand) {
 			case 'dare':
-				didBan = await new BanHandler().banDare(interaction.options.getNumber('id'), interaction.options.getString('reason'), interaction);
-				break;
 			case 'truth':
-				didBan = await new BanHandler().banTruth(interaction.options.getNumber('id'), interaction.options.getString('reason'), interaction);
+				id = interaction.options.getNumber('id')
+				didBan = await new BanHandler().banQuestion(id, interaction.options.getString('reason'), interaction, true, false);
 				break;
 			case 'server':
-				didBan = await new BanHandler().banServer(interaction.options.getString('id'), interaction.options.getString('reason'), interaction);
+				id = interaction.options.getString('id')
+				didBan = await new BanHandler().banServer(id, interaction.options.getString('reason'), interaction);
 				break;
 			case 'user':
-				didBan = await new BanHandler().banUser(interaction.options.getString('id'), interaction.options.getString('reason'), interaction);
+				id = interaction.options.getString('id')
+				didBan = await new BanHandler().banUser(id, interaction.options.getString('reason'), interaction);
 				break;
 			default:
 				interaction.reply('Not an Option');
 				break;
+		}
+
+		if(didBan) {
+			interaction.editReply({ content: `Successfully banned ${id}`, ephemeral: true });
+		}
+		else {
+			interaction.editReply({ content: `Failed to ban ${id}`, ephemeral: true });
 		}
 	},
 	async autocomplete(interaction) {
 
 		const focusedOption = interaction.options.getFocused(true);
 		let choices;
+		const subcommand = interaction.options.getSubcommand();
 
 		if (focusedOption.name === 'id') {
-			const subcommand = interaction.options.getSubcommand();
+			
 			const db = new Database();
 			const id = focusedOption.value.toLowerCase();
 
 			try {
 				switch (subcommand) {
 					case 'dare':
-						choices = await this.getAutocompleteChoices(db, 'dares', id, 'question');
+						choices = await this.getAutocompleteChoices(db, 'dare', id, 'question');
 						break;
 					case 'truth':
-						choices = await this.getAutocompleteChoices(db, 'truths', id, 'question');
+						choices = await this.getAutocompleteChoices(db, 'truth', id, 'question');
 						break;
 					case 'guild':
 						choices = await this.getAutocompleteChoices(db, 'servers', id, 'name');
@@ -134,20 +133,49 @@ module.exports = {
 		}
 
 		if (focusedOption.name === 'reason') {
-			choices = banReasonList;
+			choices = [];
+			switch (subcommand) {
+				case 'dare':
+				case 'truth':
+					choices = new BanHandler().banReasonList;
+					break;
+				case 'server':
+					choices = new BanHandler().serverBanReasonList;
+					break;
+				case 'user':
+					choices = new BanHandler().UserBanReasonList;
+					break;
+			}
 		}
 		interaction.respond(choices);
 	},
 
+	/**
+	 * 
+	 * @param {Database} db 
+	 * @param {*} collectionName 
+	 * @param {*} id 
+	 * @param {*} fieldName 
+	 * @returns 
+	 */
 	async getAutocompleteChoices(db, collectionName, id, fieldName) {
 		console.log(`Fetching autocomplete choices for collection: ${collectionName}, id: ${id}, fieldName: ${fieldName}`);
-		const items = await db.like(collectionName, 'id', `%${id}%`, 20, "DESC");
-		console.log(`Retrieved items:`, items);
-		return items.map(item => {
+		let items = [];
+		if(collectionName !== "truth" && collectionName !== "dare") {
+			items = await db.like(collectionName, 'id', `%${id}%`, 20, "DESC");
+		} else {
+			items = await db.query(`SELECT * FROM questions WHERE (question LIKE '%${id}%' OR id LIKE '%${id}%') AND isBanned = 0 AND type='${collectionName}' ORDER BY question DESC LIMIT 20`);
+		}
+		//console.log(`Retrieved items:`, items);
+		let options = items.map(item => {
 			const name = `${item.id} - ${item[fieldName]}`;
 			const value = item.id;
 			return { name: truncateString(name, 96), value: value };
 		}).filter(choice => choice !== null);
+
+		console.log(`Autocomplete options:`, options);
+
+		return options;
 	}
 
 }

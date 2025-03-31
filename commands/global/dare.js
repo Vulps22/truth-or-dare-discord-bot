@@ -9,6 +9,6 @@ module.exports = {
 	nsfw: true,
 	administrator: false,
 	async execute(interaction) {
-		new DareHandler(interaction.client).dare(interaction);
+		new DareHandler(interaction.client).getQuestion(interaction);
 	}
 }
