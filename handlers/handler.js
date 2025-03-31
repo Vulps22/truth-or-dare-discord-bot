@@ -223,9 +223,8 @@ async useCustomBanModal(interaction, id) {
 
     switch (this.type) {
       case 'dare':
-        didBan = await new BanHandler().banQuestion(id, reason, interaction);
-        break;
-      case 'truth':
+	  case 'truth':
+	  case 'question':
         didBan = await new BanHandler().banQuestion(id, reason, interaction);
         break;
       case 'server':
