@@ -1,5 +1,6 @@
 const { ShardingManager } = require('discord.js');
 const Database = require('objects/database');
+const { AutoPoster } = require('topgg-autoposter');
 require('dotenv').config();
 
 const path = require('node:path');
@@ -53,7 +54,7 @@ async function main() {
         token: my.secret,
         totalShards: my.environment === 'dev' ? 2 : 'auto' // Force 2 shards in dev, auto in prod
     });
-    
+
 
     manager.on('shardCreate', shard => console.log(`Launched shard ${shard.id}`));
 
@@ -61,6 +62,8 @@ async function main() {
 
     setupVoteServer();
     scheduleDailyCleanup();
+    syncGG(manager);
+    scheduleTopGGUpdate(manager);
 }
 
 main().catch(error => {
@@ -170,103 +173,4 @@ async function setupVoteServer() {
 
     app.use(cors());
 
-    app.post('/announce', async (req, res) => {
-        console.log(`New Announcement Send Request`)
-        // Compare the hashed passwords
-        const isMatch = req.body.password === my.announce_password;
-
-        if (!isMatch) {
-            return res.status(403).json({ message: 'Invalid password' });
-        }
-
-        console.log("Annoucement Revieved");
-        console.log(req.body);
-
-        const content = req.body;
-
-        const embed = new EmbedBuilder()
-            .setTitle(content.title)
-            .setDescription(content.description)
-            .addFields(content.fields)
-            .setColor(content.color || '#ffffff');
-
-        const db = new Database();
-
-        const servers = await db.query("SELECT hasAccepted, isBanned, announcement_channel FROM servers");
-
-        await rateLimitedAnnounce(servers, embed);
-
-        res.status(200).json({ message: "success" });
-    });
-
-    app.get('/announce', async (req, res) => {
-
-        console.log("Announcement View Requested");
-
-        if (!my.announce_password) {
-            res.sendFile(path.join(__dirname, 'views', 'password_set.html'));
-        }
-
-        res.sendFile(path.join(__dirname, 'views', 'announce.html'));
-    });
-
-    app.post('/set_password', async (req, res) => {
-        // Check if the password is provided in the request body
-        if (!req.body.password) {
-            return res.status(400).json({ message: 'Password is required' });
-        }
-
-        const db = new Database();
-
-        try {
-            // Escape the password to prevent SQL injection
-            const escaped_pass = db.escape(req.body.password);
-
-            // Update the password in the database
-            await db.query(`UPDATE config SET announce_password = ${escaped_pass} WHERE id = 1`);
-            my.announce_password = escaped_pass;
-            // Send a success response
-            res.status(200).json({ message: 'Password set successfully' });
-        } catch (error) {
-            console.error('Error setting password:', error);
-            res.status(500).json({ message: 'An error occurred while setting the password' });
-        }
-    });
-
-    app.listen(3002, '0.0.0.0', () => console.log('Webhook server running on port 3002'));
-}
-
-function delay(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-async function rateLimitedAnnounce(servers, embed, delayTime = 100) {
-    for (const server of servers) {
-        if (server.hasAccepted && !server.isBanned && server.announcement_channel) {
-            await announce(embed, server.announcement_channel);
-        }
-        await delay(delayTime); // Delay of 100ms (1/10th of a second)
-    }
-}
-
-/**
- * 
- * @param {EmbedBuilder} embed 
- * @param {string} server 
- */
-async function announce(embed, channelId) {
-
-    if (!channelId) {
-        console.log("Announcement Channel not set")
-        return;
-    }
-    console.log("Announcing to:", channelId);
-    /** @type {Client} */
-    let client = global.client;
-    channel = client.channels.cache.get(channelId);
-    try {
-        await channel.send({ embeds: [embed] })
-    } catch (error) {
-        return;
-    }
 }
