@@ -45,9 +45,13 @@ class ButtonEventHandler {
 
         //get the type from the question using the messageId as the key
         const db = new Database();
-        
-        let type = await db.query(`SELECT type from user_questions WHERE messageId = '${this.interaction.message.id}'`);
-        type = type[0].type;
+
+        let type = await db.query(`SELECT * from user_questions WHERE messageId = '${this.interaction.message.id}'`);
+        console.log(type);
+        if (type == []) {
+            console.log("No user question found, checking questions table");
+            type = type[0].type;
+        }
 
         let buttonId = this.interaction.customId;
         /** @type {Array<string>} */
@@ -207,10 +211,10 @@ async function handleGivenQuestion(interaction, idComponents) {
                         .setURL(`https://discord.com/application-directory/${my.client}/store/1335708253165719572`)
                 );
                 interaction.reply(
-                    { 
+                    {
                         content: "Uh oh! You're out of Skips!\nNot to worry, You can earn up to 10 skips by voting for the bot every day on [top.gg](https://top.gg/bot/1079207025315164331/vote)!",
                         components: [row],
-                        flags: MessageFlags.Ephemeral 
+                        flags: MessageFlags.Ephemeral
                     });
                 return;
             }

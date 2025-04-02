@@ -38,6 +38,7 @@ class Database {
 	}
 
 	query(sql) {
+		console.log(`Executing SQL query: ${sql}`);
 		try {
 			this.connect();
 			return new Promise((resolve, reject) => {

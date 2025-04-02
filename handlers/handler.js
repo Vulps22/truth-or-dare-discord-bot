@@ -223,9 +223,8 @@ async useCustomBanModal(interaction, id) {
 
     switch (this.type) {
       case 'dare':
-        didBan = await new BanHandler().banQuestion(id, reason, interaction);
-        break;
-      case 'truth':
+	  case 'truth':
+	  case 'question':
         didBan = await new BanHandler().banQuestion(id, reason, interaction);
         break;
       case 'server':
@@ -233,6 +232,10 @@ async useCustomBanModal(interaction, id) {
         break;
       case 'user':
         didBan = await new BanHandler().banUser(id, reason, interaction);
+		break;
+	  default:
+		interaction.followUp({ content: 'Invalid type provided', ephemeral: true });
+		return;
     }
 
     if (!didBan) {
