@@ -101,6 +101,35 @@ function scheduleDailyCleanup() {
     }, getTimeUntilMidnight());
 }
 
+/**
+ * Every 12 hours, update the bot's stats on top.gg
+ * @param {ShardingManager} manager - The ShardingManager instance.
+ */
+function scheduleTopGGUpdate(manager) {
+    const updateInterval = 12 * 60 * 60 * 1000; // 12 hours in milliseconds
+
+    setInterval(async () => {
+        console.log("Updating bot stats on top.gg...");
+        syncGG(manager);
+        
+    }, updateInterval);
+}
+
+/**
+ * Function to sync the bot's stats with top.gg
+ * @param {ShardingManager} manager 
+ */
+function syncGG(manager){
+    try {
+        const ap = AutoPoster(my.top_gg_token, manager);
+        ap.on('posted', () => {
+            console.log('Updated bot stats on top.gg');
+        });
+    } catch (error) {
+        console.error('Error updating bot stats on top.gg:', error);
+    }
+}
+
 async function setupVoteServer() {
     const app = express();
     app.use(express.json());
