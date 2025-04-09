@@ -120,7 +120,7 @@ async function handleContentResponse(interaction, idComponents) {
         case "dare":
         case "truth":
         case "question":
-            new Handler().setQuestion(interaction, decision);
+            new Handler('question').setQuestion(interaction, decision);
             break;
         case "server":
             new ServerHandler(interaction.client).banServer(interaction, decision)

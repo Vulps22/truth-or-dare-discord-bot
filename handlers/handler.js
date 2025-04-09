@@ -234,6 +234,7 @@ async useCustomBanModal(interaction, id) {
         didBan = await new BanHandler().banUser(id, reason, interaction);
 		break;
 	  default:
+		console.error("Invalid type provided for ban operation:", this.type);
 		interaction.followUp({ content: 'Invalid type provided', ephemeral: true });
 		return;
     }
@@ -645,6 +646,12 @@ async useCustomBanModal(interaction, id) {
 	async setQuestion(interaction, decision) {
 		if (!interaction.deferred) await interaction.deferReply({ ephemeral: true })
 		let question = await new Question().find(interaction.message.id);
+	
+		if (!question) {
+			interaction.editReply("This question could not be found.");
+			return;
+		}
+
 		switch (decision) {
 			case "ban":
 				this.getBanReason(interaction, question.id);
