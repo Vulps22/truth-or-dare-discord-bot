@@ -1,15 +1,15 @@
 const {
-  /* eslint-disable no-unused-vars */ 
-  Interaction,
-  StringSelectMenuOptionBuilder, 
-  StringSelectMenuBuilder, 
-  ComponentType, 
-  ButtonBuilder, 
-  ButtonStyle, 
-  TextInputStyle, 
-  EmbedBuilder, 
-  Snowflake, 
-  MessageFlags
+	/* eslint-disable no-unused-vars */
+	Interaction,
+	StringSelectMenuOptionBuilder,
+	StringSelectMenuBuilder,
+	ComponentType,
+	ButtonBuilder,
+	ButtonStyle,
+	TextInputStyle,
+	EmbedBuilder,
+	Snowflake,
+	MessageFlags
 } = require('discord.js');
 const { ModalBuilder, ActionRowBuilder, TextInputBuilder } = require('@discordjs/builders');
 const Database = require('objects/database.js');
@@ -23,42 +23,42 @@ const Purchasable = require('objects/purchasable');
 const User = require('objects/user');
 
 class Handler {
-  /**
-   * @type {Database}
-   */
-  db;
-  /**
-   * @type {string<"dare"|"truth">}
-   */
-  type;
-
-  xpValues = {
-    dare: {
-      success: 50,
-      fail: 25,
-    },
-    truth: {
-      success: 30,
-      fail: 15,
-    }
-  };
-
-  vote_count;
-  ALPHA = false;
-
-  constructor(type) {
-    this.db = new Database();
-    this.type = type;
-    this.ALPHA = my.environment === 'dev'
-    this.vote_count = my.required_votes
-
-  }
-
-  /**
-	 * 
-	 * @param {Interaction} interaction 
-	 * @returns 
+	/**
+	 * @type {Database}
 	 */
+	db;
+	/**
+	 * @type {string<"dare"|"truth">}
+	 */
+	type;
+
+	xpValues = {
+		dare: {
+			success: 50,
+			fail: 25,
+		},
+		truth: {
+			success: 30,
+			fail: 15,
+		}
+	};
+
+	vote_count;
+	ALPHA = false;
+
+	constructor(type) {
+		this.db = new Database();
+		this.type = type;
+		this.ALPHA = my.environment === 'dev'
+		this.vote_count = my.required_votes
+
+	}
+
+	/**
+	   * 
+	   * @param {Interaction} interaction 
+	   * @returns 
+	   */
 	async createQuestion(interaction) {
 		const question = new Question(null, this.type);
 
@@ -78,7 +78,7 @@ class Handler {
 			let createdQuestion = await question.create(interaction.options.getString('text'), interaction.user.id, interaction.guildId);
 
 			const embed = new EmbedBuilder()
-				.setTitle(`New ${ this.type == "truth" ? "Truth" : "Dare" } Created!`)
+				.setTitle(`New ${this.type == "truth" ? "Truth" : "Dare"} Created!`)
 				.setDescription(question.question)
 				.setColor('#00ff00')
 				.setFooter({ text: ' Created by ' + interaction.user.username, iconURL: interaction.user.displayAvatarURL() });
@@ -91,7 +91,7 @@ class Handler {
 
 			} else {
 				//Not Christmas
-				interaction.editReply({ content: `Thank you for your submission. A member of the moderation team will review your ${ this.type } shortly`});
+				interaction.editReply({ content: `Thank you for your submission. A member of the moderation team will review your ${this.type} shortly` });
 			}
 
 			interaction.channel.send({ embeds: [embed] });
@@ -99,191 +99,214 @@ class Handler {
 			logger.newQuestion(createdQuestion);
 		}
 	}
-  
-  /**
-   * 
-   * @param {Interaction} interaction 
-   * @param {string} id 
-   */
-  banQuestion(interaction, id) {
-    const reason = interaction.values[0];
-    console.log("reason", reason);
-  }
 
-  /**
-   * send an ephemeral select to the user with a select menu
-   * @param {Interaction} interaction 
-   * @param {number} id 
-   */
-  async getBanReason(interaction, id) {
-    const banHandler = new BanHandler();
-    let banReasons;
+	/**
+	 * 
+	 * @param {Interaction} interaction 
+	 * @param {string} id 
+	 */
+	banQuestion(interaction, id) {
+		const reason = interaction.values[0];
+		console.log("reason", reason);
+	}
 
-    switch(this.type) {
-      case 'server':
-        banReasons = banHandler.getServerBanReasons();
-        break;
-      case 'user':
-        banReasons = banHandler.getUserBanReasons();
-        break;
-      default:
-        banReasons = banHandler.getBanReasons();
-    }
+	/**
+	 * send an ephemeral select to the user with a select menu
+	 * @param {Interaction} interaction 
+	 * @param {number} id - the id of the question, server, or user
+	 */
+	async getBanReason(interaction, id) {
+		const banHandler = new BanHandler();
+		let banReasons;
 
-    let reasons = [];
+		switch (this.type) {
+			case 'server':
+				banReasons = banHandler.getServerBanReasons();
+				break;
+			case 'user':
+				banReasons = banHandler.getUserBanReasons();
+				break;
+			default:
+				banReasons = banHandler.getBanReasons();
+		}
 
-    reasons[0] = new StringSelectMenuOptionBuilder()
-      .setLabel('Select a reason')
-      .setValue('none')
-      .setDefault(true);
+		let reasons = [];
 
-    banReasons.forEach((reason) => {
-      const option = new StringSelectMenuOptionBuilder()
-        .setLabel(reason.name)
-        .setValue(reason.value + `_${id}`)
-      reasons.push(option);
-    });
+		reasons[0] = new StringSelectMenuOptionBuilder()
+			.setLabel('Select a reason')
+			.setValue('none')
+			.setDefault(true);
 
-    const menu = new StringSelectMenuBuilder()
-      .setCustomId('ban_reason')
-      .setMinValues(1)
-      .setOptions(reasons);
-    const row = new ActionRowBuilder().addComponents(menu);
-    const reply = await interaction.followUp({ content: 'Select a reason for this ban', components: [row], fetchReply: true });
-    interaction.editReply("Choose a Reason");
+		banReasons.forEach((reason) => {
+			const option = new StringSelectMenuOptionBuilder()
+				.setLabel(reason.name)
+				.setValue(reason.value + `_${id}`)
+			reasons.push(option);
+		});
 
-    const collector = reply.createMessageComponentCollector({
-      ComponentType: ComponentType.StringSelect,
-      filter: (i) => i.customId === 'ban_reason',
-      time: 60_000
-    })
+		const menu = new StringSelectMenuBuilder()
+			.setCustomId('ban_reason')
+			.setMinValues(1)
+			.setOptions(reasons);
+		const row = new ActionRowBuilder().addComponents(menu);
+		const reply = await interaction.message.edit({ content: 'Select a reason for this ban', components: [row], fetchReply: true });
+		interaction.editReply("Please Check the original message for the ban reason select menu");
 
-
-    collector.on('collect', async (i) => {
-      console.log(i.values);
-
-      const [reason, id] = i.values[0].split('_');
-
-      if (reason === 'other') {
-        await this.useCustomBanModal(i, id);  // Call the new function for custom reason
-      } else {
-        this.doBan(i, id, reason);
-      }
-
-    })
-
-  }
-
-  /**
- * Opens a modal to collect a custom ban reason from the user.
- * @param {Interaction} interaction 
- * @param {number} id 
- */
-async useCustomBanModal(interaction, id) {
-  const modal = new ModalBuilder()
-    .setCustomId('customBanReason')
-    .setTitle('Enter Custom Ban Reason')
-    .addComponents(
-      new ActionRowBuilder().addComponents(
-        new TextInputBuilder()
-          .setCustomId('custom_reason')
-          .setLabel('Ban Reason')
-          .setStyle(TextInputStyle.Short)
-          .setPlaceholder('Provide a reason for this ban')
-          .setRequired(true)
-      )
-    );
-
-  await interaction.showModal(modal);
-
-  // Collect modal submission
-  const modalFilter = (modalInteraction) => modalInteraction.customId === 'customBanReason';
-  interaction.awaitModalSubmit({ filter: modalFilter, time: 60_000 })
-    .then((modalInteraction) => {
-      const customReason = modalInteraction.fields.getTextInputValue('custom_reason');
-      this.doBan(modalInteraction, id, customReason);
-    })
-    .catch((err) => {
-      console.error("Modal timed out or encountered an error:", err);
-      interaction.followUp({ content: "Timed out or encountered an error while waiting for a response.", ephemeral: true });
-    });
-}
+		const collector = reply.createMessageComponentCollector({
+			ComponentType: ComponentType.StringSelect,
+			filter: (i) => i.customId === 'ban_reason',
+			time: 60_000
+		})
 
 
-  /**
-   * 
+		collector.on('collect', async (i) => {
+			i.handled = true;
+			console.log(i.values);
+
+			const [reason, id] = i.values[0].split('_');
+
+			if (reason === 'other') {
+				await this.useCustomBanModal(i, id);  // Call the new function for custom reason
+			} else {
+				this.doBan(i, id, reason);
+			}
+
+		})
+
+		collector.on('end', async (collected, reason) => {
+			if (reason === 'time') {
+				await this.updateBannable(interaction.message.id);
+			}
+
+		});
+
+
+	}
+
+	async updateBannable(messageId) {
+		const question = await new Question().find(messageId);
+		if (question) {
+			await logger.updateQuestion(question);
+			return true;
+		} else { //the question does not exist, so check if it's a server
+			const server = await new Server().find(messageId);
+			if (!server) return false;
+			await logger.updateServer(server);
+			return true;
+		}
+	}
+
+
+	/**
+   * Opens a modal to collect a custom ban reason from the user.
    * @param {Interaction} interaction 
    * @param {number} id 
-   * @param {string} reason 
    */
-  async doBan(interaction, id, reason) {
-    await interaction.deferReply({ephemeral: true});
-    console.log("ban", id, reason);
-    let didBan = false;
+	async useCustomBanModal(interaction, id) {
+		const modal = new ModalBuilder()
+			.setCustomId('customBanReason')
+			.setTitle('Enter Custom Ban Reason')
+			.addComponents(
+				new ActionRowBuilder().addComponents(
+					new TextInputBuilder()
+						.setCustomId('custom_reason')
+						.setLabel('Ban Reason')
+						.setStyle(TextInputStyle.Short)
+						.setPlaceholder('Provide a reason for this ban')
+						.setRequired(true)
+				)
+			);
 
-    switch (this.type) {
-      case 'dare':
-	  case 'truth':
-	  case 'question':
-        didBan = await new BanHandler().banQuestion(id, reason, interaction);
-        break;
-      case 'server':
-        didBan = await new BanHandler().banServer(id, reason, interaction);
-        break;
-      case 'user':
-        didBan = await new BanHandler().banUser(id, reason, interaction);
-		break;
-	  default:
-		console.error("Invalid type provided for ban operation:", this.type);
-		interaction.followUp({ content: 'Invalid type provided', ephemeral: true });
-		return;
-    }
+		await interaction.showModal(modal);
 
-    if (!didBan) {
-       // You can also respond with an ephemeral message indicating failure if needed
-      await interaction.followUp({ content: 'Ban Failed', ephemeral: true });
-    }
-}
+		// Collect modal submission
+		const modalFilter = (modalInteraction) => modalInteraction.customId === 'customBanReason';
+		interaction.awaitModalSubmit({ filter: modalFilter, time: 60_000 })
+			.then((modalInteraction) => {
+				const customReason = modalInteraction.fields.getTextInputValue('custom_reason');
+				this.doBan(modalInteraction, id, customReason);
+			})
+			.catch((err) => {
+				console.error("Modal timed out or encountered an error:", err);
+				interaction.followUp({ content: "Timed out or encountered an error while waiting for a response.", ephemeral: true });
+			});
+	}
 
-  /**
-   * 
-   * @param {Interaction} interaction 
-   * @param {Question} question 
-   */
-  async approve(interaction, question) {
-    if(!interaction.deferred) await interaction.deferReply({ephemeral: true});
-    await question.load();
-    await question.approve(interaction.user.id);
-    
-    await question.save();
 
-    logger.updateQuestion(question, false);
+	/**
+	 * 
+	 * @param {Interaction} interaction 
+	 * @param {number} id 
+	 * @param {string} reason 
+	 */
+	async doBan(interaction, id, reason) {
+		await interaction.deferReply({ ephemeral: true });
+		console.log("ban", id, reason);
+		let didBan = false;
 
-    interaction.editReply({ content: 'Question has been approved', ephemeral: true });
-  }
+		switch (this.type) {
+			case 'dare':
+			case 'truth':
+			case 'question':
+				didBan = await new BanHandler().banQuestion(id, reason, interaction);
+				break;
+			case 'server':
+				didBan = await new BanHandler().banServer(id, reason, interaction);
+				break;
+			case 'user':
+				didBan = await new BanHandler().banUser(id, reason, interaction);
+				break;
+			default:
+				console.error("Invalid type provided for ban operation:", this.type);
+				interaction.followUp({ content: 'Invalid type provided', ephemeral: true });
+				return;
+		}
 
-  getEmbed(question) {
-    return new EmbedBuilder()
-        .setTitle(`New ${this.type === 'truth' ? 'Truth' : 'Dare'}`)
-        .addFields(
-            { name: "Content", value: question.question ?? '' },
-            { name: "Author", value: question.creator ?? '' },
-            { name: "Server:", value: question.server.name },
-            { name: "Approved By:", value: question.banReason ?? '' }
-        )
-        .setFooter(`#${question.id}`);
-  }
+		if (!didBan) {
+			// You can also respond with an ephemeral message indicating failure if needed
+			await interaction.followUp({ content: 'Ban Failed', ephemeral: true });
+		}
+	}
 
-  /**
-   * Creates an embed to show the question to the user.
-   * @param {Question} question 
-   * @param {Interaction} interaction 
-   * @param {string} username The username of the user who created the question, or "unknown" if not available.
-   * @returns {EmbedBuilder} The embed object to be sent in the message.
-   */
-  createQuestionEmbed(question, interaction, username) {
+	/**
+	 * 
+	 * @param {Interaction} interaction 
+	 * @param {Question} question 
+	 */
+	async approve(interaction, question) {
+		if (!interaction.deferred) await interaction.deferReply({ ephemeral: true });
+		await question.load();
+		await question.approve(interaction.user.id);
 
-    const type = question.type === 'truth' ? 'Truth' : 'Dare';
+		await question.save();
+
+		logger.updateQuestion(question, false);
+
+		interaction.editReply({ content: 'Question has been approved', ephemeral: true });
+	}
+
+	getEmbed(question) {
+		return new EmbedBuilder()
+			.setTitle(`New ${this.type === 'truth' ? 'Truth' : 'Dare'}`)
+			.addFields(
+				{ name: "Content", value: question.question ?? '' },
+				{ name: "Author", value: question.creator ?? '' },
+				{ name: "Server:", value: question.server.name },
+				{ name: "Approved By:", value: question.banReason ?? '' }
+			)
+			.setFooter(`#${question.id}`);
+	}
+
+	/**
+	 * Creates an embed to show the question to the user.
+	 * @param {Question} question 
+	 * @param {Interaction} interaction 
+	 * @param {string} username The username of the user who created the question, or "unknown" if not available.
+	 * @returns {EmbedBuilder} The embed object to be sent in the message.
+	 */
+	createQuestionEmbed(question, interaction, username) {
+
+		const type = question.type === 'truth' ? 'Truth' : 'Dare';
 
 		let questionText = `${question.question}\n\n **Votes:** 0 Done | 0 Failed`;
 
@@ -294,12 +317,12 @@ async useCustomBanModal(interaction, id) {
 			.setFooter({ text: `Requested by ${interaction.user.username} | Created By ${username} | #${question.id}`, iconURL: interaction.user.displayAvatarURL() });
 	}
 
-  /**
-	 * Creates an embed for the question, updasted with the latest vote counts.
-	 * @param {UserQuestion} userQuestion 
-	 * @param {Interaction} interaction 
-	 * @returns 
-	 */
+	/**
+	   * Creates an embed for the question, updasted with the latest vote counts.
+	   * @param {UserQuestion} userQuestion 
+	   * @param {Interaction} interaction 
+	   * @returns 
+	   */
 	async createUpdatedQuestionEmbed(userQuestion, interaction) {
 		let question = await userQuestion.getQuestion();
 		let questionText = question.question;
@@ -315,75 +338,75 @@ async useCustomBanModal(interaction, id) {
 			.setFooter({ text: `Requested by ${userQuestion.username} | Created By ${username} | #${question.id}`, iconURL: userQuestion.image });
 	}
 
-  /**
-   * Selects a random question from the provided array.
-   * @param {Question[]} questions 
-   * @returns {Question} A random question from the provided array.
-   */
-  selectRandom(questions) {
-    const randomIndex = Math.floor(Math.random() * questions.length);
-    return questions[randomIndex];
-  }
-
-  /**
-     * Asynchronously gets the creator of a dare from an interaction within a guild.
-     * 
-     * @param {Question} question - The question object with a 'creator' property holding the user ID.
-     * @param {Interaction} interaction - The interaction from which the guild and users are accessed.
-     * @returns {User} The user object of the creator or a default user object if not found.
-     */
-    async getCreator(question, interaction) {
-      // Check if the interaction has a guild and the guild is properly fetched
-      if (!interaction.guild) {
-        console.error("Guild is undefined. Ensure this function is used within a guild context.");
-        return { username: "Somebody" };
-      }
-  
-      try {
-        // Fetch the user from the guild
-        const creator = await interaction.guild.members.fetch(question.creator);
-        return creator.user;
-      } catch (error) {
-        // Handle cases where the user cannot be fetched (e.g., not in guild, API error)
-        if (error.code !== 10007) {
-          // Log other errors
-          logger.error('Unexpectedly failed to fetch username in questionHandler: ', error)
-        }
-  
-        return { username: "Somebody" };
-      }
-    }
-
-    /**
-     * Create a new UserQuestion instance and save it to the database.
-     * This is used to track the message ID of the question for voting purposes.
-     * @param {Snowflake} messageId 
-     * @param {Snowflake} userId 
-     * @param {number} questionId 
-     * @param {Snowflake} serverId 
-     * @param {string} username 
-     * @param {*} image 
-     * @returns {Promise<bool>}
-     */
-    async saveQuestionMessageId(messageId, userId, questionId, serverId, username, image) {
-
-      if (!messageId) {
-        logger.error(`Brain Fart: Couldn't save question to track votes. Message ID missing`);
-        return false;
-      } else {
-        const userQuestion = new UserQuestion(messageId, userId, questionId, serverId, username, image, 0, 0, this.type);
-        await userQuestion.save();
-        return true;
-
-      }
-    }
-
-  /**
-	 * gets a random question from the database and sends it to the user
-   * uses the type to determine if it's a truth or dare
-	 * @param {Interaction} interaction 
-	 * @returns 
+	/**
+	 * Selects a random question from the provided array.
+	 * @param {Question[]} questions 
+	 * @returns {Question} A random question from the provided array.
 	 */
+	selectRandom(questions) {
+		const randomIndex = Math.floor(Math.random() * questions.length);
+		return questions[randomIndex];
+	}
+
+	/**
+	   * Asynchronously gets the creator of a dare from an interaction within a guild.
+	   * 
+	   * @param {Question} question - The question object with a 'creator' property holding the user ID.
+	   * @param {Interaction} interaction - The interaction from which the guild and users are accessed.
+	   * @returns {User} The user object of the creator or a default user object if not found.
+	   */
+	async getCreator(question, interaction) {
+		// Check if the interaction has a guild and the guild is properly fetched
+		if (!interaction.guild) {
+			console.error("Guild is undefined. Ensure this function is used within a guild context.");
+			return { username: "Somebody" };
+		}
+
+		try {
+			// Fetch the user from the guild
+			const creator = await interaction.guild.members.fetch(question.creator);
+			return creator.user;
+		} catch (error) {
+			// Handle cases where the user cannot be fetched (e.g., not in guild, API error)
+			if (error.code !== 10007) {
+				// Log other errors
+				logger.error('Unexpectedly failed to fetch username in questionHandler: ', error)
+			}
+
+			return { username: "Somebody" };
+		}
+	}
+
+	/**
+	 * Create a new UserQuestion instance and save it to the database.
+	 * This is used to track the message ID of the question for voting purposes.
+	 * @param {Snowflake} messageId 
+	 * @param {Snowflake} userId 
+	 * @param {number} questionId 
+	 * @param {Snowflake} serverId 
+	 * @param {string} username 
+	 * @param {*} image 
+	 * @returns {Promise<bool>}
+	 */
+	async saveQuestionMessageId(messageId, userId, questionId, serverId, username, image) {
+
+		if (!messageId) {
+			logger.error(`Brain Fart: Couldn't save question to track votes. Message ID missing`);
+			return false;
+		} else {
+			const userQuestion = new UserQuestion(messageId, userId, questionId, serverId, username, image, 0, 0, this.type);
+			await userQuestion.save();
+			return true;
+
+		}
+	}
+
+	/**
+	   * gets a random question from the database and sends it to the user
+	 * uses the type to determine if it's a truth or dare
+	   * @param {Interaction} interaction 
+	   * @returns 
+	   */
 
 	async getQuestion(interaction) {
 
@@ -406,9 +429,9 @@ async useCustomBanModal(interaction, id) {
 
 			const message = await interaction.editReply({ content: `Here's your ${this.type == "truth" ? "Truth" : "Dare"}!`, embeds: [embed], components: [row], fetchReply: true });
 			const didSave = await this.saveQuestionMessageId(message.id, interaction.user.id, question.id, interaction.guildId, interaction.user.username, interaction.user.displayAvatarURL());
-      if (!didSave) {
-        await interaction.channel.send("I'm sorry, I couldn't save the question to track votes. This is a brain fart. Please reach out for support on the official server.");
-      }
+			if (!didSave) {
+				await interaction.channel.send("I'm sorry, I couldn't save the question to track votes. This is a brain fart. Please reach out for support on the official server.");
+			}
 		} catch (error) {
 			console.error('Error in handler.getQuestion function:', error);
 			interaction.editReply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:");
@@ -416,14 +439,14 @@ async useCustomBanModal(interaction, id) {
 		}
 	}
 
-  /**
-	 * 
-	 * @param {Interaction} interaction 
-	 * @returns 
-	 */
+	/**
+	   * 
+	   * @param {Interaction} interaction 
+	   * @returns 
+	   */
 	async giveQuestion(interaction) {
 		if (!interaction.deferred) await interaction.deferReply({ ephemeral: true })
-    const type = this.type === 'truth' ? 'Truth' : 'Dare';
+		const type = this.type === 'truth' ? 'Truth' : 'Dare';
 		const target = interaction.options.getUser('user');
 		const question = interaction.options.getString('truth');
 		const wager = interaction.options.getInteger('wager');
@@ -450,11 +473,11 @@ async useCustomBanModal(interaction, id) {
 	}
 
 
-  /**
-	 * 
-	 * @param {Interaction} interaction 
-	 * @returns 
-	 */
+	/**
+	   * 
+	   * @param {Interaction} interaction 
+	   * @returns 
+	   */
 	async vote(interaction) {
 		if (!interaction.deferred) await interaction.deferReply({ content: "Registering your vote", ephemeral: true })
 
@@ -517,7 +540,7 @@ async useCustomBanModal(interaction, id) {
 					.setLabel('Vote on Top.gg')
 					.setStyle(ButtonStyle.Link)
 					.setURL('https://top.gg/bot/1079207025315164331/vote'),
-          // TODO: Fix and reimplement the purchasable button - See #50
+				// TODO: Fix and reimplement the purchasable button - See #50
 				//new ButtonBuilder()
 				//	.setStyle(ButtonStyle.Premium)
 				//	.setSKUId(purchasable.skuId)
@@ -537,7 +560,7 @@ async useCustomBanModal(interaction, id) {
 		//use the userQuestion.messageId to edit the embed in the message
 		await interaction.message.edit({ embeds: [embed], components: [row] });
 		await user.burnVote();
-    console.log(this.type)
+		console.log(this.type)
 		await interaction.editReply({ content: `Your ${this.type} has been skipped! You have ${user.voteCount} skips remaining!`, ephemeral: true });
 
 	}
@@ -573,12 +596,12 @@ async useCustomBanModal(interaction, id) {
 		if (userQuestion.doneCount >= this.vote_count) {
 			row = this.createPassedActionRow();
 			user.addXP(this.xpValues[userQuestion.type].success);
-      user.addServerXP(server[`${userQuestion.type}_success_xp`]);
+			user.addServerXP(server[`${userQuestion.type}_success_xp`]);
 
 		} else if (userQuestion.failedCount >= this.vote_count) {
 			row = this.createFailedActionRow();
 			user.subtractXP(this.xpValues[userQuestion.type].fail);
-      user.addServerXP(server[`${userQuestion.type}_fail_xp`]);
+			user.addServerXP(server[`${userQuestion.type}_fail_xp`]);
 
 		}
 
@@ -587,7 +610,7 @@ async useCustomBanModal(interaction, id) {
 		await interaction.editReply({ content: "Your vote has been recorded!", ephemeral: true });
 	}
 
-  createActionRow() {
+	createActionRow() {
 		return new ActionRowBuilder()
 			.addComponents(
 				new ButtonBuilder()
@@ -638,15 +661,15 @@ async useCustomBanModal(interaction, id) {
 			);
 	}
 
-  /**
-	 * mark the question as approved or banned
-	 * @param {Interaction} interaction 
-	 * @param {string<"ban"|"approve"} decision
-	 */
+	/**
+	   * mark the question as approved or banned
+	   * @param {Interaction} interaction 
+	   * @param {string<"ban"|"approve"} decision
+	   */
 	async setQuestion(interaction, decision) {
 		if (!interaction.deferred) await interaction.deferReply({ ephemeral: true })
 		let question = await new Question().find(interaction.message.id);
-	
+
 		if (!question) {
 			interaction.editReply("This question could not be found.");
 			return;

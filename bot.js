@@ -1,7 +1,7 @@
 require('dotenv').config();
 const fs = require('node:fs');
 const path = require('node:path');
-const { Client, GatewayIntentBits, Collection, SlashCommandRoleOption, EmbedBuilder } = require('discord.js');
+const { Client, GatewayIntentBits, Collection} = require('discord.js');
 const Database = require('objects/database.js'); // Import Database class
 const util = require('util');
 const logger = require('objects/logger.js');
@@ -10,6 +10,10 @@ overrideConsoleLog();
 console.log('Initialising Bot....');
 
 process.on('uncaughtException', (err, origin) => {
+    if(err.code === 10062) {
+        console.error("skipping unknown interaction");
+        return;
+    }
     console.error(err);
     console.error(origin);
     logger.error(err.name + "\n" + err.message + "\n" + err.stack);
