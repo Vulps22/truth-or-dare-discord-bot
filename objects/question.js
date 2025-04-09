@@ -147,6 +147,11 @@ class Question {
 		return "Untracked";
 	}
 
+	/**
+	 * Find and load a question by its messageId.
+	 * @param {string} messageId 
+	 * @returns 
+	 */
 	async find(messageId) {
 		/** @type {Array} */
 		const question = await this.db.query(`select id FROM questions WHERE messageId = ${messageId}`);
