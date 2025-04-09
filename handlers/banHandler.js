@@ -1,4 +1,4 @@
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, Interaction, Message, TextChannel } = require("discord.js");
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 const Database = require("objects/database");
 const { env } = require("process");
 const Server = require("objects/server");
@@ -48,7 +48,7 @@ class BanHandler {
     ]
 
     constructor() {
-        
+
     }
 
     getBanReasons() {
@@ -195,9 +195,9 @@ class BanHandler {
             await question.save();
 
             let didUpdate = null;
-            
-                didUpdate = await logger.updateQuestion(question, userBan);
-            
+
+            didUpdate = await logger.updateQuestion(question, userBan);
+
             if (!didUpdate) {
                 if (notify) interaction.followUp(`Banned: Failed to update Action Row: Pre-V5 Question\n\nId: ${question.id} \n\n Question: ${question.question}\n\nReason: ${reason}`);
             }
@@ -271,7 +271,7 @@ class BanHandler {
 
             user.isBanned = 1;
             user.banReason = reason;
-            await user.save();
+            //await user.save();
 
             // ban every dare the user created
             const db = new Database();
@@ -281,7 +281,7 @@ class BanHandler {
             let servers = 0;
 
             // Batch update to ban all questions created by the user
-            await db.query(`UPDATE questions SET isBanned=1, banReason='Creator was Banned' WHERE creator=${user.id} AND isBanned=0`);
+            //await db.query(`UPDATE questions SET isBanned=1, banReason='Creator was Banned' WHERE creator=${user.id} AND isBanned=0`);
             questions = await db.query(`SELECT COUNT(*) as count FROM questions WHERE creator=${user.id} AND isBanned=1`);
             let questionCount = questions[0].count;
 
@@ -293,35 +293,8 @@ class BanHandler {
                     const questions = Question.loadMany(questionsData);
 
                     for (const question of questions) {
-                        const actionRow = logger.getActionRow(question.type, true, true);
-                        const logType = `${question.type}s_log`; // Construct the log type dynamically
-                        const channelId = my[logType]; // Get the appropriate channel ID from `my` object
 
-                        let embed;
-                        switch (question.type) {
-                            case 'truth':
-                                embed = await logger.getTruthEmbed(question);
-                                break;
-                            case 'dare':
-                                embed = await logger.getDareEmbed(question);
-                                break;
-                            default:
-                                logger.error(`Unexpected type used during user ban: Question with ID: ${question.id} | using Type: ${question.type}`);
-                                continue;
-                        }
-
-                        // Edit the message across shards if messageId is valid
-                        if (question.messageId != undefined && question.messageId != 'pre-v5') {
-                            try {
-                                const success = await editMessageInChannel(channelId, question.messageId, { embeds: [embed], components: [actionRow] });
-
-                                if (!success) {
-                                    logger.error(`Failed to edit message with ID: ${question.messageId}`);
-                                }
-                            } catch (error) {
-                                logger.error(`Error editing message for question ID ${question.id}: ${error}`);
-                            }
-                        }
+                        logger.updateQuestion(question, true); // Update the question in discord logs
                     }
                 })
                 .catch(error => {
@@ -338,6 +311,12 @@ class BanHandler {
             db.query(`SELECT * FROM servers WHERE owner=${user.id};`).then(async serverData => {
                 /** @type {Server[]} */
                 const servers = Server.loadMany(serverData);
+
+                for (const server of servers) {
+                    await server.load();
+                    await this.updateActionRow(server.message_id, my.servers_log, "server");
+                }
+
             })
 
             logger.log(`User: ${user.username} with ID: ${user.id} has been banned for ${user.banReason} | Auto-Banned: ${questions} Truths/Dares | ${servers} Servers`);

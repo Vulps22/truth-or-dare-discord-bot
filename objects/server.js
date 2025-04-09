@@ -1,4 +1,3 @@
-const { Message, TextChannel } = require("discord.js");
 const Database = require("objects/database");
 const logger = require("objects/logger");
 
@@ -94,7 +93,7 @@ class Server {
      * @param {Array<Object>} serverDataArray - Array of objects containing server data.
      * @returns {Server[]} - Array of populated Server instances.
      */
-    loadMany(serverDataArray) {
+    static loadMany(serverDataArray) {
         return serverDataArray.map(data => {
             const server = new Server(data.id, data.name);  // Create new Server instance with id and name
 
