@@ -40,7 +40,7 @@ class ButtonEventHandler {
                 embeds: this.interaction.message.embeds, // Keep the same embeds
                 components: [] // Remove the components (e.g., buttons, dropdowns, etc.)
             });
-            this.interaction.reply("A recent Update has changed how I identify bots. I am unable to register any votes on messages created before <t:1725855060:F>")
+            this.interaction.reply("A recent Update has changed how I identify votes. I am unable to register any votes on messages created before <t:1725855060:F>")
         }
 
         //get the type from the question using the messageId as the key
@@ -120,7 +120,7 @@ async function handleContentResponse(interaction, idComponents) {
         case "dare":
         case "truth":
         case "question":
-            new Handler().setQuestion(interaction, decision);
+            new Handler('question').setQuestion(interaction, decision);
             break;
         case "server":
             new ServerHandler(interaction.client).banServer(interaction, decision)

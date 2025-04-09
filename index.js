@@ -124,7 +124,7 @@ function scheduleTopGGUpdate(manager) {
  */
 function syncGG(manager){
     try {
-        const ap = AutoPoster(my.TOP_GG_TOKEN, manager);
+        const ap = AutoPoster(my.top_gg_token, manager);
         ap.on('posted', () => {
             console.log('Updated bot stats on top.gg');
         });
