@@ -22,21 +22,19 @@ module.exports = {
 
         console.log("Interaction Created");
 
-        if (interaction.i)
-
-            if (interaction.isStringSelectMenu() && !interaction.replied && !interaction.handled) {
-                const didRespond = await new Handler().updateBannable(interaction.message.id);
-                if (!interaction.handled) {
-                    if (!didRespond) {
-                        console.log("Could not update bannable message");
-                        interaction.update({ content: "This message is no longer valid. The bot may have restarted. Try again and try to respond in less than 1 minute", embeds: [], components: [] });
-                        return;
-                    } else {
-                        interaction.reply({ content: "Your response timed out. The bot may have restarted", ephemeral: true });
-                        return;
-                    }
+        if (interaction.isStringSelectMenu() && !interaction.replied && !interaction.handled) {
+            const didRespond = await new Handler().updateBannable(interaction.message.id);
+            if (!interaction.handled) {
+                if (!didRespond) {
+                    console.log("Could not update bannable message");
+                    interaction.update({ content: "This message is no longer valid. The bot may have restarted. Try again and try to respond in less than 1 minute", embeds: [], components: [] });
+                    return;
+                } else {
+                    interaction.reply({ content: "Your response timed out. The bot may have restarted", ephemeral: true });
+                    return;
                 }
             }
+        }
         if (interaction.isChannelSelectMenu() && !interaction.replied && !interaction.handled) {
             //wait 1 second to let any collectors collect this interaction
             await new Promise(resolve => setTimeout(resolve, 1000));
