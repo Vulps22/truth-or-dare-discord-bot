@@ -160,6 +160,7 @@ class Handler {
 
 
 		collector.on('collect', async (i) => {
+			i.handled = true;
 			console.log(i.values);
 
 			const [reason, id] = i.values[0].split('_');
@@ -173,22 +174,28 @@ class Handler {
 		})
 
 		collector.on('end', async (collected, reason) => {
-
 			if (reason === 'time') {
-				const question = await new Question().find(interaction.message.id);
-				if (question) {
-					await logger.updateQuestion(question);
-				} else{ //the question does not exist, so check if it's a server
-					const server = await new Server().find(interaction.message.id);
-					if (!server) return;
-					await logger.updateServer(server);
-				}
+				await this.updateBannable(interaction.message.id);
 			}
 
 		});
 
 
 	}
+
+	async updateBannable(messageId) {
+		const question = await new Question().find(messageId);
+		if (question) {
+			await logger.updateQuestion(question);
+			return true;
+		} else { //the question does not exist, so check if it's a server
+			const server = await new Server().find(messageId);
+			if (!server) return false;
+			await logger.updateServer(server);
+			return true;
+		}
+	}
+
 
 	/**
    * Opens a modal to collect a custom ban reason from the user.

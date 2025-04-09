@@ -1,7 +1,7 @@
 const Server = require("objects/server");
 const Handler = require("handlers/handler");
 const embedder = require('embedder.js');
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelSelectMenuBuilder, ChannelType, ComponentType, Interaction, PermissionFlagsBits } = require("discord.js");
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelSelectMenuBuilder, ChannelType, ComponentType, Interaction, PermissionFlagsBits, MessageFlags } = require("discord.js");
 const logger = require("objects/logger.js");
 
 class SetupHandler extends Handler {
@@ -79,7 +79,7 @@ class SetupHandler extends Handler {
             });
 
             collector.on('collect', async i => {
-
+                i.handled = true;
                 if (i.customId === 'setup_2_channel') {
                     await this.action_2(i);
                     collector.stop();
@@ -98,7 +98,7 @@ class SetupHandler extends Handler {
  * @returns 
  */
     async action_2(interaction) {
-        interaction.deferReply();
+        interaction.deferReply({ flags: MessageFlags.Ephemeral});
         let channelId = interaction.values[0];
 
         if (!hasPermission(interaction.guildId, channelId)) {
@@ -134,6 +134,7 @@ class SetupHandler extends Handler {
 
                     await targetChannel.send("✅ This channel has been subscribed to the official announcement and bot update channels.");
                     logger.log(`✅ Subscribed ${guild.name} to announcements and bot updates.`);
+                    interaction.editReply("✅ The channel has been subscribed to the official announcement and bot update channels.");
                 } catch (error) {
                     logger.error(`Failed to subscribe ${guild.name}:`, error);
                     await interaction.reply("An error occurred while subscribing to announcements. Please try again later.");
