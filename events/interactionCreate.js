@@ -7,6 +7,7 @@ const ButtonEventHandler = require("handlers/buttonEventHandler");
 const logger = require("objects/logger");
 const BanHandler = require("handlers/banHandler");
 const embedder = require("embedder");
+const Handler = require("handlers/handler");
 
 let logInteraction = '';
 
@@ -19,9 +20,34 @@ module.exports = {
      */
     async execute(interaction) {
 
+        console.log("Interaction Created");
+
+        if (interaction.isStringSelectMenu() && !interaction.replied && !interaction.handled) {
+            const didRespond = await new Handler().updateBannable(interaction.message.id);
+            if (!interaction.handled) {
+                if (!didRespond) {
+                    console.log("Could not update bannable message");
+                    interaction.update({ content: "This message is no longer valid. The bot may have restarted. Try again and try to respond in less than 1 minute", embeds: [], components: [] });
+                    return;
+                } else {
+                    interaction.reply({ content: "Your response timed out. The bot may have restarted", ephemeral: true });
+                    return;
+                }
+            }
+        }
+        if (interaction.isChannelSelectMenu() && !interaction.replied && !interaction.handled) {
+            //wait 1 second to let any collectors collect this interaction
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            if (!interaction.handled) {
+                interaction.update({ content: "This message is no longer valid. The bot may have restarted. Try again and try to respond in less than 1 minute", embeds: [], components: [] });
+                return;
+            }
+
+        }
+
         const didBan = await registerServer(interaction);
         if (didBan === -1) {
-            interaction.reply({content: "Oops! It looks like you tried to give me a command in DM. I don't currently support this. But if you join my support server and ask for it, my developer can look into it.", embeds: [embedder.help(false)]})
+            interaction.reply({ content: "Oops! It looks like you tried to give me a command in DM. I don't currently support this. But if you join my support server and ask for it, my developer can look into it.", embeds: [embedder.help(false)] })
             return;
         }
         if (didBan) {
@@ -48,7 +74,7 @@ module.exports = {
             return;
         }
 
-        if(user.username !== interaction.user.username) {
+        if (user.username !== interaction.user.username) {
             user.username = interaction.user.username;
             await user.save();
         }
@@ -123,7 +149,7 @@ async function runCommand(interaction) {
         }
         logInteraction = `**Command**: ${interaction.commandName} | **Server**: ${server.name} - ${server.id} | **User**: ${interaction.user.username} - ${interaction.user.id} ||`
         interaction.logInteraction = logInteraction;
-        
+
         interaction.logMessage = await logger.log(logInteraction);
 
         if (server.isBanned && interaction.commandName !== "help") {
@@ -139,7 +165,7 @@ async function runCommand(interaction) {
     } catch (error) {
         console.error(`Error executing ${interaction.commandName}`);
         console.error(error);
-        if(!interaction.deferred) interaction.reply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:");
+        if (!interaction.deferred) interaction.reply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:");
         else interaction.editReply("Woops! Brain Fart! Try another Command while I work out what went Wrong :thinking:");
 
         logger.error(`New Brain Fart occurred!\nCommand: ${interaction.commandName}\nError: ${error.message}`);
@@ -230,7 +256,7 @@ async function registerServer(interaction) {
             server.owner = interaction.guild.ownerId;
             await server.save();
         }
-            
+
     }
 
     if (!server.isBanned) {

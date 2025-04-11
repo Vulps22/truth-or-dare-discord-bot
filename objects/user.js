@@ -186,7 +186,8 @@ class User {
             return false;
         }
 
-        this.markForDeletion();
+        //this.markForDeletion(); -- Stop marking users for deletion as they may have purchased a consumable and we cannot delete consumables users have paid for
+        const logger = require('logger');
 
         logger.log(`**User** ${this.id} is no longer using the bot and Will be deleted in 30 days...`)
         return true;
@@ -502,17 +503,22 @@ class User {
 
     /**
     * Marks the user for deletion in 30 days
+* THIS FUNCTION HAS BEEN DISABLED AND WILL THROW AN ERROR IF CALLED
+    * @throws {MustNotDeleteUsersError} - This error is thrown to prevent user deletion
     */
     async markForDeletion() {
-
-        const now = new Date();
+        throw new MustNotDeleteUsersError();
+        /*const now = new Date();
         const deleteDate = new Date(now.setDate(now.getDate() + 30)).toISOString().split('T')[0];
+
+        const db = new Database();
 
         await db.query(`
                 UPDATE users
                 SET deleteDate = '${deleteDate}'
                 WHERE id = '${this.id}'
             `);
+            */
     }
 
     /**

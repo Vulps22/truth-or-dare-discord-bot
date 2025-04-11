@@ -10,6 +10,6 @@ module.exports = {
 	administrator: false,
 	async execute(interaction) {
 
-		new TruthHandler(interaction.client).truth(interaction);
+		new TruthHandler(interaction.client).getQuestion(interaction);
 	}
 }

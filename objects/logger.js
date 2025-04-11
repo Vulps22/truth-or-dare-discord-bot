@@ -1,4 +1,5 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, Message, } = require('discord.js');
+const Question = require('./question');
 
 module.exports = {
 
@@ -68,110 +69,70 @@ module.exports = {
         }
     },
 
+    createApprovedActionRow(type) {
+        return new ActionRowBuilder()
+          .addComponents(
+            new ButtonBuilder()
+              .setCustomId(`new_${type}_approve`)
+              .setLabel('Approved')
+              .setStyle(ButtonStyle.Success)
+              .setDisabled(true),
+            new ButtonBuilder()
+              .setCustomId(`new_${type}_ban`)
+              .setLabel("Ban")
+              .setStyle(ButtonStyle.Danger)
+              .setDisabled(false),
+          );
+      },
 
     /**
- * @param {Dare} dare 
- */
-    async newDare(dare) {
-
-        const channelId = my.dares_log;
-        const embed = await this.getDareEmbed(dare);
-        const actionRow = this.createActionRow("dare");
-
-        try {
-            const messageId = await this.sendTo({ embeds: [embed], components: [actionRow] }, channelId);
-
-            if (messageId) {
-                console.log("Logged:", messageId);
-                dare.messageId = messageId;
-                await dare.save();
-            } else {
-                console.log("Failed to log the dare message.");
-            }
-        } catch (error) {
-            console.log("Error logging new dare:", error);
-        }
-    },
-
-
-    /**
- * @param {Dare} dare 
- */
-    async updateDare(dare, userBan = false) {
-        const channelId = my.dares_log;
-        const embed = await this.getDareEmbed(dare);
-        const actionRow = this.createActionRow("dare", dare.isBanned, userBan);
-
-        try {
-            if (dare.messageId !== 'pre-v5') {
-                const success = await this.editMessageInChannel(channelId, dare.messageId, { embeds: [embed], components: [actionRow] });
-
-                if (success) {
-                    console.log("Updated message with ID:", dare.messageId);
-                    return true;
-                } else {
-                    console.log(`Failed to update dare message with ID: ${dare.messageId}`);
-                    return false;
-                }
-            }
-        } catch (error) {
-            console.log(`Error updating dare message with ID ${dare.messageId}:`, error);
-            return false;
-        }
-    },
-
-
-    /**
-     * @param {Truth} truth 
+     * @param {Question} question 
      */
-    async newTruth(truth) {
-        if (truth.server && truth.server.name) serverName = truth.server.name;
+    async newQuestion(question) {
 
-        const channelId = my.truths_log;
-        const embed = await this.getTruthEmbed(truth);
-        const actionRow = this.createActionRow("truth");
+        const channelId = (question.type == "truth") ? my.truths_log : my.dares_log;
+        const embed = await this.questionEmbed(question);
+        const actionRow = this.createActionRow(question.type);
 
         try {
             const messageId = await this.sendTo({ embeds: [embed], components: [actionRow] }, channelId);
 
             if (messageId) {
                 console.log("Logged message with ID:", messageId);
-                truth.messageId = messageId;
-                await truth.save();
+                question.messageId = messageId;
+                await question.save();
             } else {
-                console.log("Failed to log the truth message.");
+                console.log("Failed to log the question message.");
             }
         } catch (error) {
-            console.log("Error logging new truth:", error);
+            console.log("Error logging new question:", error);
         }
     },
 
     /**
-     * @param {Truth} truth 
+     * @param {Question} question 
      * @param {boolean} [userBan] 
      */
-    async updateTruth(truth, userBan = false) {
-        let serverName = 'pre-v5';
-        if (truth.server && truth.server.name) serverName = truth.server.name;
+    async updateQuestion(question, userBan = false) {
 
-        const channelId = my.truths_log;
-        const embed = await this.getTruthEmbed(truth);
-        const actionRow = this.createActionRow("truth", truth.isBanned, userBan);
+        const channelId = (question.type == "truth") ? my.truths_log : my.dares_log;
+        const embed = await this.questionEmbed(question);
+        const actionRow = question.isApproved && !question.isBanned ? this.createApprovedActionRow(question.type) : this.createActionRow(question.type, question.isApproved, question.isBanned, userBan);
 
         try {
-            if (truth.messageId !== 'pre-v5') {
-                const success = await this.editMessageInChannel(channelId, truth.messageId, { embeds: [embed], components: [actionRow] });
+            if (question.messageId !== 'pre-v5') {
+                const success = await this.editMessageInChannel(channelId, question.messageId, { embeds: [embed], components: [actionRow] });
 
                 if (success) {
-                    console.log("Updated message with ID:", truth.messageId);
+                    console.log("Updated message with ID:", question.messageId);
                     return true;
                 } else {
-                    console.log(`Failed to update truth message with ID: ${truth.messageId}`);
+                    console.log(`Failed to update question message with ID: ${question.messageId}`);
                     return false;
                 }
             }
         } catch (error) {
-            console.log(`Error updating truth message with ID ${truth.messageId}:`, error);
+            console.log(`Error updating question message with ID ${question.messageId}:`, error);
             return false;
         }
     },
@@ -245,7 +206,7 @@ module.exports = {
 
             const channelId = my.servers_log;
             const embed = this.serverEmbed(server);
-            const actionRow = this.createActionRow("server", server.isBanned, userBan);
+            const actionRow = this.createActionRow("server", false, server.isBanned, userBan);
 
             const success = await this.editMessageInChannel(channelId, server.message_id, { embeds: [embed], components: [actionRow] });
 
@@ -355,6 +316,7 @@ module.exports = {
      * 
      * @param {Dare} dare 
      * @returns {Promise<EmbedBuilder>}
+     * @deprecated use questionEmbed instead
      */
     async getDareEmbed(dare) {
         if (!dare.server || !dare.server.name) dare.server = { name: 'Pre-V5' };
@@ -368,6 +330,7 @@ module.exports = {
      * 
      * @param {Truth} truth 
      * @returns {Promise<EmbedBuilder>}
+     * @deprecated use questionEmbed instead
      */
     async getTruthEmbed(truth) {
         if (!truth.server || !truth.server.name) truth.server = { name: 'Pre-V5' };
@@ -491,17 +454,24 @@ module.exports = {
     /**
      * Creates an action row with buttons
      * @param {string<truth|dare>} type 
+     * @param {boolean} isBanned
+     * @param {boolean} userBanned - Whether the user is banned or not
      * @returns {ActionRowBuilder}
+     * TODO: isApproved is sitting here for no reason? why??
      */
-    createActionRow(type, isBanned = false, userBanned = false) {
+    createActionRow(type, isApproved = false, isBanned = false, userBanned = false) {
+        console.log("Creating action row", type, isBanned, userBanned);
+
+        const approvedButton = new ButtonBuilder()
+            .setCustomId(`new_${type}_approve`)
+            .setLabel('Approve')
+            .setStyle(ButtonStyle.Success);
+
         if (!isBanned) {
             if (type !== 'server') {
                 return new ActionRowBuilder()
                     .addComponents(
-                        new ButtonBuilder()
-                            .setCustomId(`new_${type}_approve`)
-                            .setLabel('Approve')
-                            .setStyle(ButtonStyle.Success),
+                        approvedButton,
                         new ButtonBuilder()
                             .setCustomId(`new_${type}_ban`)
                             .setLabel('Ban')
@@ -521,7 +491,7 @@ module.exports = {
                             .setStyle(ButtonStyle.Danger),
                         new ButtonBuilder()
                             .setCustomId(`user_server_ban`)
-                            .setLabel(userBanned ? 'Creator is Owner' : 'Ban Owner')
+                            .setLabel(userBanned ? 'Owner is Banned' : 'Ban Owner')
                             .setStyle(ButtonStyle.Secondary)
                             .setDisabled(userBanned),
                     );

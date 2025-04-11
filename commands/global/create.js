@@ -1,10 +1,9 @@
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandStringOption, Interaction, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
-const DareHandler = require("handlers/dareHandler");
-const TruthHandler = require("handlers/truthHandler");
 const Database = require("objects/database");
 const logger = require("objects/logger");
 const User = require("objects/user");
 const embedder = require("embedder");
+const Handler = require("handlers/handler");
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -55,30 +54,15 @@ module.exports = {
 		//handle different subcommands
 		const subcommand = interaction.options.getSubcommand();
 
+		if(!await canCreate(interaction)) return;
 
-		switch (subcommand) {
-			case 'dare':
-				if(!await canCreate(interaction)) return;
-				// Handle the "dare" subcommand
-				new DareHandler(interaction.client).createDare(interaction);
-				break;
-
-			case 'truth':
-				if(!await canCreate(interaction)) return;
-				// Handle the "truth" subcommand
-				new TruthHandler(interaction.client).createTruth(interaction);
-				break;
-
-			default:
-				logger.error(`Aborted creation: Invalid type specified`);
-				break;
-		}
+		await new Handler(subcommand).createQuestion(interaction);
 	}
 }
 
 async function canCreate(interaction) {
 	const db = new Database();
-	lastQuestion = await db.createdWithin('questions', 2, interaction.user.id);
+	const lastQuestion = await db.createdWithin('questions', 2, interaction.user.id);
 
 	if (lastQuestion.length > 0 && my.environment !== 'devv') {
 		interaction.editReply({ content: `Aborted creation: User attempted to create a Truth or Dare within 2 minutes`, ephemeral: true });

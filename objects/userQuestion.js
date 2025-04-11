@@ -1,6 +1,5 @@
 const User = require("objects/user");
 const Database = require("objects/database");
-const Question = require("objects/question");
 
 class UserQuestion {
    id; // message_id
@@ -12,7 +11,7 @@ class UserQuestion {
    failedCount;
    type;
 
-   constructor(id, userId, questionId, serverId, username, image, doneCount, failedCount) {
+   constructor(id, userId, questionId, serverId, username, image, doneCount, failedCount, type) {
       this.id = id;
       this.userId = userId;
       this.questionId = questionId;
@@ -21,6 +20,7 @@ class UserQuestion {
       this.image = image;
       this.doneCount = doneCount;
       this.failedCount = failedCount;
+      this.type = type;
    }
 
    getId() {
@@ -61,6 +61,10 @@ class UserQuestion {
       return this.serverId;
    }
 
+   /**
+    * 
+    * @returns {Question}
+    */
    async getQuestion() {
       const db = new Database();
       return await db.get('questions', this.questionId)
@@ -167,12 +171,9 @@ class UserQuestion {
      * Use the message ID as the primary key for the UserDare object
      * It will be ID in the UserQuestion class and on the table
      * @param {string} messageId 
-     * @param {"truth" | "dare"} type 
      */
-   async load(messageId, type) {
+   async load(messageId) {
       const db = new Database();
-      if (!type) throw new Error("Type must be provided for UserQuestion load");
-      this.type = type;
       let question = await db.get('user_questions', messageId, "messageId");
       this.id = question.messageId;
       this.userId = question.userId;
@@ -183,6 +184,12 @@ class UserQuestion {
       this.doneCount = question.doneCount;
       this.failedCount = question.failedCount;
 
+      const theQuestion = await db.get('questions', question.questionId, "id")
+      
+      this.type = theQuestion.type;
+      if (!this.type) {
+         throw new Error("Question type not found in database. Please check the question ID.");
+      }
 
       return this;
    }
