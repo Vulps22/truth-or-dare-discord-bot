@@ -110,6 +110,7 @@ module.exports = {
     },
 
     /**
+     * Updates an existing question message in the log channel.
      * @param {Question} question 
      * @param {boolean} [userBan] 
      */
@@ -151,8 +152,8 @@ module.exports = {
             .addFields(
                 { name: "Id", value: user.id ?? ' ' },
                 { name: "Username", value: user.username ?? ' ' },
-                { name: "Questions:", value: String(questions) ?? ' ' },
-                { name: "Servers:", value: String(servers) ?? ' ' },
+                { name: "Questions:", value: String(questions) || ' ' },
+                { name: "Servers:", value: String(servers) || ' ' },
                 { name: "Ban Reason:", value: user.banReason ?? ' ' }
             );
 
