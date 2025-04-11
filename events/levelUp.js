@@ -11,11 +11,13 @@ module.exports = {
          * 
          * @param {User} user 
          * @param {"global" | "server"} type
+         * @param {import("discord.js").Interaction} interaction
          */
-        async execute(user, type) {
+        async execute(user, type, interaction) {
+
                 logger.log(`Handling level up for user: ${user.username} with ID: ${user.id}`);
                 const client = global.client;
-                if (!user._serverUserLoaded) await user.loadServerUser();
+                if (!user._serverUserLoaded) await user.loadServerUser(interaction.guild.id);
 
                 if (!user.serverId) throw new Error("Level up was triggered but no server ID was present to notify the user");
 
