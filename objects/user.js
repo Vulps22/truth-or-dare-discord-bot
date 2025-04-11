@@ -188,7 +188,6 @@ class User {
         }
 
         //this.markForDeletion(); -- Stop marking users for deletion as they may have purchased a consumable and we cannot delete consumables users have paid for
-        const logger = require('logger');
 
         logger.log(`**User** ${this.id} is no longer using the bot and Will be deleted in 30 days...`)
         return true;
