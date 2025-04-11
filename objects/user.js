@@ -1,3 +1,4 @@
+const MustNotDeleteUsersError = require("errors/mustNotDeleteUsersError");
 const Events = require("events/Events");
 const Database = require("objects/database");
 const Server = require("objects/server");
@@ -303,7 +304,12 @@ class User {
     }
 
 
-    async addXP(xp) {
+    /**
+     * 
+     * @param {number} xp 
+     * @param {import("node_modules/discord.js").Interaction} interaction If interaction is provided, it will be used to emit the level up event
+     */
+    async addXP(xp, interaction = null) {
         if (this._loaded) await this.load();
         let didLevelUp = false;  // Flag to determine if a level-up event should be emitted.
 
@@ -321,8 +327,8 @@ class User {
             didLevelUp = true;
         }
 
-        if (didLevelUp) {
-            global.client.emit(Events.LevelUp, this, "global");
+        if (didLevelUp && interaction) {
+            global.client.emit(Events.LevelUp, this, "global", interaction);
         }
 
 
@@ -348,7 +354,13 @@ class User {
     }
 
 
-    async addServerXP(xp) {
+    /**
+     * 
+     * @param {number} xp 
+     * @param {import("node_modules/discord.js").Interaction} interaction 
+     * @returns 
+     */
+    async addServerXP(xp, interaction = null) {
 
         if (!this._serverUserLoaded) return;  // Ensure the server user is loaded before proceeding.
         if (!this._server || !this._server.hasPremium()) return;
@@ -369,9 +381,9 @@ class User {
         }
 
         await this.save();  // Save changes to the database.
-        if (didLevelUp) {
+        if (didLevelUp && interaction) {
             if (!this._serverUserLoaded) throw Error("Attempted to emit level up before loading server User");
-            global.client.emit(Events.LevelUp, this, "server");
+            global.client.emit(Events.LevelUp, this, "server", interaction);
         }
     }
 
@@ -503,7 +515,7 @@ class User {
 
     /**
     * Marks the user for deletion in 30 days
-* THIS FUNCTION HAS BEEN DISABLED AND WILL THROW AN ERROR IF CALLED
+    * THIS FUNCTION HAS BEEN DISABLED AND WILL THROW AN ERROR IF CALLED
     * @throws {MustNotDeleteUsersError} - This error is thrown to prevent user deletion
     */
     async markForDeletion() {

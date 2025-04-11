@@ -595,8 +595,8 @@ class Handler {
 
 		if (userQuestion.doneCount >= this.vote_count) {
 			row = this.createPassedActionRow();
-			user.addXP(this.xpValues[userQuestion.type].success);
-			user.addServerXP(server[`${userQuestion.type}_success_xp`]);
+			user.addXP(this.xpValues[userQuestion.type].success, interaction);
+			user.addServerXP(server[`${userQuestion.type}_success_xp`], interaction);
 
 		} else if (userQuestion.failedCount >= this.vote_count) {
 			row = this.createFailedActionRow();
