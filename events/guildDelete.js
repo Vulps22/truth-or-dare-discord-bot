@@ -2,6 +2,7 @@ const { Events } = require("discord.js");
 const Server = require("objects/server");
 const logger = require("objects/logger");
 const User = require("objects/user");
+const ServerNotExistError = require("errors/serverNotExistError");
 
 module.exports = {
     name: Events.GuildDelete,
@@ -16,7 +17,7 @@ module.exports = {
 
             if (!server._loaded) {
                 logger.error("Tried to delete a server that never existed:", guild.id);
-                throw new Error("Somehow tried to delete a server that never existed");
+                throw new ServerNotExistError("Tried to delete a server that never existed");
             }
 
             if (server.isBanned) {

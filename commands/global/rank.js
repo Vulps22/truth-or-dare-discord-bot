@@ -1,4 +1,5 @@
 const { SlashCommandBuilder, SlashCommandUserOption } = require("discord.js");
+const RankCommandExecutionTimeError = require("errors/rankCommandExecutionTimeError");
 const UserHandler = require("handlers/userHandler");
 const RankCard = require("objects/rankCard");
 const Server = require("objects/server");
@@ -50,7 +51,7 @@ module.exports = {
         
         const executionTime = Date.now() - startTime;
         if (executionTime > 5000) {
-            throw new Error(`Rank command took too long to execute: ${executionTime}ms`);
+            throw new RankCommandExecutionTimeError(executionTime);
         }
         
         await interaction.editReply({ files: [card] });
