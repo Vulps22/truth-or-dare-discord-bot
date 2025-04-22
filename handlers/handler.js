@@ -9,7 +9,8 @@ const {
 	TextInputStyle,
 	EmbedBuilder,
 	Snowflake,
-	MessageFlags
+	MessageFlags,
+	Message
 } = require('discord.js');
 const { ModalBuilder, ActionRowBuilder, TextInputBuilder } = require('@discordjs/builders');
 const Database = require('objects/database.js');
@@ -308,34 +309,53 @@ class Handler {
 
 		const type = question.type === 'truth' ? 'Truth' : 'Dare';
 
-		let questionText = `${question.question}\n\n **Votes:** 0 Done | 0 Failed`;
+		let questionText = `${question.question}\n\n`;
+		const expiryTime = new Date().getTime() + (48 * 60 * 60 * 1000);
 
 		return new EmbedBuilder()
 			.setTitle(`${type}!`)
 			.setDescription(questionText)
+			.addFields(
+				{ name: "Auto Fails", value: `<t:${Math.floor(expiryTime / 1000)}:R>`, inline: true },
+				{ name: "Votes", value: `Done: 0 | Failed: 0`, inline: false }
+
+			)
 			.setColor('#6A5ACD')
-			.setFooter({ text: `Requested by ${interaction.user.username} | Created By ${username} | #${question.id}`, iconURL: interaction.user.displayAvatarURL() });
+			.setFooter({
+				text: `Requested by ${interaction.user.username} | Created By ${username} | #${question.id}`,
+				iconURL: interaction.user.displayAvatarURL()
+			});
 	}
 
 	/**
-	   * Creates an embed for the question, updasted with the latest vote counts.
-	   * @param {UserQuestion} userQuestion 
-	   * @param {Interaction} interaction 
-	   * @returns 
-	   */
+ * Creates an embed for the question, updated with the latest vote counts.
+ * @param {UserQuestion} userQuestion 
+ * @param {Interaction} interaction 
+ * @returns {Promise<EmbedBuilder>}
+ */
 	async createUpdatedQuestionEmbed(userQuestion, interaction) {
-		let question = await userQuestion.getQuestion();
-		let questionText = question.question;
-		let creator = this.getCreator(question, interaction);
-		const username = (await creator).username;
+		const question = await userQuestion.getQuestion();
+		const questionText = question.question;
+		const creator = await this.getCreator(question, interaction);
+		const username = creator.username;
+		const type = userQuestion.getType();
 
-		let questionEmbedText = `${questionText}\n\n **Votes:** ${userQuestion.doneCount} Done | ${userQuestion.failedCount} Failed`;
+		// Calculate expiry timestamp
+		const createdAt = new Date(userQuestion.datetime_created).getTime();
+		const expiryTime = createdAt + (48 * 60 * 60 * 1000);
 
 		return new EmbedBuilder()
-			.setTitle('Dare!')
-			.setDescription(questionEmbedText)
+			.setTitle(`${type}!`)
+			.setDescription(questionText)
+			.addFields(
+				{ name: "Auto Fails", value: `<t:${Math.floor(expiryTime / 1000)}:R>`, inline: true },
+				{ name: "Votes", value: `Done: ${userQuestion.doneCount} | Failed: ${userQuestion.failedCount}`, inline: false }
+			)
 			.setColor('#6A5ACD')
-			.setFooter({ text: `Requested by ${userQuestion.username} | Created By ${username} | #${question.id}`, iconURL: userQuestion.image });
+			.setFooter({
+				text: `Requested by ${userQuestion.username} | Created By ${username} | #${question.id}`,
+				iconURL: userQuestion.image
+			});
 	}
 
 	/**
@@ -381,6 +401,7 @@ class Handler {
 	 * Create a new UserQuestion instance and save it to the database.
 	 * This is used to track the message ID of the question for voting purposes.
 	 * @param {Snowflake} messageId 
+	 * @param {Snowflake} channelId
 	 * @param {Snowflake} userId 
 	 * @param {number} questionId 
 	 * @param {Snowflake} serverId 
@@ -388,13 +409,13 @@ class Handler {
 	 * @param {*} image 
 	 * @returns {Promise<bool>}
 	 */
-	async saveQuestionMessageId(messageId, userId, questionId, serverId, username, image) {
+	async saveQuestionMessageId(messageId, channelId, userId, questionId, serverId, username, image) {
 
 		if (!messageId) {
 			logger.error(`Brain Fart: Couldn't save question to track votes. Message ID missing`);
 			return false;
 		} else {
-			const userQuestion = new UserQuestion(messageId, userId, questionId, serverId, username, image, 0, 0, this.type);
+			const userQuestion = new UserQuestion(messageId, userId, channelId, questionId, serverId, username, image, 0, 0, this.type);
 			await userQuestion.save();
 			return true;
 
@@ -427,8 +448,9 @@ class Handler {
 			const embed = this.createQuestionEmbed(question, interaction, username);
 			const row = this.createActionRow();
 
+			/** @var {Message} */
 			const message = await interaction.editReply({ content: `Here's your ${this.type == "truth" ? "Truth" : "Dare"}!`, embeds: [embed], components: [row], fetchReply: true });
-			const didSave = await this.saveQuestionMessageId(message.id, interaction.user.id, question.id, interaction.guildId, interaction.user.username, interaction.user.displayAvatarURL());
+			const didSave = await this.saveQuestionMessageId(message.id, message.channelId, interaction.user.id, question.id, interaction.guildId, interaction.user.username, interaction.user.displayAvatarURL());
 			if (!didSave) {
 				await interaction.channel.send("I'm sorry, I couldn't save the question to track votes. This is a brain fart. Please reach out for support on the official server.");
 			}
@@ -650,6 +672,17 @@ class Handler {
 			);
 	}
 
+	createAbandonedActionRow() {
+		return new ActionRowBuilder()
+			.addComponents(
+				new ButtonBuilder()
+					.setCustomId('question_abandoned')
+					.setLabel('ABANDONED')
+					.setDisabled(true)
+					.setStyle(ButtonStyle.Danger), // gray button
+			);
+	}
+
 	createSkippedActionRow() {
 		return new ActionRowBuilder()
 			.addComponents(
@@ -690,6 +723,96 @@ class Handler {
 		}
 
 	}
+
+	/**
+ * Finds and fails all questions that are older than 48 hours
+ */
+	async expireQuestions() {
+		logger.log("[Expire] Starting expiration check...");
+		const db = new Database();
+		const questions = await db.query(`
+		SELECT messageId FROM user_questions
+		WHERE finalResult IS NULL
+		AND channelId != 'PRE_5_6_9'
+		AND skipped = 0
+		AND datetime_created < NOW() - INTERVAL 48 HOUR;
+	`);
+
+		logger.log(`[Expire] Found ${questions.length} candidate question(s)`);
+
+		if (questions.length === 0) {
+			logger.log("[Expire] No questions to expire. Exiting.");
+			return;
+		}
+
+		for (const question of questions) {
+			const userQuestion = await new UserQuestion().load(question.messageId);
+
+			if (!userQuestion) {
+				logger.error(`[Expire] Could not load UserQuestion for messageId: ${question.messageId}`);
+				continue;
+			}
+
+			// Decide final result
+			if (userQuestion.doneCount > userQuestion.failedCount) {
+				userQuestion.finalResult = "passed";
+			} else if (userQuestion.failedCount > 0) {
+				userQuestion.finalResult = "failed";
+			} else {
+				userQuestion.finalResult = "abandoned";
+			}
+
+			userQuestion.finalised_datetime = new Date();
+			await userQuestion.save();
+			logger.log(`[Expire] Saved updated result "${userQuestion.finalResult}" to DB for ${question.messageId}`);
+
+			// Get appropriate action row and content
+			let row;
+			let content;
+			switch (userQuestion.finalResult) {
+				case "passed":
+					row = this.createPassedActionRow();
+					content = null;
+					break;
+				case "failed":
+					row = this.createFailedActionRow();
+					content = "Did not receive enough votes to pass in 48 hours.";
+					break;
+				case "abandoned":
+					row = this.createAbandonedActionRow();
+					content = "Automatically abandoned because no votes were cast in 48 hours.";
+					break;
+				default:
+					console.error(`[Expire] Unknown finalResult: ${userQuestion.finalResult} for messageId: ${question.messageId}`);
+					continue;
+			}
+
+			const channelId = userQuestion.channelId;
+			const messageId = userQuestion.id;
+			console.log(`[Expire] Attempting to update message ${messageId} in channel ${channelId}`);
+
+			//const embed = await this.createUpdatedQuestionEmbed(userQuestion);
+			console.log(`[Expire] Created embed for message ${messageId}`);
+			const message = { content, components: [row] };
+			console.log(`[Expire] Created message object for message ${messageId}`);
+			let success = false;
+			try {
+				success = await logger.editMessageInChannel(channelId, messageId, message);
+			} catch (error) {
+				logger.error(`[Expire] Error while editing message ${messageId} in channel ${channelId}:`, error);
+				continue;
+			}
+
+			if (success) {
+				logger.log(`[Expire] ✅ Message ${messageId} updated with "${userQuestion.finalResult}"`);
+			} else {
+				logger.error(`[Expire] ⚠️ Failed to update message ${messageId} in channel ${channelId}`);
+			}
+		}
+
+		logger.log("[Expire] Finished processing expired questions.");
+	}
+
 
 }
 

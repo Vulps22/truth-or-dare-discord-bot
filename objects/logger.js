@@ -429,21 +429,29 @@ module.exports = {
      * @returns {Promise<boolean>} - Resolves with `true` if edited successfully.
      */
     async editMessageInChannel(channelId, messageId, newContent) {
+    
         try {
+        
+
             const result = await global.client.shard.broadcastEval(
                 async (client, { channelId, messageId, newContent }) => {
-                    const channel = client.channels.cache.get(channelId);
-                    if (channel) {
-                        const message = await channel.messages.cache.get(messageId);
-                        if (message) {
-                            await message.edit(newContent);
-                            return true;
-                        }
+                  try {                    const channel = client.channels.cache.get(channelId);
+                    if (!channel) {                      return false;
                     }
+              
+                    const message = await channel.messages.fetch(messageId);
+                    if (!message) {                      return false;
+                    }
+              
+                    await message.edit(newContent);                    return true;
+                  } catch (err) {
+                    console.error(`[ShardEval] Error editing message ${messageId}:`, err);
                     return false;
+                  }
                 },
                 { context: { channelId, messageId, newContent } }
-            );
+              );
+              
 
             return result.some(success => success);
         } catch (error) {

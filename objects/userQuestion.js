@@ -3,6 +3,7 @@ const Database = require("objects/database");
 
 class UserQuestion {
    id; // message_id
+   channelId; // channel_id
    userId;
    questionId;
    username;
@@ -10,9 +11,14 @@ class UserQuestion {
    doneCount;
    failedCount;
    type;
+   /** @var {"passed"|"failed"|"abandoned"} */
+   finalResult;
+   finalised_datetime;
+   datetime_created;
 
-   constructor(id, userId, questionId, serverId, username, image, doneCount, failedCount, type) {
+   constructor(id, userId, channelId, questionId, serverId, username, image, doneCount, failedCount, type) {
       this.id = id;
+      this.channelId = channelId;
       this.userId = userId;
       this.questionId = questionId;
       this.serverId = serverId;
@@ -41,6 +47,16 @@ class UserQuestion {
    }
 
    /**
+    * return a capitalised string of the type
+    * @returns {"Truth" | "Dare"}
+    */
+   getType() {
+      return this.type.charAt(0).toUpperCase() + this.type.slice(1);
+   }
+
+
+
+   /**
     * @returns {String}
     */
    getUsername() {
@@ -59,6 +75,10 @@ class UserQuestion {
     */
    getServerId() {
       return this.serverId;
+   }
+
+   getChannelId() {
+      return this.channelId;
    }
 
    /**
@@ -156,12 +176,16 @@ class UserQuestion {
          messageId: this.id,
          userId: this.userId,
          serverId: this.serverId,
+         channelId: this.channelId,
          questionId: this.questionId,
          username: this.username,
          imageUrl: this.image ?? '',
          doneCount: this.doneCount ?? 0,
          failedCount: this.failedCount ?? 0,
+         skipped: this.skipped ?? false,
          type: this.type,
+         finalResult: this.finalResult ?? null,
+         finalised_datetime: this.finalised_datetime ?? null
       };
 
       db.set('user_questions', tableSafe, "messageId");
@@ -179,11 +203,16 @@ class UserQuestion {
       this.userId = question.userId;
       this.questionId = question.questionId;
       this.serverId = question.serverId;
+      this.channelId = question.channelId;
       this.username = question.username;
       this.image = question.imageUrl;
       this.doneCount = question.doneCount;
       this.failedCount = question.failedCount;
-
+      this.skipped = question.skipped;
+      this.type = question.type;
+      this.finalResult = question.finalResult;
+      this.finalised_datetime = question.finalised_datetime;
+      this.datetime_created = question.datetime_created;
       const theQuestion = await db.get('questions', question.questionId, "id")
       
       this.type = theQuestion.type;
