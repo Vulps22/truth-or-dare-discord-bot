@@ -11,7 +11,7 @@ class UserQuestion {
    doneCount;
    failedCount;
    type;
-   /** @var {"passed"|"failed"|"abaandoned"} */
+   /** @var {"passed"|"failed"|"abandoned"} */
    finalResult;
    finalised_datetime;
    datetime_created;
