@@ -1,16 +1,17 @@
 require('dotenv').config();
 const fs = require('node:fs');
 const path = require('node:path');
-const { Client, GatewayIntentBits, Collection} = require('discord.js');
+const { Client, GatewayIntentBits, Collection } = require('discord.js');
 const Database = require('objects/database.js'); // Import Database class
 const util = require('util');
 const logger = require('objects/logger.js');
+const cron = require('node-cron');
 overrideConsoleLog();
 
 console.log('Initialising Bot....');
 
 process.on('uncaughtException', (err, origin) => {
-    if(err.code === 10062) {
+    if (err.code === 10062) {
         console.error("skipping unknown interaction");
         return;
     }
@@ -66,20 +67,32 @@ async function init() {
     //Uptime-kuma ping
     const axios = require('axios');
     const retry = require('async-retry'); // You might need to install async-retry via npm
+    if (my.environment === "prod") {
+        setInterval(async () => {
+            try {
+                await retry(async () => {
+                    const response = await axios.get('https://uptime.vulps.co.uk/api/push/EaJ73kd8Km?status=up&msg=OK&ping=');
+                }, {
+                    retries: 3, // Retry up to 3 times
+                    minTimeout: 1000, // Wait 1 second between retries
+                });
+                console.log('Ping succeeded');
+            } catch (error) {
+                console.error('Ping failed after retries:', error.message);
+            }
+        }, 60000); // Ping every 60 seconds
+    } else {
+        console.log("Not pinging uptime-kuma as this is not the prod environment.");
+    }
 
-    setInterval(async () => {
-        try {
-            await retry(async () => {
-                const response = await axios.get('https://uptime.vulps.co.uk/api/push/EaJ73kd8Km?status=up&msg=OK&ping=');
-            }, {
-                retries: 3, // Retry up to 3 times
-                minTimeout: 1000, // Wait 1 second between retries
-            });
-            console.log('Ping succeeded');
-        } catch (error) {
-            console.error('Ping failed after retries:', error.message);
-        }
-    }, 60000); // Ping every 60 seconds
+    console.log("Shard ID: " + client.shard.ids[0]);
+    if (client.shard?.ids?.[0] === 0) {
+        cron.schedule('*/10 * * * * *', async () => {
+            console.log('[AutoFail] Shard 0 running 48h timeout check...');
+            // await processExpiredQuestions();
+        });
+    }
+
 
 }
 
