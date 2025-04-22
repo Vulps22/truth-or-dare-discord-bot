@@ -86,19 +86,6 @@ async function init() {
         console.log("Not pinging uptime-kuma as this is not the prod environment.");
     }
 
-    if (client.shard?.ids?.[0] === 0) {
-        let isRunning = true;
-        cron.schedule('*/10 * * * * *', async () => {
-            if(isRunning) return; // Prevent multiple executions
-            console.log('[AutoFail] Shard 0 running 48h timeout check...');
-            isRunning = true;
-            let handler = new Handler(client);
-            await handler.expireQuestions();
-            isRunning = false;
-        });
-    }
-
-
 }
 
 init().catch(error => {
