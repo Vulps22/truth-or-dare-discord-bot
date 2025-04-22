@@ -9,7 +9,8 @@ const {
 	TextInputStyle,
 	EmbedBuilder,
 	Snowflake,
-	MessageFlags
+	MessageFlags,
+	Message
 } = require('discord.js');
 const { ModalBuilder, ActionRowBuilder, TextInputBuilder } = require('@discordjs/builders');
 const Database = require('objects/database.js');
@@ -308,34 +309,53 @@ class Handler {
 
 		const type = question.type === 'truth' ? 'Truth' : 'Dare';
 
-		let questionText = `${question.question}\n\n **Votes:** 0 Done | 0 Failed`;
+		let questionText = `${question.question}\n\n`;
+		const expiryTime = new Date().getTime() + (48 * 60 * 60 * 1000);
 
 		return new EmbedBuilder()
 			.setTitle(`${type}!`)
 			.setDescription(questionText)
+			.addFields(
+				{ name: "Auto Fails", value: `<t:${Math.floor(expiryTime / 1000)}:R>`, inline: true },
+				{ name: "Votes", value: `Done: 0 | Failed: 0`, inline: false }
+
+			)
 			.setColor('#6A5ACD')
-			.setFooter({ text: `Requested by ${interaction.user.username} | Created By ${username} | #${question.id}`, iconURL: interaction.user.displayAvatarURL() });
+			.setFooter({
+				text: `Requested by ${interaction.user.username} | Created By ${username} | #${question.id}`,
+				iconURL: interaction.user.displayAvatarURL()
+			});
 	}
 
 	/**
-	   * Creates an embed for the question, updasted with the latest vote counts.
+ * Creates an embed for the question, updated with the latest vote counts.
 	   * @param {UserQuestion} userQuestion 
 	   * @param {Interaction} interaction 
-	   * @returns 
+ * @returns {Promise<EmbedBuilder>}
 	   */
 	async createUpdatedQuestionEmbed(userQuestion, interaction) {
-		let question = await userQuestion.getQuestion();
-		let questionText = question.question;
-		let creator = this.getCreator(question, interaction);
-		const username = (await creator).username;
+		const question = await userQuestion.getQuestion();
+		const questionText = question.question;
+		const creator = await this.getCreator(question, interaction);
+		const username = creator.username;
+		const type = userQuestion.getType();
 
-		let questionEmbedText = `${questionText}\n\n **Votes:** ${userQuestion.doneCount} Done | ${userQuestion.failedCount} Failed`;
+		// Calculate expiry timestamp
+		const createdAt = new Date(userQuestion.datetime_created).getTime();
+		const expiryTime = createdAt + (48 * 60 * 60 * 1000);
 
 		return new EmbedBuilder()
-			.setTitle('Dare!')
-			.setDescription(questionEmbedText)
+			.setTitle(`${type}!`)
+			.setDescription(questionText)
+			.addFields(
+				{ name: "Auto Fails", value: `<t:${Math.floor(expiryTime / 1000)}:R>`, inline: true },
+				{ name: "Votes", value: `Done: ${userQuestion.doneCount} | Failed: ${userQuestion.failedCount}`, inline: false }
+			)
 			.setColor('#6A5ACD')
-			.setFooter({ text: `Requested by ${userQuestion.username} | Created By ${username} | #${question.id}`, iconURL: userQuestion.image });
+			.setFooter({
+				text: `Requested by ${userQuestion.username} | Created By ${username} | #${question.id}`,
+				iconURL: userQuestion.image
+			});
 	}
 
 	/**
@@ -381,6 +401,7 @@ class Handler {
 	 * Create a new UserQuestion instance and save it to the database.
 	 * This is used to track the message ID of the question for voting purposes.
 	 * @param {Snowflake} messageId 
+	 * @param {Snowflake} channelId
 	 * @param {Snowflake} userId 
 	 * @param {number} questionId 
 	 * @param {Snowflake} serverId 
@@ -388,13 +409,13 @@ class Handler {
 	 * @param {*} image 
 	 * @returns {Promise<bool>}
 	 */
-	async saveQuestionMessageId(messageId, userId, questionId, serverId, username, image) {
+	async saveQuestionMessageId(messageId, channelId, userId, questionId, serverId, username, image) {
 
 		if (!messageId) {
 			logger.error(`Brain Fart: Couldn't save question to track votes. Message ID missing`);
 			return false;
 		} else {
-			const userQuestion = new UserQuestion(messageId, userId, questionId, serverId, username, image, 0, 0, this.type);
+			const userQuestion = new UserQuestion(messageId, channelId, userId, questionId, serverId, username, image, 0, 0, this.type);
 			await userQuestion.save();
 			return true;
 
@@ -427,8 +448,9 @@ class Handler {
 			const embed = this.createQuestionEmbed(question, interaction, username);
 			const row = this.createActionRow();
 
+			/** @var {Message} */
 			const message = await interaction.editReply({ content: `Here's your ${this.type == "truth" ? "Truth" : "Dare"}!`, embeds: [embed], components: [row], fetchReply: true });
-			const didSave = await this.saveQuestionMessageId(message.id, interaction.user.id, question.id, interaction.guildId, interaction.user.username, interaction.user.displayAvatarURL());
+			const didSave = await this.saveQuestionMessageId(message.id, message.channelId, interaction.user.id, question.id, interaction.guildId, interaction.user.username, interaction.user.displayAvatarURL());
 			if (!didSave) {
 				await interaction.channel.send("I'm sorry, I couldn't save the question to track votes. This is a brain fart. Please reach out for support on the official server.");
 			}
