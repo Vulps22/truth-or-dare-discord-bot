@@ -123,6 +123,7 @@ function scheduleTopGGUpdate(manager) {
  * @param {ShardingManager} manager 
  */
 function syncGG(manager){
+    if(my.environment != 'prod') return; // Only sync in prod
     try {
         const ap = AutoPoster(my.top_gg_token, manager);
         ap.on('posted', () => {
