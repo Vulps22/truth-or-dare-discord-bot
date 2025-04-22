@@ -14,6 +14,7 @@ class UserQuestion {
    /** @var {"passed"|"failed"|"abaandoned"} */
    finalResult;
    finalised_datetime;
+   datetime_created;
 
    constructor(id, userId, channelId, questionId, serverId, username, image, doneCount, failedCount, type) {
       this.id = id;
@@ -211,7 +212,7 @@ class UserQuestion {
       this.type = question.type;
       this.finalResult = question.finalResult;
       this.finalised_datetime = question.finalised_datetime;
-
+      this.datetime_created = question.datetime_created;
       const theQuestion = await db.get('questions', question.questionId, "id")
       
       this.type = theQuestion.type;
