@@ -735,7 +735,7 @@ class Handler {
 		WHERE finalResult IS NULL
 		AND channelId != 'PRE_5_6_9'
 		AND skipped = 0
-		AND datetime_created < NOW() - INTERVAL 10 SECOND;
+		AND datetime_created < NOW() - INTERVAL 48 HOUR;
 	`);
 
 		logger.log(`[Expire] Found ${questions.length} candidate question(s)`);
