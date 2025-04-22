@@ -728,10 +728,8 @@ class Handler {
  * Finds and fails all questions that are older than 48 hours
  */
 	async expireQuestions() {
-		console.log("[Expire] Starting expiration check...");
-
+		logger.log("[Expire] Starting expiration check...");
 		const db = new Database();
-		console.log("[Expire] Checking for expired questions...");
 		const questions = await db.query(`
 		SELECT messageId FROM user_questions
 		WHERE finalResult IS NULL
@@ -740,37 +738,33 @@ class Handler {
 		AND datetime_created < NOW() - INTERVAL 10 SECOND;
 	`);
 
-		console.log(`[Expire] Found ${questions.length} candidate question(s)`);
+		logger.log(`[Expire] Found ${questions.length} candidate question(s)`);
 
 		if (questions.length === 0) {
-			console.log("[Expire] No questions to expire. Exiting.");
+			logger.log("[Expire] No questions to expire. Exiting.");
 			return;
 		}
 
 		for (const question of questions) {
-			console.log(`[Expire] Processing messageId: ${question.messageId}`);
 			const userQuestion = await new UserQuestion().load(question.messageId);
 
 			if (!userQuestion) {
-				console.warn(`[Expire] Could not load UserQuestion for messageId: ${question.messageId}`);
+				logger.error(`[Expire] Could not load UserQuestion for messageId: ${question.messageId}`);
 				continue;
 			}
 
 			// Decide final result
 			if (userQuestion.doneCount > userQuestion.failedCount) {
-				console.log(`[Expire] Question ${question.messageId} passed by votes`);
 				userQuestion.finalResult = "passed";
 			} else if (userQuestion.failedCount > 0) {
-				console.log(`[Expire] Question ${question.messageId} failed by votes`);
 				userQuestion.finalResult = "failed";
 			} else {
-				console.log(`[Expire] Question ${question.messageId} abandoned due to no votes`);
 				userQuestion.finalResult = "abandoned";
 			}
 
 			userQuestion.finalised_datetime = new Date();
 			await userQuestion.save();
-			console.log(`[Expire] Saved updated result "${userQuestion.finalResult}" to DB for ${question.messageId}`);
+			logger.log(`[Expire] Saved updated result "${userQuestion.finalResult}" to DB for ${question.messageId}`);
 
 			// Get appropriate action row and content
 			let row;
@@ -803,22 +797,20 @@ class Handler {
 			console.log(`[Expire] Created message object for message ${messageId}`);
 			let success = false;
 			try {
-				console.log("logger is", logger);
 				success = await logger.editMessageInChannel(channelId, messageId, message);
 			} catch (error) {
-				console.error(`[Expire] Error while editing message ${messageId} in channel ${channelId}:`, error);
+				logger.error(`[Expire] Error while editing message ${messageId} in channel ${channelId}:`, error);
 				continue;
 			}
 
-			console.log(`[Expire] Attempted to edit message ${messageId} in channel ${channelId} with result: ${success}`);
 			if (success) {
-				console.log(`[Expire] ✅ Message ${messageId} updated with "${userQuestion.finalResult}"`);
+				logger.log(`[Expire] ✅ Message ${messageId} updated with "${userQuestion.finalResult}"`);
 			} else {
-				console.warn(`[Expire] ⚠️ Failed to update message ${messageId} in channel ${channelId}`);
+				logger.error(`[Expire] ⚠️ Failed to update message ${messageId} in channel ${channelId}`);
 			}
 		}
 
-		console.log("[Expire] Finished processing expired questions.");
+		logger.log("[Expire] Finished processing expired questions.");
 	}
 
 
