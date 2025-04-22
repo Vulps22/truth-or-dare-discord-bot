@@ -166,10 +166,10 @@ class Question {
 	 * 
 	 * @param {"truth" | "dare"} type 
 	 */
-	static async collect(type) {
+	static async collect(type, dev = false) {
 		const db = new Database();
 
-		const questions = await db.query(`SELECT * FROM questions WHERE type='${type}' AND isBanned=0 AND isApproved=1`);
+		const questions = await db.query(`SELECT * FROM questions WHERE type='${type}' AND isBanned=0 AND isApproved=1 ${dev ? "AND serverId='" + my.guildId + "'" : ""}`);
 
 		return questions ?? [];
 	}

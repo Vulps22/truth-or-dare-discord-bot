@@ -6,6 +6,7 @@ const Database = require('objects/database.js'); // Import Database class
 const util = require('util');
 const logger = require('objects/logger.js');
 const cron = require('node-cron');
+const Handler = require('handlers/handler');
 overrideConsoleLog();
 
 console.log('Initialising Bot....');
@@ -85,11 +86,15 @@ async function init() {
         console.log("Not pinging uptime-kuma as this is not the prod environment.");
     }
 
-    console.log("Shard ID: " + client.shard.ids[0]);
     if (client.shard?.ids?.[0] === 0) {
+        let isRunning = true;
         cron.schedule('*/10 * * * * *', async () => {
+            if(isRunning) return; // Prevent multiple executions
             console.log('[AutoFail] Shard 0 running 48h timeout check...');
-            // await processExpiredQuestions();
+            isRunning = true;
+            let handler = new Handler(client);
+            await handler.expireQuestions();
+            isRunning = false;
         });
     }
 

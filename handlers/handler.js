@@ -329,10 +329,10 @@ class Handler {
 
 	/**
  * Creates an embed for the question, updated with the latest vote counts.
-	   * @param {UserQuestion} userQuestion 
-	   * @param {Interaction} interaction 
+ * @param {UserQuestion} userQuestion 
+ * @param {Interaction} interaction 
  * @returns {Promise<EmbedBuilder>}
-	   */
+ */
 	async createUpdatedQuestionEmbed(userQuestion, interaction) {
 		const question = await userQuestion.getQuestion();
 		const questionText = question.question;
@@ -415,7 +415,7 @@ class Handler {
 			logger.error(`Brain Fart: Couldn't save question to track votes. Message ID missing`);
 			return false;
 		} else {
-			const userQuestion = new UserQuestion(messageId, channelId, userId, questionId, serverId, username, image, 0, 0, this.type);
+			const userQuestion = new UserQuestion(messageId, userId, channelId, questionId, serverId, username, image, 0, 0, this.type);
 			await userQuestion.save();
 			return true;
 
@@ -672,6 +672,17 @@ class Handler {
 			);
 	}
 
+	createAbandonedActionRow() {
+		return new ActionRowBuilder()
+			.addComponents(
+				new ButtonBuilder()
+					.setCustomId('question_abandoned')
+					.setLabel('ABANDONED')
+					.setDisabled(true)
+					.setStyle(ButtonStyle.Danger), // gray button
+			);
+	}
+
 	createSkippedActionRow() {
 		return new ActionRowBuilder()
 			.addComponents(
@@ -712,6 +723,104 @@ class Handler {
 		}
 
 	}
+
+	/**
+ * Finds and fails all questions that are older than 48 hours
+ */
+	async expireQuestions() {
+		console.log("[Expire] Starting expiration check...");
+
+		const db = new Database();
+		console.log("[Expire] Checking for expired questions...");
+		const questions = await db.query(`
+		SELECT messageId FROM user_questions
+		WHERE finalResult IS NULL
+		AND channelId != 'PRE_5_6_9'
+		AND skipped = 0
+		AND datetime_created < NOW() - INTERVAL 10 SECOND;
+	`);
+
+		console.log(`[Expire] Found ${questions.length} candidate question(s)`);
+
+		if (questions.length === 0) {
+			console.log("[Expire] No questions to expire. Exiting.");
+			return;
+		}
+
+		for (const question of questions) {
+			console.log(`[Expire] Processing messageId: ${question.messageId}`);
+			const userQuestion = await new UserQuestion().load(question.messageId);
+
+			if (!userQuestion) {
+				console.warn(`[Expire] Could not load UserQuestion for messageId: ${question.messageId}`);
+				continue;
+			}
+
+			// Decide final result
+			if (userQuestion.doneCount > userQuestion.failedCount) {
+				console.log(`[Expire] Question ${question.messageId} passed by votes`);
+				userQuestion.finalResult = "passed";
+			} else if (userQuestion.failedCount > 0) {
+				console.log(`[Expire] Question ${question.messageId} failed by votes`);
+				userQuestion.finalResult = "failed";
+			} else {
+				console.log(`[Expire] Question ${question.messageId} abandoned due to no votes`);
+				userQuestion.finalResult = "abandoned";
+			}
+
+			userQuestion.finalised_datetime = new Date();
+			await userQuestion.save();
+			console.log(`[Expire] Saved updated result "${userQuestion.finalResult}" to DB for ${question.messageId}`);
+
+			// Get appropriate action row and content
+			let row;
+			let content;
+			switch (userQuestion.finalResult) {
+				case "passed":
+					row = this.createPassedActionRow();
+					content = null;
+					break;
+				case "failed":
+					row = this.createFailedActionRow();
+					content = "Did not receive enough votes to pass in 48 hours.";
+					break;
+				case "abandoned":
+					row = this.createAbandonedActionRow();
+					content = "Automatically abandoned because no votes were cast in 48 hours.";
+					break;
+				default:
+					console.error(`[Expire] Unknown finalResult: ${userQuestion.finalResult} for messageId: ${question.messageId}`);
+					continue;
+			}
+
+			const channelId = userQuestion.channelId;
+			const messageId = userQuestion.id;
+			console.log(`[Expire] Attempting to update message ${messageId} in channel ${channelId}`);
+
+			//const embed = await this.createUpdatedQuestionEmbed(userQuestion);
+			console.log(`[Expire] Created embed for message ${messageId}`);
+			const message = { content, components: [row] };
+			console.log(`[Expire] Created message object for message ${messageId}`);
+			let success = false;
+			try {
+				console.log("logger is", logger);
+				success = await logger.editMessageInChannel(channelId, messageId, message);
+			} catch (error) {
+				console.error(`[Expire] Error while editing message ${messageId} in channel ${channelId}:`, error);
+				continue;
+			}
+
+			console.log(`[Expire] Attempted to edit message ${messageId} in channel ${channelId} with result: ${success}`);
+			if (success) {
+				console.log(`[Expire] ✅ Message ${messageId} updated with "${userQuestion.finalResult}"`);
+			} else {
+				console.warn(`[Expire] ⚠️ Failed to update message ${messageId} in channel ${channelId}`);
+			}
+		}
+
+		console.log("[Expire] Finished processing expired questions.");
+	}
+
 
 }
 
