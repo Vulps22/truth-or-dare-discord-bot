@@ -37,7 +37,7 @@ class Question {
 
 	async load() {
 
-		const question = await this.db.get('questions', this.id);
+		const question = await this.db.get('questions', this.id, true);
 		if (!question) return;
 		this.type = question.type;
 		this.question = question.question;
@@ -154,7 +154,7 @@ class Question {
 	 */
 	async find(messageId) {
 		/** @type {Array} */
-		const question = await this.db.query(`select id FROM questions WHERE messageId = ${messageId}`);
+		const question = await this.db.query(`select id FROM questions WHERE messageId = ${messageId} AND isDeleted=0`);
 		if (!question || question.length == 0) return null;
 		const questionId = question[0].id;
 		this.id = questionId;
@@ -169,7 +169,7 @@ class Question {
 	static async collect(type) {
 		const db = new Database();
 
-		const questions = await db.query(`SELECT * FROM questions WHERE type='${type}' AND isBanned=0 AND isApproved=1`);
+		const questions = await db.query(`SELECT * FROM questions WHERE type='${type}' AND isBanned=0 AND isApproved=1 AND isDeleted=0`);
 
 		return questions ?? [];
 	}

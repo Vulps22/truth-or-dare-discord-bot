@@ -5,36 +5,33 @@ class Database {
 	connection;
 
 	async connect(retryAttempt = 0) {
-		try {
-			this.connection = mysql.createConnection({
-				host: process.env['DATABASE_HOST'],
-				port: process.env['DATABASE_PORT'],
-				user: process.env['DATABASE_USER'],
-				password: process.env['DATABASE_PASSWORD'],
-				database: process.env['DATABASE']
-			});
 
-			await new Promise((resolve, reject) => {
-				this.connection.connect((err) => {
-					if (err) {
-						if (err.code === 'ECONNREFUSED' && retryAttempt < 3) {
-							// Connection refused, retry after 5 seconds
-							console.log(`Connection refused, retrying in 5 seconds (attempt ${retryAttempt + 1}/3)...`);
-							setTimeout(() => {
-								this.connect(retryAttempt + 1).then(resolve).catch(reject);
-							}, 5000);
-						} else {
-							// Other error or maximum retries reached
-							reject(err);
-						}
+		this.connection = mysql.createConnection({
+			host: process.env['DATABASE_HOST'],
+			port: process.env['DATABASE_PORT'],
+			user: process.env['DATABASE_USER'],
+			password: process.env['DATABASE_PASSWORD'],
+			database: process.env['DATABASE']
+		});
+
+		await new Promise((resolve, reject) => {
+			this.connection.connect((err) => {
+				if (err) {
+					if (err.code === 'ECONNREFUSED' && retryAttempt < 3) {
+						// Connection refused, retry after 5 seconds
+						console.log(`Connection refused, retrying in 5 seconds (attempt ${retryAttempt + 1}/3)...`);
+						setTimeout(() => {
+							this.connect(retryAttempt + 1).then(resolve).catch(reject);
+						}, 5000);
 					} else {
-						resolve();
+						// Other error or maximum retries reached
+						reject(err);
 					}
-				});
+				} else {
+					resolve();
+				}
 			});
-		} catch (err) {
-			throw err;
-		}
+		});
 	}
 
 	query(sql) {
@@ -51,13 +48,21 @@ class Database {
 			}).finally(() => {
 				this.connection.end()
 			});
-		} catch(error) {
+		} catch (error) {
 			throw new Error(`Unexpected Error in database query: ${sql}\n\n${error}`);
 		}
 	}
 
-	get(table, id, idField = "id") {
-		return this.query(`SELECT * FROM ${table} WHERE ${idField}='${id}'`)
+	/**
+	 * Selects a row from the database
+	 * @param {*} table 
+	 * @param {*} id 
+	 * @param {*} idField 
+	 * @param {*} excludeDeleted Set to true to exclude deleted rows from the result. Should always be true if the table has a deleted column.
+	 * @returns 
+	 */
+	get(table, id, idField = "id", excludeDeleted = false) {
+		return this.query(`SELECT * FROM ${table} WHERE ${idField}='${id}' AND ${excludeDeleted ? 'isDeleted=0' : ''}`)
 			.then(rows => rows[0]);
 	}
 
