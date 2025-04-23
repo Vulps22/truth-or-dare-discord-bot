@@ -37,7 +37,7 @@ class Question {
 
 	async load() {
 
-		const question = await this.db.get('questions', this.id, true);
+		const question = await this.db.get('questions', this.id, 'id', true);
 		if (!question) return;
 		this.type = question.type;
 		this.question = question.question;

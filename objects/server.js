@@ -225,7 +225,7 @@ class Server {
         const db = new Database();
 
         this.isDeleted = 1;
-        this.save();
+        await this.save();
 
         // Delete server-user relationships from 'server_users'
         await db.query(`DELETE FROM server_users WHERE server_id = '${this.id}'`);
