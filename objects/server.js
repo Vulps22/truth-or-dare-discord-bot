@@ -33,6 +33,7 @@ class Server {
     is_entitled = false;
     entitlement_end_date = null;
 
+    isDeleted = 0; // 0 = not deleted, 1 = deleted
 
     _loaded = false;
 
@@ -46,7 +47,7 @@ class Server {
 
     async find(messageId) {
 
-        const server = await this._db.query(`select id FROM servers WHERE message_id = ${messageId}`);
+        const server = await this._db.query(`select id FROM servers WHERE message_id = ${messageId} AND isDeleted = 0`);
         if (server.length === 0) return false;
         const serverId = server[0].id;
         this.id = serverId;
@@ -57,7 +58,7 @@ class Server {
     async load() {
         // load server from database
 
-        let serverData = await this._db.get("servers", this.id);
+        let serverData = await this._db.get("servers", this.id, true);
 
         if (!serverData) {
             this.name = 'Server Data No Longer Exists';
@@ -82,6 +83,7 @@ class Server {
         this.is_entitled = serverData.is_entitled;
         this.entitlement_end_date = serverData.entitlement_end_date;
         this.message_id = serverData.message_id;
+        this.isDeleted = serverData.isDeleted || 0; // Default to 0 if not present
 
         this._loaded = this.name ? true : false;
 
@@ -114,6 +116,7 @@ class Server {
             server.truth_fail_xp = data.truth_fail_xp || 40;
             server.is_entitled = data.is_entitled || false;
             server.entitlement_end_date = data.entitlement_end_date || null;
+            server.isDeleted = data.isDeleted || 0; // Default to 0 if not present
             server._loaded = true;  // Mark as loaded since we're assigning values directly
 
             return server;  // Add to the array of servers
@@ -213,7 +216,7 @@ class Server {
     }
 
     /**
-    * Deletes the server and its related server_user relationships
+    * soft-deletes the server and hard deletes it's related server_user relationships
     */
     async deleteServer() {
 
@@ -221,8 +224,8 @@ class Server {
 
         const db = new Database();
 
-        // Delete the server from the 'servers' table
-        await db.delete('servers', this.id);
+        this.isDeleted = 1;
+        this.save();
 
         // Delete server-user relationships from 'server_users'
         await db.query(`DELETE FROM server_users WHERE server_id = '${this.id}'`);
