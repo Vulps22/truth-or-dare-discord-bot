@@ -62,8 +62,8 @@ class Database {
 	 * @returns 
 	 */
 	get(table, id, idField = "id", excludeDeleted = false) {
-		return this.query(`SELECT * FROM ${table} WHERE ${idField}='${id}' AND ${excludeDeleted ? 'isDeleted=0' : ''}`)
-			.then(rows => rows[0]);
+		const excludeDeletedClause = excludeDeleted ? " AND isDeleted=0" : "";
+		return this.query(`SELECT * FROM ${table} WHERE ${idField}='${id}'${excludeDeletedClause}`)
 	}
 
 	/**
