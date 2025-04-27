@@ -123,6 +123,11 @@ function scheduleTopGGUpdate(manager) {
  * @param {ShardingManager} manager 
  */
 function syncGG(manager){
+    if(my.environment !== 'prod'){
+        console.log("Not in prod, skipping top.gg sync.");
+        return;
+    }
+
     try {
         const ap = AutoPoster(my.top_gg_token, manager);
         ap.on('posted', () => {
@@ -143,6 +148,7 @@ async function setupVoteServer() {
         console.log(req.body);
         // Verify the request
         if (req.headers.authorization !== my.top_gg_webhook_secret) {
+            console.log("Expected | Actual: ", my.top_gg_webhook_secret, req.headers.authorization)
             console.log("UNAUTHORIZED")
             return res.status(403).send('Unauthorized');
         }
@@ -151,7 +157,6 @@ async function setupVoteServer() {
         const userId = voteData.user;
         const botId = voteData.bot;
         const isWeekend = voteData.isWeekend;
-
 
         /**
          * @type {User}
@@ -172,5 +177,9 @@ async function setupVoteServer() {
     });
 
     app.use(cors());
+
+    app.listen(3002, () => {
+        console.log('Vote server is listening on port 3000');
+    });
 
 }
