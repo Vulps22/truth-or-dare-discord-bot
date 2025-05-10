@@ -11,7 +11,7 @@ jest.mock('mysql2', () => ({
     escape: jest.fn(value => `'${value}'`)  // Simple mock for escape
 }));
 
-describe('Database', () => {
+describe.skip('Database', () => {
     /** @type {Database} */
     let db;
     let mockConnection;

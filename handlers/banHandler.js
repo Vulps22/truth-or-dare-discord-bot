@@ -305,7 +305,7 @@ class BanHandler {
 
             // Batch update to ban all servers owned by the user
             await db.query(`UPDATE servers SET isBanned=1, banReason='Owner was Banned' WHERE owner=${user.id} AND isBanned=0`);
-            servers = await db.query(`SELECT COUNT(*) as count FROM servers WHERE owner=${user.id} AND isBanned=1`);
+            servers = await db.query(`SELECT COUNT(*) as count FROM servers WHERE owner=${user.id} AND isBanned=1 AND isDeleted=0`);
             let serverCount = servers[0].count;
 
             db.query(`SELECT * FROM servers WHERE owner=${user.id};`).then(async serverData => {
