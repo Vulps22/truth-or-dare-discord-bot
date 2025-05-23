@@ -60,10 +60,12 @@ async function main() {
 
     manager.spawn();
 
+    
     setupVoteServer();
     scheduleDailyCleanup();
     syncGG(manager);
     scheduleTopGGUpdate(manager);
+    uptimeKuma();
 }
 
 main().catch(error => {
@@ -173,4 +175,28 @@ async function setupVoteServer() {
 
     app.use(cors());
 
+    app.listen(3002, () => {
+        console.log('Vote server is listening on port 3000');
+    });
+
+}
+
+async function uptimeKuma() {
+    //Uptime-kuma ping
+        const axios = require('axios');
+        const retry = require('async-retry'); // You might need to install async-retry via npm
+    
+        setInterval(async () => {
+            try {
+                await retry(async () => {
+                    const response = await axios.get('https://uptime.vulps.co.uk/api/push/EaJ73kd8Km?status=up&msg=OK&ping=');
+                }, {
+                    retries: 3, // Retry up to 3 times
+                    minTimeout: 1000, // Wait 1 second between retries
+                });
+                console.log('Ping succeeded');
+            } catch (error) {
+                console.error('Ping failed after retries:', error.message);
+            }
+        }, 60000); // Ping every 60 seconds
 }

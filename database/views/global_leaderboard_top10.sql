@@ -42,4 +42,4 @@ SELECT
 FROM RankedUsers ru
 LEFT JOIN QuestionCounts qc ON ru.id = qc.userId
 WHERE ru.position <= 10
-ORDER BY ru.position;
+ORDER BY truths_done + dares_done DESC
