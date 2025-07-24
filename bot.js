@@ -1,16 +1,17 @@
 require('dotenv').config();
-const fs = require('node:fs');
-const path = require('node:path');
-const { Client, GatewayIntentBits, Collection} = require('discord.js');
+const { Client, GatewayIntentBits, Collection } = require('discord.js');
 const util = require('util');
 const logger = require('objects/logger.js');
 const ConfigService = require('./services/ConfigService');
+const loadEvents = require('loaders/loadEvents');
+const loadButtons = require('loaders/loadButtons');
+const loadCommands = require('loaders/loadCommands');
 overrideConsoleLog();
 
 console.log('Initialising Bot....');
 
 process.on('uncaughtException', (err, origin) => {
-    if(err.code === 10062) {
+    if (err.code === 10062) {
         console.error("skipping unknown interaction");
         return;
     }
@@ -26,23 +27,11 @@ async function init() {
     await ConfigService.loadConfig();
     global.my = ConfigService.config;
 
-    // Load event files
-    const eventsPath = path.join(__dirname, "events");
-    const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
-    eventFiles.forEach(file => {
-
-        const filePath = path.join(eventsPath, file);
-        const event = require(filePath);
-        if (event.once) {
-            client.once(event.name, (...args) => event.execute(...args));
-        } else {
-            global.client.on(event.name, (...args) => event.execute(...args));
-        }
-    });
-
-    // Load commands
+    /** Loaders */
+    loadEvents(client);
     loadCommands(client, "global");
     loadCommands(client, "mod");
+    loadButtons(client);
 
     // Start the bot
     client.login(my.secret);
@@ -71,20 +60,6 @@ init().catch(error => {
     console.error('Failed to start the bot:', error);
 });
 
-function loadCommands(client, type) {
-    const commandsPath = path.join(__dirname, `commands/${type}`);
-    const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
-
-    commandFiles.forEach(file => {
-        const filePath = path.join(commandsPath, file);
-        const command = require(filePath);
-        if (command.data && command.execute) {
-            client.commands.set(command.data.name, command);
-        } else {
-            console.warn(`[WARNING] The command at ${filePath} is missing a required 'data' or 'execute' property`);
-        }
-    });
-}
 
 
 function overrideConsoleLog() {
