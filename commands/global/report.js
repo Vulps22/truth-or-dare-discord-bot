@@ -1,11 +1,11 @@
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandNumberOption, SlashCommandStringOption } = require("discord.js");
-const Report = require("objects/report"); // Use the new Report class
-const logger = require("objects/logger"); // Ensure the logger path is correct
+const ReportService = require('../../services/ReportService');
+const logger = require("../../objects/logger"); // Assuming logger is still needed for error logging.
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('report')
-        .setDescription('Report a Dare|Truth|Server')
+        .setDescription('Report a Dare, Truth, or Server')
         .addSubcommand(new SlashCommandSubcommandBuilder()
             .setName('dare')
             .setDescription('Report the specified Dare')
@@ -48,31 +48,33 @@ module.exports = {
     async execute(interaction) {
         await interaction.deferReply({ ephemeral: true });
 
-        const subcommand = interaction.options.getSubcommand();
-        const reason = interaction.options.getString('reason');
-        let offenderId = subcommand === 'server' ? interaction.guildId : interaction.options.getNumber('id');
-        
-        if(!reason) {
-            await interaction.editReply("You must specify a reason. Only you can see this message");
-            return;
-        }
+        const reportService = new ReportService();
 
         try {
-            // Create a new Report instance and save it
-            const report = new Report(null, subcommand, interaction.user.id, reason, offenderId);
-            report.type = subcommand;
-            report.senderId = interaction.user.id;
-            report.serverId = interaction.guildId;
-            report.reason = reason;
-            report.offenderId = offenderId;
-            let reportId = await report.save();
+            const reportData = {
+                type: interaction.options.getSubcommand(),
+                reporterId: interaction.user.id,
+                offenderId: interaction.options.getSubcommand() === 'server' ? interaction.guildId : interaction.options.getNumber('id'),
+                reason: interaction.options.getString('reason'),
+                serverId: interaction.guildId,
+            };
 
-            await logger.newReport(report);
+            // Create the report in the database
+            const newReport = await reportService.createReport(reportData);
 
-            await interaction.editReply("Your report has been submitted. Only you can see this message.");
+            if (!newReport) {
+                await interaction.editReply("There was an issue saving your report. Please try again later.");
+                return;
+            }
+
+            // Notify moderators
+            await reportService.notifyModerators(newReport, interaction.client);
+
+            await interaction.editReply("Your report has been submitted successfully. Thank you.");
+
         } catch (error) {
-            console.error(`Failed to submit report: ${error}`);
-            await interaction.editReply("There was an issue submitting your report. Please try again later.");
+            logger.error(`Failed to execute /report command: ${error.message}`);
+            await interaction.editReply("A critical error occurred while submitting your report. The development team has been notified.");
         }
     }
 };
