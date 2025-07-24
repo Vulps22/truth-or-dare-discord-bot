@@ -1,50 +1,80 @@
-const { EmbedBuilder, TextDisplayBuilder, SectionBuilder, ContainerBuilder } = require('discord.js');
+const { questionBanReasons, userBanReasons, serverBanReasons } = require('constants/banReasons');
+const { TextDisplayBuilder, ContainerBuilder, ButtonStyle } = require('discord.js');
+const { ActionRowBuilder, ButtonBuilder, SelectMenuBuilder } = require('node_modules/@discordjs/builders/dist');
 
 /**
  * Creates a Discord embed for a new report notification.
  * @param {object} report - The report object from the database.
- * @returns {EmbedBuilder} A Discord embed builder instance.
+ * @returns {ContainerBuilder} A Discord embed builder instance.
  */
-function ReportViewV1(report) {
-    const embed = new EmbedBuilder()
-        .setColor('#FF0000')
-        .setTitle('New Report Submitted')
-        .addFields(
-            { name: 'Report ID', value: `\`${report.id}\``, inline: true },
-            { name: 'Type', value: `\`${report.type}\``, inline: true },
-            { name: 'Status', value: `\`${report.status}\``, inline: true },
-            { name: 'Reason', value: report.reason },
-            { name: 'Reporter', value: `<@${report.senderId}> (\`${report.senderId}\`)` },
-            { name: 'Offender ID', value: `\`${report.offenderId}\`` },
-            { name: 'Server ID', value: `\`${report.serverId}\`` }
-        )
-        .setTimestamp(new Date(report.created_at));
-
-    // TODO: Add buttons for actions (e.g., Ban User, Ban Question, Clear Report)
-
-    return embed;
-}
 
 function ReportView(report) {
 
     const titleComponent = new TextDisplayBuilder()
-    .setContent('# New Report Submitted');
+        .setContent('# New Report Submitted');
 
-        const reportComponent = new TextDisplayBuilder().setContent(`Report ID: \`${report.id}\`   Type: \`${report.type}\`   Status: \`${report.status}\``);
-        const reasonComponent = new TextDisplayBuilder().setContent(`Reason: ${report.reason}`);
-        const reporterComponent = new TextDisplayBuilder().setContent(`Reporter: <@${report.senderId}> (\`${report.senderId}\`)`);
-        const offenderComponent = new TextDisplayBuilder().setContent(`Offender ID: \`${report.offenderId}\``);
-        const serverComponent = new TextDisplayBuilder().setContent(`Server ID: \`${report.serverId}\``);
+    const reportComponent = new TextDisplayBuilder().setContent(`Report ID: \`${report.id}\`   Type: \`${report.type}\`   Status: \`${report.status}\``);
+    const reasonComponent = new TextDisplayBuilder().setContent(`Reason: ${report.reason}`);
+    const reporterComponent = new TextDisplayBuilder().setContent(`Reporter: <@${report.senderId}> (\`${report.senderId}\`)`);
+    const offenderComponent = new TextDisplayBuilder().setContent(`Offender ID: \`${report.offenderId}\``);
+    const serverComponent = new TextDisplayBuilder().setContent(`Server ID: \`${report.serverId}\``);
 
+    const actionRow = ReportActionRows[report.status?.toUpperCase()]?.(report);
 
-        const containerComponent = new ContainerBuilder()
+    const containerComponent = new ContainerBuilder()
         .setAccentColor(ReportColor[report.status?.toUpperCase()]) // fallback to red
-        .addTextDisplayComponents([titleComponent, reportComponent, reasonComponent, reporterComponent, offenderComponent, serverComponent]);
-            
+        .addTextDisplayComponents([titleComponent, reportComponent, reasonComponent, reporterComponent, offenderComponent, serverComponent])
 
-    return containerComponent;
+    return [containerComponent, actionRow];
 
 }
+
+const ReportActionRows = {
+    PENDING: (report) => new ActionRowBuilder()
+        .addComponents(
+            new ButtonBuilder()
+                .setCustomId('report_clear|id:' + report.id)
+                .setLabel('Clear Report')
+                .setStyle(ButtonStyle.Success),
+            new ButtonBuilder()
+                .setCustomId('report_take_action|id:' + report.id)
+                .setLabel('Take Action')
+                .setStyle(ButtonStyle.Danger),
+            new ButtonBuilder()
+                .setCustomId('report_view_offender|id:' + report.id)
+                .setLabel('View Offender')
+                .setStyle(ButtonStyle.Secondary)
+        ),
+    ACTIONING: (report) => {
+
+        let banReasons = [];
+        switch(report.type) {
+            case 'question':
+                banReasons = questionBanReasons;
+                break;
+            case 'user':
+                banReasons = userBanReasons;
+                break;
+            case 'server':
+                banReasons = serverBanReasons;
+                break;
+        }
+
+        return new ActionRowBuilder()
+            .addComponents(SelectMenuBuilder()
+                .setCustomId('report_action_ban|id:' + report.id)
+                .setPlaceholder('Select a reason')
+                .addOptions(banReasons)
+            )
+    },
+    ACTIONED: (report) => new ActionRowBuilder()
+        .addComponents(
+            new ButtonBuilder()
+                .setCustomId('report_view_offender|id:' + report.id)
+                .setLabel('View Offender')
+                .setStyle(ButtonStyle.Secondary)
+        ),
+};
 
 const ReportColor = {
     CLEARED: [0, 255, 0], // Green

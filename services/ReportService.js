@@ -65,7 +65,7 @@ class ReportService {
 
             // TODO: Add buttons for actions (e.g., Ban User, Ban Question, Clear Report)
 
-            await channel.send({ components: [ReportView(report)], flags: MessageFlags.IsComponentsV2 });
+            await channel.send({ components: ReportView(report), flags: MessageFlags.IsComponentsV2 });
         } catch (error) {
             console.error('Failed to send report notification to moderators:', error);
             throw new Error('Failed to notify moderators.');
