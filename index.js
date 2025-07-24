@@ -1,10 +1,8 @@
 const { ShardingManager } = require('discord.js');
-const Database = require('objects/database');
+const ConfigService = require('./services/ConfigService');
 const { AutoPoster } = require('topgg-autoposter');
 require('dotenv').config();
 
-const path = require('node:path');
-const { Client, EmbedBuilder } = require('discord.js');
 const express = require('express');
 const cors = require('cors');
 const User = require('objects/user.js');
@@ -38,21 +36,14 @@ global.my = {
 
 
 async function main() {
-    const db = new Database();
-    try {
-        const data = await db.get('config', process.env['ENVIRONMENT_KEY']);
-        global.my = data;
-        console.log(my);
-    } catch (error) {
-        console.error('Error loading config from database:', error);
-        return;  // Exit if configuration loading fails
-    }
-
-
-
+    await ConfigService.loadConfig();
+    const my = ConfigService.config;
+    
     const manager = new ShardingManager('./bot.js', {
         token: my.secret,
-        totalShards: my.environment === 'dev' ? 2 : 'auto' // Force 2 shards in dev, auto in prod
+        totalShards: my.environment === 'dev' ? 2 : 'auto', // Force 2 shards in dev, auto in prod
+        execArgv: ['-r', 'dotenv/config'],
+        shardArgs: [JSON.stringify(my)]
     });
 
 
@@ -123,6 +114,7 @@ function scheduleTopGGUpdate(manager) {
  * @param {ShardingManager} manager 
  */
 function syncGG(manager){
+    const my = ConfigService.config;
     if(my.environment !== 'prod'){
         console.log("Not in prod, skipping top.gg sync.");
         return;
@@ -141,6 +133,7 @@ function syncGG(manager){
 async function setupVoteServer() {
     const app = express();
     app.use(express.json());
+    const my = ConfigService.config;
 
     app.post('/vote', async (req, res) => {  // Make the callback function async
         const voteData = req.body;

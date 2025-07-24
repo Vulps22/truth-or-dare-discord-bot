@@ -2,9 +2,9 @@ require('dotenv').config();
 const fs = require('node:fs');
 const path = require('node:path');
 const { Client, GatewayIntentBits, Collection} = require('discord.js');
-const Database = require('objects/database.js'); // Import Database class
 const util = require('util');
 const logger = require('objects/logger.js');
+const ConfigService = require('./services/ConfigService');
 overrideConsoleLog();
 
 console.log('Initialising Bot....');
@@ -22,25 +22,9 @@ process.on('uncaughtException', (err, origin) => {
 global.client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });
 client.commands = new Collection();
 
-
 async function init() {
-
-    const db = new Database();
-
-    try {
-        const data = await db.get('config', process.env['ENVIRONMENT_KEY']);
-        global.my = data;
-
-    } catch (error) {
-        console.error('Error loading config from database:', error);
-        return;  // Exit if configuration loading fails
-    }
-
-    try {
-        const questions = await db.list('questions');
-    } catch (error) {
-        console.error('Error loading dares and truths:', error);
-    }
+    await ConfigService.loadConfig();
+    global.my = ConfigService.config;
 
     // Load event files
     const eventsPath = path.join(__dirname, "events");
@@ -70,7 +54,7 @@ async function init() {
     setInterval(async () => {
         try {
             await retry(async () => {
-                const response = await axios.get('https://uptime.vulps.co.uk/api/push/EaJ73kd8Km?status=up&msg=OK&ping=');
+                await axios.get('https://uptime.vulps.co.uk/api/push/EaJ73kd8Km?status=up&msg=OK&ping=');
             }, {
                 retries: 3, // Retry up to 3 times
                 minTimeout: 1000, // Wait 1 second between retries
