@@ -8,6 +8,8 @@ const logger = require("objects/logger");
 const BanHandler = require("handlers/banHandler");
 const embedder = require("embedder");
 const Handler = require("handlers/handler");
+const loadButtons = require('../loaders/loadButtons');
+const loadedButtons = loadButtons();
 
 let logInteraction = '';
 
@@ -97,7 +99,15 @@ module.exports = {
             logInteraction = `**Button**: ${interaction.customId} | **Server**: ${server.name} - ${server.id} | **User**: ${interaction.user.username} - ${interaction.user.id} ||`
             interaction.logInteraction = logInteraction;
             interaction.logMessage = await logger.log(`${logInteraction} Executing Button Press`);
-            await new ButtonEventHandler(interaction).execute();
+
+            // New button handler logic
+            const buttonId = interaction.customId.split('|')[0];
+            if (loadedButtons.has(buttonId)) {
+                await loadedButtons.get(buttonId).execute(interaction);
+            } else {
+                // Legacy handler fallback
+                await new ButtonEventHandler(interaction).execute();
+            }
             return;
         }
 
