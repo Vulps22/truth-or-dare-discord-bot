@@ -9,6 +9,7 @@ const BanHandler = require("handlers/banHandler");
 const embedder = require("embedder");
 const Handler = require("handlers/handler");
 const loadButtons = require('../loaders/loadButtons');
+const { BotButtonInteraction } = require("structures/botbuttonInteraction");
 const loadedButtons = loadButtons();
 
 let logInteraction = '';
@@ -101,9 +102,10 @@ module.exports = {
             interaction.logMessage = await logger.log(`${logInteraction} Executing Button Press`);
 
             // New button handler logic
-            const buttonId = interaction.customId.split('|')[0];
-            if (loadedButtons.has(buttonId)) {
-                await loadedButtons.get(buttonId).execute(interaction);
+            const buttonInteraction = new BotButtonInteraction(interaction);
+            if (loadedButtons.has(buttonInteraction.baseId)) {
+
+                await loadedButtons.get(buttonInteraction.baseId).execute(buttonInteraction);
             } else {
                 // Legacy handler fallback
                 await new ButtonEventHandler(interaction).execute();
@@ -285,7 +287,7 @@ async function registerServerUser(interaction) {
 
     let user = new User(interaction.user.id, interaction.user.username);
 
-    didLoad = await user.load();
+    const didLoad = await user.load();
     if (!didLoad) await user.save()
     await user.loadServerUser(interaction.guildId, true);
 

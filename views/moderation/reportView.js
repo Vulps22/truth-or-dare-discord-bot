@@ -33,15 +33,15 @@ const ReportActionRows = {
     PENDING: (report) => new ActionRowBuilder()
         .addComponents(
             new ButtonBuilder()
-                .setCustomId('report_clear|id:' + report.id)
+                .setCustomId('report_clear_id:' + report.id)
                 .setLabel('Clear Report')
                 .setStyle(ButtonStyle.Success),
             new ButtonBuilder()
-                .setCustomId('report_take_action|id:' + report.id)
+                .setCustomId('report_take-action_id:' + report.id)
                 .setLabel('Take Action')
                 .setStyle(ButtonStyle.Danger),
             new ButtonBuilder()
-                .setCustomId('report_view_offender|id:' + report.id)
+                .setCustomId('report_view-offender_id:' + report.id)
                 .setLabel('View Offender')
                 .setStyle(ButtonStyle.Secondary)
         ),
@@ -50,6 +50,8 @@ const ReportActionRows = {
         let banReasons = [];
         switch(report.type) {
             case 'question':
+            case 'truth':
+            case 'dare':
                 banReasons = questionBanReasons;
                 break;
             case 'user':
@@ -60,8 +62,11 @@ const ReportActionRows = {
                 break;
         }
 
+
+        console.log('Ban reasons:', banReasons);
+
         return new ActionRowBuilder()
-            .addComponents(SelectMenuBuilder()
+            .addComponents(new SelectMenuBuilder()
                 .setCustomId('report_action_ban|id:' + report.id)
                 .setPlaceholder('Select a reason')
                 .addOptions(banReasons)

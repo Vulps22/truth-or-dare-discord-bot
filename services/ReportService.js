@@ -50,6 +50,15 @@ class ReportService {
         }
     }
 
+    async updateReport(report) {
+        try {
+            await this.db.set('reports', report);
+        } catch (error) {
+            console.error('Error updating report:', error);
+            throw new Error('Failed to update report in database.');
+        }
+    }
+
     /**
      * Notifies moderators about a new report.
      * @param {object} report - The report object from the database.
@@ -71,6 +80,27 @@ class ReportService {
             throw new Error('Failed to notify moderators.');
         }
     }
+
+    /**
+     * Fetch a report by its unique ID
+     * @param {number|string} id
+     * @returns {Promise<Object|null>} The report object or null if not found
+     */
+    async getReportById(id) {
+        const results = await this.db.get('reports', id, 'id');
+        console.log(`Fetched report with ID ${id}:`, results);
+        if (results !== undefined) {
+            return results;
+        }
+        return null;
+    }
 }
 
-module.exports = ReportService;
+const ReportStatus = {
+    PENDING: 'pending',
+    ACTIONING: 'actioning',
+    ACTIONED: 'actioned',
+    CLEARED: 'cleared'
+};
+
+module.exports = { ReportService, ReportStatus };
