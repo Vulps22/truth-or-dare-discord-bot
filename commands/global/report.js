@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandNumberOption, SlashCommandStringOption } = require("discord.js");
-const ReportService = require('../../services/ReportService');
+const { ReportService } = require('../../services/ReportService');
 const logger = require("../../objects/logger"); // Assuming logger is still needed for error logging.
 
 module.exports = {
