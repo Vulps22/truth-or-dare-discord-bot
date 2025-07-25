@@ -27,6 +27,31 @@ module.exports = {
         //get the message the button was clicked on
         const channel = interaction.channel;
         const message = await channel.messages.fetch(interaction.messageId);
-        message.edit({components: ReportView(report), flags: MessageFlags.IsComponentsV2 });
+        await message.edit({components: ReportView(report), flags: MessageFlags.IsComponentsV2 });
+        actionTimeout(interaction);
     }
 };
+
+/**
+ * after 1 minute, if the report status is still actioning, timeout the action, set the report status to pending and update the message
+ * @param {BotButtonInteraction} interaction 
+ */
+function actionTimeout(interaction) {
+    setTimeout(async () => {
+        const reportService = new ReportService();
+        const params = interaction.params;
+        const reportId = params.get('id');
+
+        const report = await reportService.getReportById(reportId);
+
+        if (report && report.status === ReportStatus.ACTIONING) {
+            report.status = ReportStatus.PENDING;
+            await reportService.updateReport(report);
+
+            //get the message the button was clicked on
+            const channel = interaction.channel;
+            const message = await channel.messages.fetch(interaction.messageId);
+            await message.edit({components: ReportView(report), flags: MessageFlags.IsComponentsV2 });
+        }
+    }, 60000);
+}
