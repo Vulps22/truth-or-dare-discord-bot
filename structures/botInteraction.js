@@ -25,6 +25,16 @@ class BotInteraction {
     get values() { return this._interaction.values; }
     get messageId() { return this._interaction.message?.id || null; }
 
+        get action() { return this._customData.action; }
+    get baseId() { return this._baseId; }
+    get buttonData() { return this._customData; }
+    get customIdRaw() { return this._interaction.customId; }
+    /**
+     * @returns {Map<string, string>} The parameters extracted from the custom ID.
+     */
+    get params() { return this._customData.params; }
+    get prefix() { return this._customData.prefix; }
+
     // --- PROXY METHODS ---
     reply(options) { return this._interaction.reply(options); }
     editReply(options) { return this._interaction.editReply(options); }
@@ -59,6 +69,41 @@ class BotInteraction {
     isAdministrator() {
         // Check if the user has the Administrator permission
         return this.member.permissions.has(PermissionsBitField.Flags.Administrator);
+    }
+
+    _parseCustomId() {
+        const parts = this._interaction.customId.split('_');
+        console.log('Parsing customId:', this._interaction.customId);
+        console.log('Parts:', parts);
+        const prefix = parts[0] || null;
+        const action = parts[1] || null;
+        const paramParts = parts.slice(2);
+        console.log(paramParts);
+        // Initialize buttonData. params will ALWAYS be a Map.
+        this._customData = {
+            prefix,
+            action,
+            params: new Map(),
+        };
+
+        // Loop through the parameter parts and enforce the key:value format.
+        for (const part of paramParts) {
+            // Check if the part contains our key-value separator ':'
+            if (part.includes(':')) {
+                const [key, value] = part.split(':', 2); // Split only on the first ':'
+                this._customData.params.set(key, value);
+                console.log(this._customData.params);
+            } else {
+                // If a part is not in key:value format, it's an error.
+                throw new Error(`Invalid customId format. Parameter "${part}" is missing a key. Expected format 'key:value'.`);
+            }
+        }
+
+        // Set the baseId as before
+        if (prefix && action) {
+            this._baseId = `${prefix}_${action}`;
+            console.log('Base ID:', this._baseId);
+        }
     }
 }
 

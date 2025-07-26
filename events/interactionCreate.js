@@ -8,9 +8,9 @@ const logger = require("objects/logger");
 const BanHandler = require("handlers/banHandler");
 const embedder = require("embedder");
 const Handler = require("handlers/handler");
-const loadButtons = require('../loaders/loadButtons');
 const { BotButtonInteraction } = require("structures/botbuttonInteraction");
-const loadedButtons = loadButtons();
+const { BotSelectInteraction } = require("structures/botSelectInteraction");
+
 
 let logInteraction = '';
 
@@ -26,6 +26,16 @@ module.exports = {
         console.log("Interaction Created");
 
         if (interaction.isStringSelectMenu() && !interaction.replied && !interaction.handled) {
+            if(interaction.message.flags.has("IsComponentsV2")) {
+                const selectInteraction = new BotSelectInteraction(interaction);
+                console.log(client.selects, 'has', selectInteraction.baseId);
+                if(client.selects.has(selectInteraction.baseId)) {
+                    let select = client.selects.get(selectInteraction.baseId);
+                    console.log('Executing select interaction:', select.name);
+                    select.execute(selectInteraction);
+                }
+                return;
+            }
             const didRespond = await new Handler().updateBannable(interaction.message.id);
             if (!interaction.handled) {
                 if (!didRespond) {
@@ -103,9 +113,9 @@ module.exports = {
 
             // New button handler logic
             const buttonInteraction = new BotButtonInteraction(interaction);
-            if (loadedButtons.has(buttonInteraction.baseId)) {
+            if (client.buttons.has(buttonInteraction.baseId)) {
 
-                await loadedButtons.get(buttonInteraction.baseId).execute(buttonInteraction);
+                await client.buttons.get(buttonInteraction.baseId).execute(buttonInteraction);
             } else {
                 // Legacy handler fallback
                 await new ButtonEventHandler(interaction).execute();

@@ -13,6 +13,8 @@ function loadEvents(client) {
             client.on(event.name, (...args) => event.execute(...args));
         }
     });
+
+    console.log(`Loaded ${eventFiles.length} events.`);
 }
 
 module.exports = loadEvents;

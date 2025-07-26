@@ -6,6 +6,7 @@ const ConfigService = require('./services/ConfigService');
 const loadEvents = require('loaders/loadEvents');
 const loadButtons = require('loaders/loadButtons');
 const loadCommands = require('loaders/loadCommands');
+const loadSelects = require('loaders/loadSelects');
 overrideConsoleLog();
 
 console.log('Initialising Bot....');
@@ -22,6 +23,8 @@ process.on('uncaughtException', (err, origin) => {
 
 global.client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });
 client.commands = new Collection();
+client.buttons = new Collection();
+client.selects = new Collection();
 
 async function init() {
     await ConfigService.loadConfig();
@@ -32,6 +35,7 @@ async function init() {
     loadCommands(client, "global");
     loadCommands(client, "mod");
     loadButtons(client);
+    loadSelects(client);
 
     // Start the bot
     client.login(my.secret);

@@ -14,6 +14,8 @@ function loadCommands(client, type) {
             console.warn(`[WARNING] The command at ${filePath} is missing a required 'data' or 'execute' property`);
         }
     });
+
+    console.log(`Loaded ${commandFiles.length} ${type} commands.`);
 }
 
 module.exports = loadCommands;
