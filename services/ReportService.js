@@ -1,6 +1,4 @@
-const { MessageFlags } = require('discord.js');
 const Database = require('../objects/database');
-const { ReportView } = require('../views/moderation/reportView');
 
 class ReportService {
     constructor() {
@@ -60,28 +58,6 @@ class ReportService {
     }
 
     /**
-     * Notifies moderators about a new report.
-     * @param {object} report - The report object from the database.
-     * @param {import('discord.js').Client} client - The Discord client instance.
-     */
-    async notifyModerators(report, client) {
-        try {
-            const channel = await client.channels.fetch(this.moderatorChannelId);
-            if (!channel) {
-                console.error(`Moderator channel with ID ${this.moderatorChannelId} not found.`);
-                return;
-            }
-
-            // TODO: Add buttons for actions (e.g., Ban User, Ban Question, Clear Report)
-
-            await channel.send({ components: ReportView(report), flags: MessageFlags.IsComponentsV2 });
-        } catch (error) {
-            console.error('Failed to send report notification to moderators:', error);
-            throw new Error('Failed to notify moderators.');
-        }
-    }
-
-    /**
      * Fetch a report by its unique ID
      * @param {number|string} id
      * @returns {Promise<Object|null>} The report object or null if not found
@@ -103,4 +79,12 @@ const ReportStatus = {
     CLEARED: 'cleared'
 };
 
-module.exports = { ReportService, ReportStatus };
+const ReportType = {
+    QUESTION: 'question',
+    TRUTH: 'truth',
+    DARE: 'dare',
+    USER: 'user',
+    SERVER: 'server'
+};
+
+module.exports = { ReportService, ReportStatus, ReportType };
