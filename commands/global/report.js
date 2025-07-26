@@ -1,6 +1,7 @@
-const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandNumberOption, SlashCommandStringOption } = require("discord.js");
+const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandNumberOption, SlashCommandStringOption, MessageFlags } = require("discord.js");
 const { ReportService } = require('../../services/ReportService');
 const logger = require("../../objects/logger"); // Assuming logger is still needed for error logging.
+const { ReportView } = require("views/moderation/reportView");
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -68,7 +69,7 @@ module.exports = {
             }
 
             // Notify moderators
-            await reportService.notifyModerators(newReport, interaction.client);
+            await notifyModerators(newReport, interaction.client);
 
             await interaction.editReply("Your report has been submitted successfully. Thank you.");
 
@@ -78,3 +79,27 @@ module.exports = {
         }
     }
 };
+
+
+    /**
+     * Notifies moderators about a new report.
+     * @param {object} report - The report object from the database.
+     * @param {import('discord.js').Client} client - The Discord client instance.
+     */
+    async function notifyModerators(report, client) {
+        try {
+            const moderatorChannelId = global.my.reports_log; // Access the global config
+            const channel = await client.channels.fetch(moderatorChannelId);
+            if (!channel) {
+                console.error(`Moderator channel with ID ${moderatorChannelId} not found.`);
+                return;
+            }
+
+            // TODO: Add buttons for actions (e.g., Ban User, Ban Question, Clear Report)
+
+            await channel.send({ components: ReportView(report), flags: MessageFlags.IsComponentsV2 });
+        } catch (error) {
+            console.error('Failed to send report notification to moderators:', error);
+            throw new Error('Failed to notify moderators.');
+        }
+    }

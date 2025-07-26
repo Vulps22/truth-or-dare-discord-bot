@@ -1,6 +1,7 @@
 const { questionBanReasons, userBanReasons, serverBanReasons } = require('constants/banReasons');
 const { TextDisplayBuilder, ContainerBuilder, ButtonStyle } = require('discord.js');
 const { ActionRowBuilder, ButtonBuilder, SelectMenuBuilder } = require('node_modules/@discordjs/builders/dist');
+const { ReportStatus } = require('../../services/ReportService');
 
 /**
  * Creates a Discord embed for a new report notification.
@@ -24,6 +25,14 @@ function ReportView(report) {
     const containerComponent = new ContainerBuilder()
         .setAccentColor(ReportColor[report.status?.toUpperCase()]) // fallback to red
         .addTextDisplayComponents([titleComponent, reportComponent, reasonComponent, reporterComponent, offenderComponent, serverComponent])
+
+        console.log(ReportStatus)
+
+    if(report.status === ReportStatus.ACTIONED) {
+        const bannedByComponent = new TextDisplayBuilder().setContent(`Banned By: <@${report.moderatorId}> (\`${report.moderatorId}\`)`);
+        const banReasonComponent = new TextDisplayBuilder().setContent(`Ban Reason: ${report.banReason}`);
+        containerComponent.addTextDisplayComponents([bannedByComponent, banReasonComponent]);
+    }
 
     return [containerComponent, actionRow];
 
@@ -67,7 +76,7 @@ const ReportActionRows = {
 
         return new ActionRowBuilder()
             .addComponents(new SelectMenuBuilder()
-                .setCustomId('report_action_ban|id:' + report.id)
+                .setCustomId('report_action-ban_id:' + report.id)
                 .setPlaceholder('Select a reason')
                 .addOptions(banReasons)
             )
@@ -75,7 +84,7 @@ const ReportActionRows = {
     ACTIONED: (report) => new ActionRowBuilder()
         .addComponents(
             new ButtonBuilder()
-                .setCustomId('report_view_offender|id:' + report.id)
+                .setCustomId('report_view-offender_id:' + report.id)
                 .setLabel('View Offender')
                 .setStyle(ButtonStyle.Secondary)
         ),
