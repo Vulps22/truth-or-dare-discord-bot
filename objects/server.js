@@ -128,7 +128,6 @@ class Server {
             serverData[key] = this[key];
             if (my.environment == 'dev' && key == 'isBanned') serverData[key] = 0;
         }
-        
         await this._db.set("servers", serverData);
         this._loaded = true;
     }
