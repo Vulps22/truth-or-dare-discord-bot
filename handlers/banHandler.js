@@ -233,7 +233,7 @@ class BanHandler {
 
             server.isBanned = 1;
             server.banReason = reason;
-            // server.save();
+            await server.save();
 
             //let didUpdate = await this.updateActionRow(server.message_id, my.servers_log, "server");
             const didUpdate = await logger.updateServer(server, userBan);
