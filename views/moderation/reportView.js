@@ -26,9 +26,9 @@ function ReportView(report) {
         .setAccentColor(ReportColor[report.status?.toUpperCase()]) // fallback to red
         .addTextDisplayComponents([titleComponent, reportComponent, reasonComponent, reporterComponent, offenderComponent, serverComponent])
 
-        console.log(ReportStatus)
+    console.log(ReportStatus)
 
-    if(report.status === ReportStatus.ACTIONED) {
+    if (report.status === ReportStatus.ACTIONED) {
         const bannedByComponent = new TextDisplayBuilder().setContent(`Banned By: <@${report.moderatorId}> (\`${report.moderatorId}\`)`);
         const banReasonComponent = new TextDisplayBuilder().setContent(`Ban Reason: ${report.banReason}`);
         containerComponent.addTextDisplayComponents([bannedByComponent, banReasonComponent]);
@@ -57,7 +57,7 @@ const ReportActionRows = {
     ACTIONING: (report) => {
 
         let banReasons = [];
-        switch(report.type) {
+        switch (report.type) {
             case 'question':
             case 'truth':
             case 'dare':
@@ -71,9 +71,6 @@ const ReportActionRows = {
                 break;
         }
 
-
-        console.log('Ban reasons:', banReasons);
-
         return new ActionRowBuilder()
             .addComponents(new SelectMenuBuilder()
                 .setCustomId('report_action-ban_id:' + report.id)
@@ -82,6 +79,13 @@ const ReportActionRows = {
             )
     },
     ACTIONED: (report) => new ActionRowBuilder()
+        .addComponents(
+            new ButtonBuilder()
+                .setCustomId('report_view-offender_id:' + report.id)
+                .setLabel('View Offender')
+                .setStyle(ButtonStyle.Secondary)
+        ),
+    CLEARED: (report) => new ActionRowBuilder()
         .addComponents(
             new ButtonBuilder()
                 .setCustomId('report_view-offender_id:' + report.id)
