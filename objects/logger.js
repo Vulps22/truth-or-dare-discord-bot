@@ -400,6 +400,11 @@ module.exports = {
      */
     async sendTo(messageOptions, channelId) {
         try {
+            if(!global.client) 
+                {
+                    console.log("messageOptions", messageOptions);
+                    throw new Error("Client is not initialized.");
+                }
             const result = await global.client.shard.broadcastEval(
                 async (client, { channelId, messageOptions }) => {
                     const channel = client.channels.cache.get(channelId);
