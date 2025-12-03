@@ -60,12 +60,10 @@ async function main() {
 
     manager.spawn();
 
-    
     setupVoteServer();
     scheduleDailyCleanup();
     syncGG(manager);
     scheduleTopGGUpdate(manager);
-    uptimeKuma();
 }
 
 main().catch(error => {
@@ -183,4 +181,5 @@ async function setupVoteServer() {
     app.listen(3002, () => {
         console.log('Vote server is listening on port 3000');
     });
+
 }
