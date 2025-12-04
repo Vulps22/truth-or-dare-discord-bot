@@ -40,11 +40,19 @@ const fs = require('fs');
 
 // Catch errors at the manager level
 process.on('uncaughtException', (error) => {
-  fs.appendFileSync('/tmp/bot_errors.log', `${Date.now()} [MANAGER]: ${error.stack || error}\n`);
+  try {
+    fs.appendFileSync('/tmp/bot_errors.log', `${Date.now()} [MANAGER]: ${error.stack || error}\n`);
+  } catch (writeError) {
+    console.error('Failed to write error to log file:', writeError);
+  }
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  fs.appendFileSync('/tmp/bot_errors.log', `${Date.now()} [MANAGER] Unhandled Rejection: ${reason}\n`);
+  try {
+    fs.appendFileSync('/tmp/bot_errors.log', `${Date.now()} [MANAGER] Unhandled Rejection: ${reason}\n`);
+  } catch (writeError) {
+    console.error('Failed to write error to log file:', writeError);
+  }
 });
 
 
@@ -69,7 +77,9 @@ async function main() {
 
     manager.on('shardCreate', shard => {
         shard.on('error', error => {
-            fs.appendFileSync('/tmp/bot_errors.log', `${Date.now()} [SHARD ${shard.id}]: ${error.stack || error}\n`);
+            fs.appendFile('/tmp/bot_errors.log', `${Date.now()} [SHARD ${shard.id}]: ${error.stack || error}\n`, err => {
+                if (err) console.error('Failed to write shard error log:', err);
+            });
         });
         console.log(`Launched shard ${shard.id}`));
     
