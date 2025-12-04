@@ -17,11 +17,31 @@ process.on('uncaughtException', (err, origin) => {
     console.error(err);
     console.error(origin);
     logger.error(err.name + "\n" + err.message + "\n" + err.stack);
+    fs.appendFile('/tmp/bot_errors.log', `${new Date().toISOString()} [SHARD ${client.shard?.ids?.[0] || 'unknown'}]: ${err.stack || err}\n`, (writeError) => {
+        if (writeError) {
+            console.error('Failed to write error to log file:', writeError);
+        }
+    });
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    fs.appendFile('/tmp/bot_errors.log', `${new Date().toISOString()} [SHARD ${client.shard?.ids?.[0] || 'unknown'}] Unhandled Rejection: ${reason?.stack || util.inspect(reason)}\n`, (writeError) => {
+        if (writeError) {
+            console.error('Failed to write error to log file:', writeError);
+        }
+    });
 });
 
 global.client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });
 client.commands = new Collection();
 
+client.on('error', (error) => {
+    fs.appendFile('/tmp/bot_errors.log', `${new Date().toISOString()} [CLIENT ${client.shard?.ids?.[0] || 'unknown'}]: ${error.stack || error}\n`, (writeError) => {
+        if (writeError) {
+            console.error('Failed to write error to log file:', writeError);
+        }
+    });
+});
 
 async function init() {
 

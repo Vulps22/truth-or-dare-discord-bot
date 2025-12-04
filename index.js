@@ -36,6 +36,25 @@ global.my = {
     environment: 'stage'
 };
 
+const fs = require('fs');
+
+// Catch errors at the manager level
+process.on('uncaughtException', (error) => {
+  fs.appendFile('/tmp/bot_errors.log', `${new Date().toISOString()} [MANAGER]: ${error.stack || error}\n`, (writeError) => {
+    if (writeError) {
+      console.error('Failed to write error to log file:', writeError);
+    }
+  });
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  fs.appendFile('/tmp/bot_errors.log', `${new Date().toISOString()} [MANAGER] Unhandled Rejection: ${reason}\n`, (writeError) => {
+    if (writeError) {
+      console.error('Failed to write error to log file:', writeError);
+    }
+  });
+});
+
 
 async function main() {
     const db = new Database();
@@ -56,8 +75,16 @@ async function main() {
     });
 
 
-    manager.on('shardCreate', shard => console.log(`Launched shard ${shard.id}`));
+    manager.on('shardCreate', shard => {
+        shard.on('error', error => {
+            fs.appendFile('/tmp/bot_errors.log', `${new Date().toISOString()} [SHARD ${shard.id}]: ${error.stack || error}\n`, err => {
+                if (err) console.error('Failed to write shard error log:', err);
+            });
+        });
+        console.log(`Launched shard ${shard.id}`);
+    });
 
+    
     manager.spawn();
 
     setupVoteServer();
