@@ -36,6 +36,17 @@ global.my = {
     environment: 'stage'
 };
 
+const fs = require('fs');
+
+// Catch errors at the manager level
+process.on('uncaughtException', (error) => {
+  fs.appendFileSync('/tmp/bot_errors.log', `${Date.now()} [MANAGER]: ${error.stack || error}\n`);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  fs.appendFileSync('/tmp/bot_errors.log', `${Date.now()} [MANAGER] Unhandled Rejection: ${reason}\n`);
+});
+
 
 async function main() {
     const db = new Database();
@@ -56,8 +67,15 @@ async function main() {
     });
 
 
-    manager.on('shardCreate', shard => console.log(`Launched shard ${shard.id}`));
+    manager.on('shardCreate', shard => {
+        shard.on('error', error => {
+            fs.appendFileSync('/tmp/bot_errors.log', `${Date.now()} [SHARD ${shard.id}]: ${error.stack || error}\n`);
+        });
+        console.log(`Launched shard ${shard.id}`));
+    
+}
 
+    
     manager.spawn();
 
     setupVoteServer();
