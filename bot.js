@@ -25,7 +25,7 @@ process.on('uncaughtException', (err, origin) => {
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-    fs.appendFile('/tmp/bot_errors.log', `${new Date().toISOString()} [SHARD ${client.shard?.ids?.[0] || 'unknown'}] Unhandled Rejection: ${reason}\n`, (writeError) => {
+    fs.appendFile('/tmp/bot_errors.log', `${new Date().toISOString()} [SHARD ${client.shard?.ids?.[0] || 'unknown'}] Unhandled Rejection: ${reason?.stack || util.inspect(reason)}\n`, (writeError) => {
         if (writeError) {
             console.error('Failed to write error to log file:', writeError);
         }
