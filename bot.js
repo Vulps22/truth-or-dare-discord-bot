@@ -17,11 +17,20 @@ process.on('uncaughtException', (err, origin) => {
     console.error(err);
     console.error(origin);
     logger.error(err.name + "\n" + err.message + "\n" + err.stack);
+    fs.appendFileSync('/tmp/bot_errors.log', `${Date.now()} [SHARD ${client.shard?.ids?.[0] || 'unknown'}]: ${error.stack || error}\n`);
+
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  fs.appendFileSync('/tmp/bot_errors.log', `${Date.now()} [SHARD ${client.shard?.ids?.[0] || 'unknown'}] Unhandled Rejection: ${reason}\n`);
 });
 
 global.client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });
 client.commands = new Collection();
 
+client.on('error', (error) => {
+  fs.appendFileSync('/tmp/bot_errors.log', `${Date.now()} [CLIENT ${client.shard?.ids?.[0] || 'unknown'}]: ${error.stack || error}\n`);
+});
 
 async function init() {
 
