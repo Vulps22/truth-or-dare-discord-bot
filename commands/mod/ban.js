@@ -164,7 +164,7 @@ module.exports = {
 		if(collectionName !== "truth" && collectionName !== "dare") {
 			items = await db.like(collectionName, 'id', `%${id}%`, 20, "DESC");
 		} else {
-			items = await db.query(`SELECT * FROM questions WHERE (question LIKE '%${id}%' OR id LIKE '%${id}%') AND isBanned = 0 AND type='${collectionName}' ORDER BY question DESC LIMIT 20`);
+			items = await db.query(`SELECT * FROM questions WHERE (question LIKE '%${id}%' OR id LIKE '%${id}%') AND isBanned = 0 AND isDeleted=0 AND type='${collectionName}'  ORDER BY question DESC LIMIT 20`);
 		}
 		//console.log(`Retrieved items:`, items);
 		let options = items.map(item => {

@@ -7,7 +7,8 @@ const ServerNotExistError = require("errors/serverNotExistError");
 module.exports = {
     name: Events.GuildDelete,
     async execute(guild) {
-        if (guild.id == '1190356693691928606') return;
+        //commenting this out for now to see if it's still causing issues
+        //if (guild.id == '1190356693691928606') return;
 
         try {
             logger.log(`Removing a server: ${guild.name} with ID: ${guild.id}`);
@@ -33,7 +34,7 @@ module.exports = {
                 user.deleteServerUser(guild.id);
             });
 
-            // Delete the server and its server-user relationships
+            // soft-delete the server and its server-user relationships
             await server.deleteServer();
 
             logger.log(`Deleted server: ${guild.id}`);
